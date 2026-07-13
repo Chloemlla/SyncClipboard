@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The built-in SyncClipboard server serves plain HTTP by default and is reached by
+  arbitrary LAN IP address, so cleartext must be permitted (Android's <domain>
+  element does not support IP/CIDR ranges, so per-subnet scoping is not possible).
+  Users syncing sensitive content should enable HTTPS on the server; the client
+  supports https:// URLs, which are used verbatim when configured.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

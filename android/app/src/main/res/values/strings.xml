@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SyncClipboard</string>
+    <string name="accessibility_service_label">SyncClipboard clipboard capture</string>
+    <string name="accessibility_service_description">Lets SyncClipboard read copied text in the background so it can push it to your LAN server. Only clipboard text is read; screen content is not inspected.</string>
+
+    <string name="channel_sync">Clipboard sync</string>
+    <string name="channel_sync_desc">Ongoing notification for background clipboard synchronization.</string>
+
+    <string name="status_connected">Connected · syncing</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_error">Sync error: %1$s</string>
+    <string name="status_stopped">Stopped</string>
+    <string name="status_not_configured">Server not configured</string>
+    <string name="last_synced">Last: %1$s</string>
+
+    <string name="section_server">Server</string>
+    <string name="section_permissions">Permissions</string>
+    <string name="section_control">Service</string>
+
+    <string name="label_server_url">Server address (host:port)</string>
+    <string name="label_username">Username</string>
+    <string name="label_password">Password</string>
+    <string name="label_poll_seconds">Poll interval (seconds)</string>
+
+    <string name="toggle_pull">Pull from server → device</string>
+    <string name="toggle_push">Push device → server</string>
+
+    <string name="perm_battery">Ignore battery optimization</string>
+    <string name="perm_accessibility">Clipboard capture (accessibility)</string>
+    <string name="hint_push_requires_accessibility">Android blocks background clipboard reads. Enabling the accessibility service lets the app capture copies from other apps and push them to the server. Pull works without it.</string>
+
+    <string name="state_granted">Granted</string>
+    <string name="state_missing">Not granted</string>
+
+    <string name="action_start">Start</string>
+    <string name="action_apply">Apply</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_grant">Grant</string>
+    <string name="action_open">Open</string>
+</resources>

@@ -466,3 +466,10 @@ build/linux/build_bin/
 TODO.md
 docs/image/todo/FluentAvaloniaContentDialog.png
 build/temp/
+setup-android-signing.ps1
+clipboard-release.jks
+Install-CodexTrellis.ps1
+keystore_base64.txt
+.trellis/
+.codex/
+.agents/skills/

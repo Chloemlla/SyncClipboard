@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SyncClipboard</string>
+    <string name="accessibility_service_label">SyncClipboard 剪贴板捕获</string>
+    <string name="accessibility_service_description">允许 SyncClipboard 在后台读取复制的文本，以便推送到局域网服务器。仅读取剪贴板文本，不会检查屏幕内容。</string>
+
+    <string name="channel_sync">剪贴板同步</string>
+    <string name="channel_sync_desc">后台剪贴板同步的常驻通知。</string>
+
+    <string name="status_connected">已连接 · 同步中</string>
+    <string name="status_connecting">连接中…</string>
+    <string name="status_error">同步错误：%1$s</string>
+    <string name="status_stopped">已停止</string>
+    <string name="status_not_configured">未配置服务器</string>
+    <string name="last_synced">最近：%1$s</string>
+
+    <string name="section_server">服务器</string>
+    <string name="section_permissions">权限</string>
+    <string name="section_control">服务</string>
+
+    <string name="label_server_url">服务器地址（host:port）</string>
+    <string name="label_username">用户名</string>
+    <string name="label_password">密码</string>
+    <string name="label_poll_seconds">轮询间隔（秒）</string>
+
+    <string name="toggle_pull">服务器 → 本机 拉取</string>
+    <string name="toggle_push">本机 → 服务器 推送</string>
+
+    <string name="perm_battery">忽略电池优化（保活）</string>
+    <string name="perm_accessibility">剪贴板捕获（无障碍）</string>
+    <string name="hint_push_requires_accessibility">Android 禁止后台读取剪贴板。开启无障碍服务后，应用可捕获其他应用中的复制内容并推送到服务器。拉取无需此权限。</string>
+
+    <string name="state_granted">已授予</string>
+    <string name="state_missing">未授予</string>
+
+    <string name="action_start">启动</string>
+    <string name="action_apply">应用</string>
+    <string name="action_stop">停止</string>
+    <string name="action_grant">授予</string>
+    <string name="action_open">打开</string>
+</resources>
