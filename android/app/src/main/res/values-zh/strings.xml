@@ -38,4 +38,28 @@
     <string name="action_stop">停止</string>
     <string name="action_grant">授予</string>
     <string name="action_open">打开</string>
+    <string name="action_test">测试连接</string>
+
+    <string name="url_placeholder">192.168.1.10:5033</string>
+    <string name="url_error">请输入有效地址，例如 192.168.1.10:5033</string>
+    <string name="poll_hint">最小 1 秒</string>
+
+    <string name="msg_url_invalid">请输入有效的服务器地址，例如 192.168.1.10:5033</string>
+    <string name="msg_test_success">连接成功</string>
+    <string name="msg_test_failed">连接失败：%1$s</string>
+    <string name="msg_started">已启动同步</string>
+    <string name="msg_stopped">已停止同步</string>
+
+    <string name="firstrun_title">开始使用</string>
+    <string name="firstrun_body">输入你的 SyncClipboard 服务器地址（host:port）。局域网中服务器使用明文 HTTP，流量不加密。拉取会把服务器剪贴板写入本机；推送需要下方的无障碍权限。</string>
+
+    <string name="push_needs_accessibility">推送已开启，但未授予剪贴板捕获权限。在下方启用无障碍服务前，复制内容不会被推送。</string>
+
+    <string name="notif_rationale">允许通知，让同步服务显示常驻状态并在后台持续运行。</string>
+    <string name="notif_denied">通知已关闭。缺少常驻通知可能导致后台同步不稳定。</string>
+
+    <string name="cd_show_password">显示密码</string>
+    <string name="cd_hide_password">隐藏密码</string>
+    <string name="cd_permission_granted">已授予</string>
+    <string name="cd_permission_missing">未授予</string>
 </resources>

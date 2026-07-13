@@ -38,4 +38,28 @@
     <string name="action_stop">Stop</string>
     <string name="action_grant">Grant</string>
     <string name="action_open">Open</string>
+    <string name="action_test">Test connection</string>
+
+    <string name="url_placeholder">192.168.1.10:5033</string>
+    <string name="url_error">Enter a valid address, e.g. 192.168.1.10:5033</string>
+    <string name="poll_hint">Minimum 1 second</string>
+
+    <string name="msg_url_invalid">Enter a valid server address, e.g. 192.168.1.10:5033</string>
+    <string name="msg_test_success">Connection successful</string>
+    <string name="msg_test_failed">Connection failed: %1$s</string>
+    <string name="msg_started">Sync started</string>
+    <string name="msg_stopped">Sync stopped</string>
+
+    <string name="firstrun_title">Get started</string>
+    <string name="firstrun_body">Enter your SyncClipboard server address (host:port). On a LAN the server uses plain HTTP, so traffic isn\'t encrypted. Pull writes the server\'s clipboard to this device; push needs the accessibility permission below.</string>
+
+    <string name="push_needs_accessibility">Push is on, but clipboard capture isn\'t granted. Copies won\'t be pushed until you enable the accessibility service below.</string>
+
+    <string name="notif_rationale">Allow notifications so the sync service can show its ongoing status and keep running in the background.</string>
+    <string name="notif_denied">Notifications are off. Background sync may be less reliable without the ongoing notification.</string>
+
+    <string name="cd_show_password">Show password</string>
+    <string name="cd_hide_password">Hide password</string>
+    <string name="cd_permission_granted">Granted</string>
+    <string name="cd_permission_missing">Not granted</string>
 </resources>
