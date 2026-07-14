@@ -98,14 +98,18 @@ public static class FuncConverter
             _ => InfoBarSeverity.Informational,
         });
 
-    public static FuncValueConverter<string?, string> LimitLines { get; } =
-        new FuncValueConverter<string?, string>(input =>
+    public static IMultiValueConverter LimitHistoryListText { get; } =
+        new FuncMultiValueConverter<object?, string>(values =>
         {
-            if (input is null)
+            var valuesList = new List<object?>();
+            foreach (var v in values)
             {
-                return string.Empty;
+                valuesList.Add(v);
             }
-            return Converter.LimitUIText(input);
+
+            var text = valuesList.Count > 0 ? valuesList[0] as string : null;
+            var isCompactListMode = valuesList.Count > 1 && valuesList[1] is bool b && b;
+            return Converter.LimitHistoryListText(text, isCompactListMode);
         });
 
     public static FuncValueConverter<ProfileType?, string> ProfileTypeToFontIcon { get; } =

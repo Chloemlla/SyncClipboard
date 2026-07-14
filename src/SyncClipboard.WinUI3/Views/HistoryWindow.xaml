@@ -32,7 +32,7 @@
                 <Setter Property="FontSize" Value="12" />
             </Style>
             <DataTemplate x:Key="normalTemplate" x:DataType="vms:HistoryRecordVM">
-                <TextBlock Text="{x:Bind vc:ConvertMethod.LimitLines(Text), Mode=OneWay}" MaxLines="{Binding MaxLines, Source={StaticResource CompactListProxy}, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Text="{x:Bind vc:ConvertMethod.LimitHistoryListText(Text, local:HistoryListModeProxy.Current.IsCompactListMode), Mode=OneWay}" TextTrimming="CharacterEllipsis" />
             </DataTemplate>
             <DataTemplate x:Key="imageTemplate" x:DataType="vms:HistoryRecordVM">
                 <StackPanel Orientation="Vertical" Spacing="5">
@@ -45,12 +45,11 @@
                            CanDrag="True"
                            Source="{x:Bind vc:ConvertMethod.CreateBitmap(PreviewImage), Mode=OneWay}"
                            Visibility="Collapsed" />
-                    <TextBlock HorizontalAlignment="Left" Text="{x:Bind Text, Mode=OneWay}" />
+                    <TextBlock HorizontalAlignment="Left" Text="{x:Bind vc:ConvertMethod.LimitHistoryListText(Text, local:HistoryListModeProxy.Current.IsCompactListMode), Mode=OneWay}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
             </DataTemplate>
             <local:ClipboardViewerTemplateSelector x:Key="clipboardTemplateSelector" Normal="{StaticResource normalTemplate}" Image="{StaticResource imageTemplate}" />
             <local:FontScaleProxy x:Key="FontScaleProxy" />
-            <local:CompactListProxy x:Key="CompactListProxy" />
             <Flyout x:Key="FontScaleFlyout" Opening="FontScaleFlyout_Opening">
                 <StackPanel Orientation="Horizontal" Padding="4" Spacing="4">
                     <TextBlock VerticalAlignment="Center" Margin="0,0,8,0" />
@@ -83,6 +82,9 @@
                 <ToggleButton Style="{StaticResource IconToggleButtonStyle}" ToolTipService.ToolTip="{x:Bind i18n:Strings.WindowTopmost}" IsChecked="{x:Bind _viewModel.IsTopmost, Mode=TwoWay}">
                     <FontIcon Glyph="&#xE840;" />
                 </ToggleButton>
+                <ToggleButton Style="{StaticResource IconToggleButtonStyle}" ToolTipService.ToolTip="{x:Bind i18n:Strings.OnlyShowStarred}" IsChecked="{x:Bind _viewModel.OnlyShowStarred, Mode=TwoWay}">
+                    <FontIcon Glyph="&#xE734;" />
+                </ToggleButton>
                 <ToggleButton Style="{StaticResource IconToggleButtonStyle}" ToolTipService.ToolTip="{x:Bind i18n:Strings.PreviewPanel}" IsChecked="{x:Bind _viewModel.ShowPreviewPanel, Mode=TwoWay}">
                     <FontIcon Glyph="&#xE90C;" />
                 </ToggleButton>
@@ -95,7 +97,9 @@
                         <MenuFlyout Placement="Bottom">
                             <ToggleMenuFlyoutItem Text="{x:Bind i18n:Strings.ScrollToTopOnReopen}" IsChecked="{x:Bind _viewModel.ScrollToTopOnReopen, Mode=TwoWay}" />
                             <ToggleMenuFlyoutItem Text="{x:Bind i18n:Strings.CloseHistoryWindowWhenLostFocus}" IsChecked="{x:Bind _viewModel.CloseWhenLostFocus, Mode=TwoWay}" />
+                            <MenuFlyoutSeparator />
                             <ToggleMenuFlyoutItem Text="{x:Bind i18n:Strings.ShowSyncStatus}" IsChecked="{x:Bind _viewModel.ShowSyncState, Mode=TwoWay}" />
+                            <ToggleMenuFlyoutItem Text="{x:Bind i18n:Strings.ShowStarredFilter}" IsChecked="{x:Bind _viewModel.ShowStarredFilter, Mode=TwoWay}" />
                             <!--<ToggleMenuFlyoutItem Text="{x:Bind i18n:Strings.OnlyShowLocal}" IsChecked="{x:Bind _viewModel.OnlyShowLocal, Mode=TwoWay}" />-->
                             <ToggleMenuFlyoutItem Text="{x:Bind i18n:Strings.SortByLastAccessed}" IsChecked="{x:Bind _viewModel.SortByLastAccessed, Mode=TwoWay}" />
                             <ToggleMenuFlyoutItem Text="{x:Bind i18n:Strings.CompactListWhenPreview}" IsChecked="{x:Bind _viewModel.CompactListWhenPreview, Mode=TwoWay}" />

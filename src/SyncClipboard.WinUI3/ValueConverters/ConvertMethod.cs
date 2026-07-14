@@ -94,14 +94,9 @@ internal static class ConvertMethod
         };
     }
 
-    public static string LimitLines(string input)
+    public static string LimitHistoryListText(string? input, bool isCompactListMode)
     {
-        if (input is null)
-        {
-            return string.Empty;
-        }
-
-        return Converter.LimitUIText(input);
+        return Converter.LimitHistoryListText(input, isCompactListMode);
     }
 
     public static string GetRecordSize(HistoryRecordVM? record)

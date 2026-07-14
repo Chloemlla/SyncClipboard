@@ -483,6 +483,7 @@
 Ctrl+Home：滚动到顶部
 Ctrl+End：滚动到底部
 Ctrl+S：切换收藏
+Ctrl+Shift+S：切换仅显示收藏
 Ctrl+D：删除项目
 Ctrl+P：切换预览面板
 Tab/Shift+Tab：切换筛选器
@@ -960,6 +961,12 @@ Esc：关闭面板</value>
   </data>
   <data name="OnlyShowLocal" xml:space="preserve">
     <value>仅显示本地记录</value>
+  </data>
+  <data name="OnlyShowStarred" xml:space="preserve">
+    <value>仅显示收藏</value>
+  </data>
+  <data name="ShowStarredFilter" xml:space="preserve">
+    <value>显示独立的收藏分类</value>
   </data>
   <data name="CancelDownload" xml:space="preserve">
     <value>取消下载</value>

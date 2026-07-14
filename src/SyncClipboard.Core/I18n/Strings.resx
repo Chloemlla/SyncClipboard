@@ -482,6 +482,7 @@
 Ctrl+Home: Scroll to top
 Ctrl+End: Scroll to bottom
 Ctrl+S: Toggle star
+Ctrl+Shift+S: Toggle starred only
 Ctrl+D: Delete item
 Ctrl+P: Toggle preview panel
 ↑/↓: Navigate items
@@ -962,6 +963,12 @@ This operation cannot be undone.</value>
   </data>
   <data name="OnlyShowLocal" xml:space="preserve">
     <value>Show Local Records Only</value>
+  </data>
+  <data name="OnlyShowStarred" xml:space="preserve">
+    <value>Show Starred Only</value>
+  </data>
+  <data name="ShowStarredFilter" xml:space="preserve">
+    <value>Show Starred Category</value>
   </data>
   <data name="CancelDownload" xml:space="preserve">
     <value>Cancel Download</value>

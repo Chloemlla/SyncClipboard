@@ -8,6 +8,7 @@ using SyncClipboard.Core.Models;
 using SyncClipboard.Core.Utilities;
 using SyncClipboard.Core.ViewModels;
 using SyncClipboard.Core.ViewModels.Sub;
+using SyncClipboard.WinUI3.Utilities;
 using SyncClipboard.WinUI3.ValueConverters;
 using System;
 using System.IO;
@@ -237,8 +238,8 @@ public sealed partial class PreviewPanel : UserControl
         try
         {
             e.Data.RequestedOperation = DataPackageOperation.Copy;
+            await DragUiHelper.SetDragIconAsync(e.DragUI, record);
             var success = await ViewModel.FillDragPackage(e.Data, record, CancellationToken.None);
-            e.DragUI.SetContentFromDataPackage();
 
             if (!success)
             {
