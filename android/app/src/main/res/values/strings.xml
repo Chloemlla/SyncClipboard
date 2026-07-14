@@ -62,4 +62,31 @@
     <string name="cd_hide_password">Hide password</string>
     <string name="cd_permission_granted">Granted</string>
     <string name="cd_permission_missing">Not granted</string>
+
+    <!-- Header hub -->
+    <string name="header_title">Clipboard Sync Hub</string>
+    <string name="header_subtitle_idle">Sync clipboard across your LAN, and manage the background service here.</string>
+    <string name="header_subtitle_running">%1$s · running in background</string>
+    <string name="pill_connection">Connection</string>
+    <string name="pill_pull">Pull</string>
+    <string name="pill_push">Push</string>
+    <string name="pill_on">On</string>
+    <string name="pill_off">Off</string>
+
+    <!-- Section subtitles -->
+    <string name="section_server_subtitle">Enter the LAN address and credentials of your SyncClipboard server.</string>
+    <string name="section_sync_subtitle">Choose which direction the clipboard flows.</string>
+    <string name="section_permissions_subtitle">Grant background access so sync keeps working reliably.</string>
+    <string name="section_control_subtitle">Start, apply changes, or stop the background sync service.</string>
+    <string name="section_sync">Sync direction</string>
+
+    <!-- Info card -->
+    <string name="firstrun_line1">Enter your server address as host:port. On a LAN the server uses plain HTTP, so traffic isn\'t encrypted.</string>
+    <string name="firstrun_line2">Pull writes the server clipboard to this device; push needs the accessibility permission below.</string>
+
+    <!-- Stop confirmation -->
+    <string name="stop_confirm_title">Stop clipboard sync</string>
+    <string name="stop_confirm_message">The background service will stop and the clipboard will no longer sync until you start it again.</string>
+    <string name="stop_confirm_confirm">Stop</string>
+    <string name="dialog_cancel">Cancel</string>
 </resources>

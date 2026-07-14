@@ -62,4 +62,31 @@
     <string name="cd_hide_password">隐藏密码</string>
     <string name="cd_permission_granted">已授予</string>
     <string name="cd_permission_missing">未授予</string>
+
+    <!-- Header hub -->
+    <string name="header_title">剪贴板同步中枢</string>
+    <string name="header_subtitle_idle">在局域网内同步剪贴板，并在此管理后台同步服务。</string>
+    <string name="header_subtitle_running">%1$s · 正在后台运行</string>
+    <string name="pill_connection">连接</string>
+    <string name="pill_pull">拉取</string>
+    <string name="pill_push">推送</string>
+    <string name="pill_on">开启</string>
+    <string name="pill_off">关闭</string>
+
+    <!-- Section subtitles -->
+    <string name="section_server_subtitle">输入 SyncClipboard 服务器的局域网地址与凭据。</string>
+    <string name="section_sync_subtitle">选择剪贴板的同步方向。</string>
+    <string name="section_permissions_subtitle">授予后台访问权限，让同步稳定运行。</string>
+    <string name="section_control_subtitle">启动、应用更改或停止后台同步服务。</string>
+    <string name="section_sync">同步方向</string>
+
+    <!-- Info card -->
+    <string name="firstrun_line1">按 host:port 格式输入服务器地址。局域网中服务器使用明文 HTTP，流量不加密。</string>
+    <string name="firstrun_line2">拉取会把服务器剪贴板写入本机；推送需要下方的无障碍权限。</string>
+
+    <!-- Stop confirmation -->
+    <string name="stop_confirm_title">停止剪贴板同步</string>
+    <string name="stop_confirm_message">后台服务将停止，剪贴板在你重新启动前不再同步。</string>
+    <string name="stop_confirm_confirm">停止</string>
+    <string name="dialog_cancel">取消</string>
 </resources>
