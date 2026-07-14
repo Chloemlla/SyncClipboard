@@ -9,7 +9,11 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
+import java.net.UnknownHostException
+import java.net.ConnectException
+import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLException
 
 /**
  * HTTP/WebDAV client for the SyncClipboard server protocol.
@@ -33,6 +37,33 @@ class SyncClient(config: ServerConfig) {
         .writeTimeout(30, TimeUnit.SECONDS)
         .callTimeout(60, TimeUnit.SECONDS)
         .build()
+
+    /**
+     * Probe the server with a lightweight authenticated GET. Throws [SyncException]
+     * with a specific [SyncErrorKind] so the UI can give actionable guidance instead
+     * of a raw stack message. Returns normally on success.
+     */
+    fun testConnection() {
+        val request = Request.Builder()
+            .url(baseUrl.newBuilder().addPathSegment(PROFILE_PATH).build())
+            .header("Authorization", authHeader)
+            .get()
+            .build()
+        try {
+            http.newCall(request).execute().use { resp ->
+                when {
+                    resp.isSuccessful -> return
+                    resp.code == 401 || resp.code == 403 ->
+                        throw SyncException(SyncErrorKind.AUTH, "HTTP ${resp.code}")
+                    else -> throw SyncException(SyncErrorKind.SERVER, "HTTP ${resp.code}")
+                }
+            }
+        } catch (e: SyncException) {
+            throw e
+        } catch (e: Exception) {
+            throw e.asSyncException()
+        }
+    }
 
     /** GET /SyncClipboard.json */
     fun getProfile(): ProfileDto {
@@ -146,4 +177,25 @@ class SyncClient(config: ServerConfig) {
                 ?: throw IllegalArgumentException("Invalid server URL: $raw")
         }
     }
+}
+
+/** Coarse cause of a sync failure, used to surface actionable UI guidance. */
+enum class SyncErrorKind { URL, AUTH, UNREACHABLE, TIMEOUT, TLS, SERVER, UNKNOWN }
+
+/** A sync failure carrying a classified [kind] plus the raw detail for logging. */
+class SyncException(
+    val kind: SyncErrorKind,
+    detail: String? = null,
+    cause: Throwable? = null,
+) : IOException(detail, cause)
+
+/** Best-effort classification of an arbitrary throwable into a [SyncException]. */
+fun Throwable.asSyncException(): SyncException = when (this) {
+    is SyncException -> this
+    is IllegalArgumentException -> SyncException(SyncErrorKind.URL, message, this)
+    is UnknownHostException -> SyncException(SyncErrorKind.UNREACHABLE, message, this)
+    is ConnectException -> SyncException(SyncErrorKind.UNREACHABLE, message, this)
+    is SocketTimeoutException -> SyncException(SyncErrorKind.TIMEOUT, message, this)
+    is SSLException -> SyncException(SyncErrorKind.TLS, message, this)
+    else -> SyncException(SyncErrorKind.UNKNOWN, message, this)
 }
