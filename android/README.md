@@ -6,9 +6,15 @@ protocol.
 
 ## What it does
 
-- **Pull (server → phone):** a resident `dataSync` foreground service polls
-  `GET /SyncClipboard.json` on the configured interval (default 3s) and writes
-  changed text to the device clipboard. Works fully in the background.
+- **Pull (server → phone):** a resident `dataSync` foreground service applies changed
+  text to the device clipboard, driven by two mechanisms that back each other up:
+  - **Real-time push** over the same SignalR hub (`/SyncClipboardHub`) the desktop
+    client uses. A server-side change wakes the app immediately (near-zero latency).
+  - **Adaptive polling** of `GET /SyncClipboard.json` as a safety net. While realtime
+    is healthy the cadence drops to a slow heartbeat (~30s) to save battery/network;
+    if the hub is unavailable (older/pure-WebDAV servers) it falls back to the
+    configured fast interval (default 3s). Repeated failures back off exponentially.
+  Works fully in the background.
 - **Push (phone → server):** an optional `AccessibilityService` observes clipboard
   changes and pushes them to the server via `PUT /SyncClipboard.json` (uploading a
   transfer file first for text over 10240 chars).
@@ -29,6 +35,7 @@ text and never inspects screen/node content (`canRetrieveWindowContent="false"`)
 
 | Direction | Request |
 |---|---|
+| Realtime | SignalR hub at `/SyncClipboardHub`; the server's `RemoteProfileChanged` invocation is used as a wake trigger for an immediate pull (the pushed payload is not trusted for content). |
 | Pull | `GET /SyncClipboard.json` → compare `(type, hash)` → apply `text` (or `GET /file/{dataName}` when `hasData`) |
 | Push | `hash = HEX_UPPER(SHA256(UTF8(text)))`; `PUT /SyncClipboard.json` (camelCase, string `type`). Text > 10240 chars: `PUT /file/{name}` (BOM-less UTF-8) first. |
 

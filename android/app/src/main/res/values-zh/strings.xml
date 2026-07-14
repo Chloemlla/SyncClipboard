@@ -49,6 +49,16 @@
     <string name="msg_test_failed">连接失败：%1$s</string>
     <string name="msg_started">已启动同步</string>
     <string name="msg_stopped">已停止同步</string>
+    <string name="action_testing">测试中…</string>
+
+    <!-- Classified connection errors -->
+    <string name="err_url">服务器地址无效。请使用 host:port 格式，例如 192.168.1.10:5033。</string>
+    <string name="err_auth">用户名或密码错误。</string>
+    <string name="err_unreachable">无法连接服务器。请检查地址，并确认在同一网络中。</string>
+    <string name="err_timeout">服务器响应超时。请检查地址与网络。</string>
+    <string name="err_tls">TLS/HTTPS 错误。请检查服务器证书，或改用 http://。</string>
+    <string name="err_server">服务器错误：%1$s</string>
+    <string name="err_unknown">连接失败：%1$s</string>
 
     <string name="firstrun_title">开始使用</string>
     <string name="firstrun_body">输入你的 SyncClipboard 服务器地址（host:port）。局域网中服务器使用明文 HTTP，流量不加密。拉取会把服务器剪贴板写入本机；推送需要下方的无障碍权限。</string>

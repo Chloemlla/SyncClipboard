@@ -43,6 +43,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -213,6 +214,12 @@ fun MainScreen(viewModel: MainViewModel) {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                 )
+                TestConnectionRow(
+                    testing = ui.testing,
+                    testOk = ui.testOk,
+                    testMessage = ui.testMessage,
+                    onTest = viewModel::testConnection,
+                )
 
                 SectionTitle(
                     text = context.getString(R.string.section_sync),
@@ -308,6 +315,53 @@ fun MainScreen(viewModel: MainViewModel) {
             },
             onDismiss = { showStopConfirm = false },
         )
+    }
+}
+
+@Composable
+private fun TestConnectionRow(
+    testing: Boolean,
+    testOk: Boolean?,
+    testMessage: String,
+    onTest: () -> Unit,
+) {
+    val context = LocalContext.current
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedButton(
+            onClick = onTest,
+            enabled = !testing,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            if (testing) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(context.getString(R.string.action_testing))
+            } else {
+                ButtonLabel(Icons.Outlined.CloudSync, context.getString(R.string.action_test))
+            }
+        }
+        if (testOk != null && testMessage.isNotBlank()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    imageVector = if (testOk) Icons.Outlined.CheckCircle else Icons.Outlined.ErrorOutline,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = if (testOk) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
+                )
+                Text(
+                    text = testMessage,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (testOk) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
+                )
+            }
+        }
     }
 }
 

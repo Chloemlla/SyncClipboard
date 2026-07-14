@@ -86,6 +86,15 @@ public sealed class OfficialAdapter(
                     var base64 = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{_officialConfig.UserName}:{_officialConfig.Password}"));
                     config.Headers.Add("Authorization", "Basic " + base64);
                 })
+                // 网络抖动或服务器重启后自动重连，避免依赖较慢的定时存活检测才恢复。
+                .WithAutomaticReconnect(new[]
+                {
+                    TimeSpan.Zero,
+                    TimeSpan.FromSeconds(2),
+                    TimeSpan.FromSeconds(5),
+                    TimeSpan.FromSeconds(10),
+                    TimeSpan.FromSeconds(30),
+                })
                 .Build();
         }
 
@@ -98,6 +107,18 @@ public sealed class OfficialAdapter(
         {
             HistoryChanged?.Invoke(historyRecord);
         });
+
+        // 自动重连开始时视为断开，重连成功后视为恢复并触发一次全量同步。
+        _hubConnection.Reconnecting += ex =>
+        {
+            ServerDisconnected?.Invoke(ex);
+            return Task.CompletedTask;
+        };
+        _hubConnection.Reconnected += _ =>
+        {
+            ServerConnected?.Invoke();
+            return Task.CompletedTask;
+        };
 
         StartSignalRConnectiron(_hubConnection);
     }

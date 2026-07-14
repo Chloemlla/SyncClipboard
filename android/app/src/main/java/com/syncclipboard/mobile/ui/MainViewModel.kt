@@ -1,15 +1,24 @@
 package com.syncclipboard.mobile.ui
 
 import android.app.Application
+import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.syncclipboard.mobile.R
 import com.syncclipboard.mobile.core.ServerConfig
 import com.syncclipboard.mobile.core.SettingsStore
+import com.syncclipboard.mobile.core.SyncClient
+import com.syncclipboard.mobile.core.SyncErrorKind
+import com.syncclipboard.mobile.core.asSyncException
 import com.syncclipboard.mobile.sync.PermissionHelper
 import com.syncclipboard.mobile.sync.SyncForegroundService
 import com.syncclipboard.mobile.sync.SyncState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** UI state for the connection form + permission/status surface. */
 data class UiState(
@@ -22,6 +31,11 @@ data class UiState(
     val serviceRunning: Boolean = false,
     val batteryOptExempt: Boolean = false,
     val accessibilityEnabled: Boolean = false,
+    val testing: Boolean = false,
+    /** Result of the last connection test: null = none, true = ok, false = failed. */
+    val testOk: Boolean? = null,
+    /** Localized message describing the last test result. */
+    val testMessage: String = "",
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -45,9 +59,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
-    fun onBaseUrlChange(value: String) = _ui.update { it.copy(baseUrl = value) }
-    fun onUsernameChange(value: String) = _ui.update { it.copy(username = value) }
-    fun onPasswordChange(value: String) = _ui.update { it.copy(password = value) }
+    fun onBaseUrlChange(value: String) = _ui.update { it.copy(baseUrl = value, testOk = null, testMessage = "") }
+    fun onUsernameChange(value: String) = _ui.update { it.copy(username = value, testOk = null, testMessage = "") }
+    fun onPasswordChange(value: String) = _ui.update { it.copy(password = value, testOk = null, testMessage = "") }
     fun onPollChange(value: Int) = _ui.update { it.copy(pollSeconds = value.coerceAtLeast(ServerConfig.MIN_POLL_SECONDS)) }
     fun onPullChange(value: Boolean) = _ui.update { it.copy(pullEnabled = value) }
     fun onPushChange(value: Boolean) = _ui.update { it.copy(pushEnabled = value) }
@@ -76,6 +90,46 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun save() = settings.save(currentConfig())
+
+    /**
+     * Probe the configured server on a background thread and surface a classified,
+     * localized result so the user knows exactly what to fix before starting sync.
+     */
+    fun testConnection() {
+        if (_ui.value.testing) return
+        val config = currentConfig()
+        if (config.baseUrl.isBlank()) {
+            _ui.update { it.copy(testOk = false, testMessage = string(R.string.msg_url_invalid)) }
+            return
+        }
+        _ui.update { it.copy(testing = true, testOk = null, testMessage = "") }
+        viewModelScope.launch {
+            val result = runCatching { withContext(Dispatchers.IO) { SyncClient(config).testConnection() } }
+            _ui.update {
+                result.fold(
+                    onSuccess = { _ -> it.copy(testing = false, testOk = true, testMessage = string(R.string.msg_test_success)) },
+                    onFailure = { e -> it.copy(testing = false, testOk = false, testMessage = errorMessage(e)) },
+                )
+            }
+        }
+    }
+
+    private fun errorMessage(e: Throwable): String {
+        val ex = e.asSyncException()
+        val detail = ex.cause?.message ?: ex.message ?: ""
+        return when (ex.kind) {
+            SyncErrorKind.URL -> string(R.string.err_url)
+            SyncErrorKind.AUTH -> string(R.string.err_auth)
+            SyncErrorKind.UNREACHABLE -> string(R.string.err_unreachable)
+            SyncErrorKind.TIMEOUT -> string(R.string.err_timeout)
+            SyncErrorKind.TLS -> string(R.string.err_tls)
+            SyncErrorKind.SERVER -> string(R.string.err_server, detail)
+            SyncErrorKind.UNKNOWN -> string(R.string.err_unknown, detail)
+        }
+    }
+
+    private fun string(@StringRes id: Int, vararg args: Any): String =
+        getApplication<Application>().getString(id, *args)
 
     fun startService() {
         settings.save(currentConfig())

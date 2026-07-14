@@ -49,6 +49,16 @@
     <string name="msg_test_failed">Connection failed: %1$s</string>
     <string name="msg_started">Sync started</string>
     <string name="msg_stopped">Sync stopped</string>
+    <string name="action_testing">Testing…</string>
+
+    <!-- Classified connection errors -->
+    <string name="err_url">Invalid server address. Use host:port, e.g. 192.168.1.10:5033.</string>
+    <string name="err_auth">Wrong username or password.</string>
+    <string name="err_unreachable">Can\'t reach the server. Check the address and that you\'re on the same network.</string>
+    <string name="err_timeout">Server timed out. Check the address and network.</string>
+    <string name="err_tls">TLS/HTTPS error. Verify the server certificate or use http://.</string>
+    <string name="err_server">Server error: %1$s</string>
+    <string name="err_unknown">Connection failed: %1$s</string>
 
     <string name="firstrun_title">Get started</string>
     <string name="firstrun_body">Enter your SyncClipboard server address (host:port). On a LAN the server uses plain HTTP, so traffic isn\'t encrypted. Pull writes the server\'s clipboard to this device; push needs the accessibility permission below.</string>
