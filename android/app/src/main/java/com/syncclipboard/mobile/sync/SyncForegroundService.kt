@@ -8,7 +8,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -190,10 +189,8 @@ class SyncForegroundService : Service() {
             SyncStatus.ERROR -> getString(R.string.status_error, snapshot.message)
             SyncStatus.STOPPED -> getString(R.string.status_stopped)
         }
-        val largeIcon = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_sync)
-            .setLargeIcon(largeIcon)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(statusText)
             .setOngoing(true)
