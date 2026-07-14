@@ -87,14 +87,14 @@ public sealed class OfficialAdapter(
                     config.Headers.Add("Authorization", "Basic " + base64);
                 })
                 // 网络抖动或服务器重启后自动重连，避免依赖较慢的定时存活检测才恢复。
-                .WithAutomaticReconnect(new[]
-                {
+                .WithAutomaticReconnect(
+                [
                     TimeSpan.Zero,
                     TimeSpan.FromSeconds(2),
                     TimeSpan.FromSeconds(5),
                     TimeSpan.FromSeconds(10),
                     TimeSpan.FromSeconds(30),
-                })
+                ])
                 .Build();
         }
 
