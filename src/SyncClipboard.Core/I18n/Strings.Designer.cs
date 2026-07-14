@@ -1394,6 +1394,7 @@ namespace SyncClipboard.Core.I18n {
         ///Ctrl+Home: Scroll to top
         ///Ctrl+End: Scroll to bottom
         ///Ctrl+S: Toggle star
+        ///Ctrl+Shift+S: Toggle starred only
         ///Ctrl+D: Delete item
         ///Ctrl+P: Toggle preview panel
         ///↑/↓: Navigate items
@@ -1804,6 +1805,15 @@ namespace SyncClipboard.Core.I18n {
         public static string OnlyShowLocal {
             get {
                 return ResourceManager.GetString("OnlyShowLocal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Show Starred Only 的本地化字符串。
+        /// </summary>
+        public static string OnlyShowStarred {
+            get {
+                return ResourceManager.GetString("OnlyShowStarred", resourceCulture);
             }
         }
         
@@ -2452,6 +2462,15 @@ namespace SyncClipboard.Core.I18n {
         public static string ShowPreviewPanel {
             get {
                 return ResourceManager.GetString("ShowPreviewPanel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Show Starred Category 的本地化字符串。
+        /// </summary>
+        public static string ShowStarredFilter {
+            get {
+                return ResourceManager.GetString("ShowStarredFilter", resourceCulture);
             }
         }
         

@@ -108,6 +108,7 @@ public partial class HistoryViewModel : ObservableObject
 
         runtimeConfig.ListenConfig<RuntimeHistoryConfig>(OnHistoryConfigChanged);
 
+        RefreshFilterOptions();
         viewController = allHistoryItems.CreateView(x => x);
         HistoryItems = viewController.ToNotifyCollectionChanged();
         HistoryItems.CollectionChanged += OnHistoryItemsCollectionChanged;
@@ -166,12 +167,10 @@ public partial class HistoryViewModel : ObservableObject
         if (OnlyShowLocal && record.SyncState == SyncStatus.ServerOnly)
             return false;
 
-        if (SelectedFilter == HistoryFilterType.Starred)
-        {
-            return record.Stared;
-        }
         return true;
     }
+
+    private bool IsStarredScopeActive => OnlyShowStarred || SelectedFilter == HistoryFilterType.Starred;
 
     [ObservableProperty]
     private int selectedIndex = -1;
@@ -203,15 +202,34 @@ public partial class HistoryViewModel : ObservableObject
         }
     }
 
-    public List<LocaleString<HistoryFilterType>> FilterOptions { get; } =
+    private static readonly LocaleString<HistoryFilterType> allFilterOption = new(HistoryFilterType.All, I18n.Strings.HistoryFilterAll);
+    private static readonly LocaleString<HistoryFilterType> textFilterOption = new(HistoryFilterType.Text, I18n.Strings.HistoryFilterText);
+    private static readonly LocaleString<HistoryFilterType> imageFilterOption = new(HistoryFilterType.Image, I18n.Strings.HistoryFilterImage);
+    private static readonly LocaleString<HistoryFilterType> fileFilterOption = new(HistoryFilterType.File, I18n.Strings.HistoryFilterFile);
+    private static readonly LocaleString<HistoryFilterType> starredFilterOption = new(HistoryFilterType.Starred, I18n.Strings.HistoryFilterStarred);
+    private static readonly LocaleString<HistoryFilterType> transferringFilterOption = new(HistoryFilterType.Transferring, I18n.Strings.HistoryFilterTransferring);
+
+    private IReadOnlyList<LocaleString<HistoryFilterType>> filterOptions = [];
+    public IReadOnlyList<LocaleString<HistoryFilterType>> FilterOptions => filterOptions;
+
+    private void RefreshFilterOptions()
+    {
+        List<LocaleString<HistoryFilterType>> options =
         [
-            new(HistoryFilterType.All, I18n.Strings.HistoryFilterAll),
-            new(HistoryFilterType.Text, I18n.Strings.HistoryFilterText),
-            new(HistoryFilterType.Image, I18n.Strings.HistoryFilterImage),
-            new(HistoryFilterType.File, I18n.Strings.HistoryFilterFile),
-            new(HistoryFilterType.Starred, I18n.Strings.HistoryFilterStarred),
-            new(HistoryFilterType.Transferring, I18n.Strings.HistoryFilterTransferring)
+            allFilterOption,
+            textFilterOption,
+            imageFilterOption,
+            fileFilterOption
         ];
+        if (ShowStarredFilter)
+        {
+            options.Add(starredFilterOption);
+        }
+        options.Add(transferringFilterOption);
+
+        filterOptions = options.ToArray();
+        OnPropertyChanged(nameof(FilterOptions));
+    }
 
     public INotifyCollectionChangedSynchronizedViewList<HistoryRecordVM> HistoryItems { get; }
     private readonly ISynchronizedView<HistoryRecordVM, HistoryRecordVM> viewController;
@@ -283,6 +301,36 @@ public partial class HistoryViewModel : ObservableObject
         }
     }
 
+    public bool OnlyShowStarred
+    {
+        get => runtimeConfig.GetConfig<HistoryWindowConfig>().OnlyShowStarred;
+        set
+        {
+            if (value == OnlyShowStarred) return;
+
+            runtimeConfig.SetConfig(runtimeConfig.GetConfig<HistoryWindowConfig>() with { OnlyShowStarred = value });
+            OnPropertyChanged(nameof(OnlyShowStarred));
+            _ = Reload();
+        }
+    }
+
+    public bool ShowStarredFilter
+    {
+        get => runtimeConfig.GetConfig<HistoryWindowConfig>().ShowStarredFilter;
+        set
+        {
+            if (value == ShowStarredFilter) return;
+
+            runtimeConfig.SetConfig(runtimeConfig.GetConfig<HistoryWindowConfig>() with { ShowStarredFilter = value });
+            OnPropertyChanged(nameof(ShowStarredFilter));
+            if (!value && SelectedFilter == HistoryFilterType.Starred)
+            {
+                SelectedFilter = HistoryFilterType.All;
+            }
+            RefreshFilterOptions();
+        }
+    }
+
     public bool SortByLastAccessed
     {
         get => runtimeConfig.GetConfig<HistoryWindowConfig>().SortByLastAccessed;
@@ -335,7 +383,6 @@ public partial class HistoryViewModel : ObservableObject
             runtimeConfig.SetConfig(runtimeConfig.GetConfig<HistoryWindowConfig>() with { ShowPreviewPanel = value });
             OnPropertyChanged(nameof(ShowPreviewPanel));
             OnPropertyChanged(nameof(IsCompactListMode));
-            OnPropertyChanged(nameof(CompactListMaxLines));
             OnPropertyChanged(nameof(ShowSyncStateIndicator));
         }
     }
@@ -360,7 +407,6 @@ public partial class HistoryViewModel : ObservableObject
             runtimeConfig.SetConfig(runtimeConfig.GetConfig<HistoryWindowConfig>() with { CompactListWhenPreview = value });
             OnPropertyChanged(nameof(CompactListWhenPreview));
             OnPropertyChanged(nameof(IsCompactListMode));
-            OnPropertyChanged(nameof(CompactListMaxLines));
         }
     }
 
@@ -373,11 +419,6 @@ public partial class HistoryViewModel : ObservableObject
     /// 是否显示同步状态指示器（ShowSyncState 为 true 且 ShowPreviewPanel 为 false）
     /// </summary>
     public bool ShowSyncStateIndicator => ShowSyncState && !ShowPreviewPanel;
-
-    /// <summary>
-    /// 紧凑模式下的最大行数：1 表示单行，0 表示无限制
-    /// </summary>
-    public int CompactListMaxLines => IsCompactListMode ? 1 : 0;
 
     public ScreenPosition? GetCaretPosition()
     {
@@ -636,51 +677,48 @@ public partial class HistoryViewModel : ObservableObject
 
     private (ProfileTypeFilter types, bool? starred, string? searchText) BuildQueryParameters()
     {
-        bool? starred = null;
+        bool? starred = IsStarredScopeActive ? true : null;
         string? searchText = string.IsNullOrEmpty(SearchText) ? null : SearchText;
-
-        ProfileTypeFilter types;
-        switch (SelectedFilter)
+        var types = SelectedFilter switch
         {
-            case HistoryFilterType.Text:
-                types = ProfileTypeFilter.Text;
-                break;
-            case HistoryFilterType.Image:
-                types = ProfileTypeFilter.Image;
-                break;
-            case HistoryFilterType.File:
-                types = ProfileTypeFilter.FileAndGroup;
-                break;
-            case HistoryFilterType.Starred:
-                types = ProfileTypeFilter.All;
-                starred = true;
-                break;
-            case HistoryFilterType.Transferring:
-                types = ProfileTypeFilter.All;
-                break;
-            case HistoryFilterType.All:
-            default:
-                types = ProfileTypeFilter.All;
-                break;
-        }
-
+            HistoryFilterType.Text => ProfileTypeFilter.Text,
+            HistoryFilterType.Image => ProfileTypeFilter.Image,
+            HistoryFilterType.File => ProfileTypeFilter.FileAndGroup,
+            _ => ProfileTypeFilter.All,
+        };
         return (types, starred, searchText);
+    }
+
+    private int GetSelectedFilterOptionIndex()
+    {
+        for (var i = 0; i < FilterOptions.Count; i++)
+        {
+            if (FilterOptions[i].Key == SelectedFilter)
+            {
+                return i;
+            }
+        }
+        return 0;
     }
 
     public void NavigateToNextFilter()
     {
-        var currentIndex = (int)SelectedFilter;
         var filterCount = FilterOptions.Count;
+        if (filterCount == 0) return;
+
+        var currentIndex = GetSelectedFilterOptionIndex();
         var nextIndex = (currentIndex + 1) % filterCount;
-        SelectedFilter = (HistoryFilterType)nextIndex;
+        SelectedFilter = FilterOptions[nextIndex].Key;
     }
 
     public void NavigateToPreviousFilter()
     {
-        var currentIndex = (int)SelectedFilter;
         var filterCount = FilterOptions.Count;
+        if (filterCount == 0) return;
+
+        var currentIndex = GetSelectedFilterOptionIndex();
         var prevIndex = (currentIndex - 1 + filterCount) % filterCount;
-        SelectedFilter = (HistoryFilterType)prevIndex;
+        SelectedFilter = FilterOptions[prevIndex].Key;
     }
 
     public void NavigateDown()
@@ -736,6 +774,16 @@ public partial class HistoryViewModel : ObservableObject
 
     public bool HandleKeyPress(Key key, bool isShiftPressed = false, bool isAltPressed = false, bool isCtrlPressed = false)
     {
+        if (isCtrlPressed && isShiftPressed && !isAltPressed)
+        {
+            switch (key)
+            {
+                case Key.S:
+                    OnlyShowStarred = !OnlyShowStarred;
+                    return true;
+            }
+        }
+
         if (isCtrlPressed)
         {
             switch (key)
@@ -910,6 +958,15 @@ public partial class HistoryViewModel : ObservableObject
 
         if (oldRecord != null)
         {
+            if (IsStarredScopeActive
+                && !newRecord.Stared
+                && IsMatchDbFilter(newRecord, ignoreStarredFilter: true)
+                && IsMatchUiFilter(newRecord))
+            {
+                oldRecord.Update(newRecord);
+                return;
+            }
+
             if (!isMatchDbFilter)
             {
                 RemoveInsert(oldRecord, null);
@@ -985,7 +1042,7 @@ public partial class HistoryViewModel : ObservableObject
         return false;
     }
 
-    private bool IsMatchDbFilter(HistoryRecordVM vm)
+    private bool IsMatchDbFilter(HistoryRecordVM vm, bool ignoreStarredFilter = false)
     {
         bool filterMatch = SelectedFilter switch
         {
@@ -998,6 +1055,14 @@ public partial class HistoryViewModel : ObservableObject
 
         if (!filterMatch)
             return false;
+
+        if (IsStarredScopeActive && !ignoreStarredFilter)
+        {
+            if (!vm.Stared)
+            {
+                return false;
+            }
+        }
 
         if (!string.IsNullOrEmpty(SearchText))
         {
@@ -1075,7 +1140,7 @@ public partial class HistoryViewModel : ObservableObject
             return;
         }
 
-        var (types, started, searchText) = BuildQueryParameters();
+        var (types, starred, searchText) = BuildQueryParameters();
 
         if (_isLocalEnd)
         {
@@ -1087,7 +1152,7 @@ public partial class HistoryViewModel : ObservableObject
 
         var records = await historyManager.GetHistoryAsync(
             types,
-            started,
+            starred,
             _timeCursor,
             size,
             string.IsNullOrEmpty(searchText) ? null : searchText,

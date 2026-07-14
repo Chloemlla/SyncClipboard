@@ -9,6 +9,8 @@ public record class HistoryWindowConfig
     public bool CloseWhenLostFocus { get; set; } = true;
     public bool ShowSyncState { get; set; } = true;
     public bool OnlyShowLocal { get; set; } = false;
+    public bool OnlyShowStarred { get; set; } = false;
+    public bool ShowStarredFilter { get; set; } = false;
     public bool SortByLastAccessed { get; set; } = false;
     public int FontScalePercent { get; set; } = 100;
     public bool FollowCaretPosition { get; set; } = false;

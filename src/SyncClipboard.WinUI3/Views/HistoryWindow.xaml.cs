@@ -17,6 +17,7 @@ using SyncClipboard.Core.Utilities;
 using SyncClipboard.Core.Utilities.Runner;
 using SyncClipboard.Core.ViewModels;
 using SyncClipboard.Core.ViewModels.Sub;
+using SyncClipboard.WinUI3.Utilities;
 using SyncClipboard.WinUI3.ValueConverters;
 using SyncClipboard.WinUI3.Win32;
 using System;
@@ -114,7 +115,7 @@ public sealed partial class HistoryWindow : Window, IWindow
         this.SetTopmost(_viewModel.IsTopmost);
 
         ApplyFontScale(_viewModel.FontScalePercent);
-        ApplyCompactListMaxLines(_viewModel.CompactListMaxLines);
+        ApplyCompactListMode(_viewModel.IsCompactListMode);
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         UpdateListViewWidthForPreview(); // 初始化时设置ListView宽度
     }
@@ -133,54 +134,23 @@ public sealed partial class HistoryWindow : Window, IWindow
         {
             DispatcherQueue.TryEnqueue(() => _ListView.Width = _viewModel.ListViewWidth);
         }
-        else if (e.PropertyName == nameof(HistoryViewModel.CompactListMaxLines))
+        else if (e.PropertyName == nameof(HistoryViewModel.IsCompactListMode))
         {
-            DispatcherQueue.TryEnqueue(() => ApplyCompactListMaxLines(_viewModel.CompactListMaxLines));
+            DispatcherQueue.TryEnqueue(() => ApplyCompactListMode(_viewModel.IsCompactListMode));
+        }
+        else if (e.PropertyName == nameof(HistoryViewModel.FilterOptions))
+        {
+            DispatcherQueue.TryEnqueue(InitializeSelectorBar);
+        }
+        else if (e.PropertyName == nameof(HistoryViewModel.SelectedFilter))
+        {
+            DispatcherQueue.TryEnqueue(UpdateSelectorBarSelection);
         }
     }
 
-    private void ApplyCompactListMaxLines(int maxLines)
+    private void ApplyCompactListMode(bool isCompactListMode)
     {
-        ((CompactListProxy)_HistoryWindowGrid.Resources[nameof(CompactListProxy)]).SetMaxLines(maxLines);
-
-        // 切换模式时更新图片可见性
-        UpdateImageVisibilityInListView(maxLines == 0);
-    }
-
-    private void UpdateImageVisibilityInListView(bool visible)
-    {
-        // 遍历 ListView 的可视化树，找到所有 Image 元素并设置可见性
-        for (int i = 0; i < _ListView.Items.Count; i++)
-        {
-            var container = _ListView.ContainerFromIndex(i) as ListViewItem;
-            if (container != null)
-            {
-                var image = FindImageInContainer(container);
-                if (image != null && image.Source != null)
-                {
-                    image.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
-                }
-            }
-        }
-    }
-
-    private Image? FindImageInContainer(DependencyObject container)
-    {
-        int childCount = VisualTreeHelper.GetChildrenCount(container);
-        for (int i = 0; i < childCount; i++)
-        {
-            var child = VisualTreeHelper.GetChild(container, i);
-            if (child is Image image)
-            {
-                return image;
-            }
-            var found = FindImageInContainer(child);
-            if (found != null)
-            {
-                return found;
-            }
-        }
-        return null;
+        HistoryListModeProxy.Current.IsCompactListMode = isCompactListMode;
     }
 
     private void UpdateListViewWidthForPreview()
@@ -431,14 +401,6 @@ public sealed partial class HistoryWindow : Window, IWindow
             return;
         }
 
-        // 紧凑模式下不显示图片
-        var compactProxy = (CompactListProxy)_HistoryWindowGrid.Resources[nameof(CompactListProxy)];
-        if (compactProxy.IsCompact)
-        {
-            image.Visibility = Visibility.Collapsed;
-            return;
-        }
-
         _InvisualableImage.Source = image.Source;
         _InvisualableImage.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         _InvisualableImage.Source = null;
@@ -448,7 +410,20 @@ public sealed partial class HistoryWindow : Window, IWindow
         {
             image.Stretch = Stretch.Uniform;
         }
-        image.Visibility = Visibility.Visible;
+
+        BindLoadedImageVisibility(image);
+    }
+
+    private static void BindLoadedImageVisibility(Image image)
+    {
+        var binding = new Binding
+        {
+            Source = HistoryListModeProxy.Current,
+            Path = new PropertyPath(nameof(HistoryListModeProxy.IsCompactListMode)),
+            Converter = boolToVisibilityNegateConverter,
+            Mode = BindingMode.OneWay,
+        };
+        image.SetBinding(UIElement.VisibilityProperty, binding);
     }
 
     private void Grid_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -493,8 +468,8 @@ public sealed partial class HistoryWindow : Window, IWindow
         try
         {
             e.Data.RequestedOperation = DataPackageOperation.Copy;
+            await DragUiHelper.SetDragIconAsync(e.DragUI, draggedItem);
             var success = await _viewModel.FillDragPackage(e.Data, draggedItem, CancellationToken.None);
-            e.DragUI.SetContentFromDataPackage();
 
             if (!success)
             {
@@ -552,7 +527,10 @@ public sealed partial class HistoryWindow : Window, IWindow
 
     private void SelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs _)
     {
-        _viewModel.SelectedFilter = ((LocaleString<HistoryFilterType>)sender.SelectedItem.DataContext).Key;
+        if (sender.SelectedItem?.DataContext is LocaleString<HistoryFilterType> option)
+        {
+            _viewModel.SelectedFilter = option.Key;
+        }
     }
 
     private void InitializeSelectorBar()
@@ -570,15 +548,7 @@ public sealed partial class HistoryWindow : Window, IWindow
             _FilterSelectorBar.Items.Add(item);
         }
 
-        _FilterSelectorBar.SelectedItem = _FilterSelectorBar.Items[(int)_viewModel.SelectedFilter];
-
-        _viewModel.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(_viewModel.SelectedFilter))
-            {
-                UpdateSelectorBarSelection();
-            }
-        };
+        UpdateSelectorBarSelection();
     }
 
     private void InitializeScrollWatcher()
@@ -674,9 +644,13 @@ public sealed partial class HistoryWindow : Window, IWindow
 
     private void UpdateSelectorBarSelection()
     {
-        if ((int)_viewModel.SelectedFilter < _FilterSelectorBar.Items.Count)
+        foreach (var item in _FilterSelectorBar.Items)
         {
-            _FilterSelectorBar.SelectedItem = _FilterSelectorBar.Items[(int)_viewModel.SelectedFilter];
+            if (item.DataContext is LocaleString<HistoryFilterType> option && option.Key == _viewModel.SelectedFilter)
+            {
+                _FilterSelectorBar.SelectedItem = item;
+                return;
+            }
         }
     }
 

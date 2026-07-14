@@ -79,4 +79,23 @@ public class Converter
         input = string.Join(Environment.NewLine, lines);
         return input;
     }
+
+    public static string LimitHistoryListText(string? input, bool isCompactListMode)
+    {
+        if (input is null)
+        {
+            return string.Empty;
+        }
+
+        if (!isCompactListMode)
+        {
+            return LimitUIText(input);
+        }
+
+        var firstContentLine = input
+            .Split(["\r\n", "\r", "\n"], StringSplitOptions.None)
+            .FirstOrDefault(line => !string.IsNullOrWhiteSpace(line));
+
+        return firstContentLine is null ? string.Empty : LimitUIText(firstContentLine);
+    }
 }

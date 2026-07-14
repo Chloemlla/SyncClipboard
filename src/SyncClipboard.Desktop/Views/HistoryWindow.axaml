@@ -49,7 +49,14 @@
     <Window.DataTemplates>
         <local:ClipboardViewerTemplateSelector>
             <DataTemplate x:Key="Normal" DataType="vms:HistoryRecordVM">
-                <TextBlock Text="{Binding Text, Converter={x:Static vc:FuncConverter.LimitLines}}" MaxLines="{Binding #_HistoryWindow.ViewModel.CompactListMaxLines}" />
+                <TextBlock>
+                    <TextBlock.Text>
+                        <MultiBinding Converter="{x:Static vc:FuncConverter.LimitHistoryListText}">
+                            <Binding Path="Text" />
+                            <Binding Path="#_HistoryWindow.ViewModel.IsCompactListMode" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
             </DataTemplate>
             <DataTemplate x:Key="Image" DataType="vms:HistoryRecordVM">
                 <StackPanel Spacing="4" Orientation="Vertical">
@@ -61,7 +68,14 @@
                            Opacity="0"
                            Loaded="Image_Loaded"
                            IsVisible="{Binding #_HistoryWindow.ViewModel.IsCompactListMode, Converter={x:Static vc:FuncConverter.Not}}" />
-                    <TextBlock HorizontalAlignment="Left" Text="{Binding Text, Converter={x:Static vc:FuncConverter.LimitLines}}" MaxLines="{Binding #_HistoryWindow.ViewModel.CompactListMaxLines}" />
+                    <TextBlock HorizontalAlignment="Left">
+                        <TextBlock.Text>
+                            <MultiBinding Converter="{x:Static vc:FuncConverter.LimitHistoryListText}">
+                                <Binding Path="Text" />
+                                <Binding Path="#_HistoryWindow.ViewModel.IsCompactListMode" />
+                            </MultiBinding>
+                        </TextBlock.Text>
+                    </TextBlock>
                 </StackPanel>
             </DataTemplate>
         </local:ClipboardViewerTemplateSelector>
@@ -115,6 +129,9 @@
                 <ToggleButton ToolTip.Tip="{x:Static i18n:Strings.WindowTopmost}" Classes="FontIcon" IsChecked="{Binding IsTopmost, Mode=TwoWay}">
                     <ui:FontIcon Glyph="&#xE840;" FontFamily="{StaticResource SymbolThemeFontFamily}" />
                 </ToggleButton>
+                <ToggleButton ToolTip.Tip="{x:Static i18n:Strings.OnlyShowStarred}" Classes="FontIcon" IsChecked="{Binding OnlyShowStarred, Mode=TwoWay}">
+                    <ui:FontIcon Glyph="&#xE734;" FontFamily="{StaticResource SymbolThemeFontFamily}" />
+                </ToggleButton>
                 <ToggleButton ToolTip.Tip="{x:Static i18n:Strings.PreviewPanel}" Classes="FontIcon" IsChecked="{Binding ShowPreviewPanel, Mode=TwoWay}">
                     <ui:FontIcon Glyph="&#xE145;" FontFamily="{StaticResource SymbolThemeFontFamily}" />
                 </ToggleButton>
@@ -127,7 +144,9 @@
                         <ui:FAMenuFlyout>
                             <ui:ToggleMenuFlyoutItem Text="{x:Static i18n:Strings.ScrollToTopOnReopen}" IsChecked="{Binding ScrollToTopOnReopen, Mode=TwoWay}" />
                             <ui:ToggleMenuFlyoutItem Text="{x:Static i18n:Strings.CloseHistoryWindowWhenLostFocus}" IsChecked="{Binding CloseWhenLostFocus, Mode=TwoWay}" />
+                            <ui:MenuFlyoutSeparator />
                             <ui:ToggleMenuFlyoutItem Text="{x:Static i18n:Strings.ShowSyncStatus}" IsChecked="{Binding ShowSyncState, Mode=TwoWay}" />
+                            <ui:ToggleMenuFlyoutItem Text="{x:Static i18n:Strings.ShowStarredFilter}" IsChecked="{Binding ShowStarredFilter, Mode=TwoWay}" />
                             <!--<ui:ToggleMenuFlyoutItem Text="{x:Static i18n:Strings.OnlyShowLocal}" IsChecked="{Binding OnlyShowLocal, Mode=TwoWay}" />-->
                             <ui:ToggleMenuFlyoutItem Text="{x:Static i18n:Strings.SortByLastAccessed}" IsChecked="{Binding SortByLastAccessed, Mode=TwoWay}" />
                             <ui:ToggleMenuFlyoutItem Text="{x:Static i18n:Strings.CompactListWhenPreview}" IsChecked="{Binding CompactListWhenPreview, Mode=TwoWay}" />
