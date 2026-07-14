@@ -11,6 +11,7 @@ import android.content.pm.ServiceInfo
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.syncclipboard.mobile.MainActivity
 import com.syncclipboard.mobile.R
@@ -34,6 +35,12 @@ class SyncForegroundService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private lateinit var settings: SettingsStore
     private lateinit var clipboard: ClipboardBridge
+
+    // Partial wake lock held while the engine is running so the poll loop timer and the
+    // SignalR socket keep getting CPU time when the screen is off / under Doze. Without
+    // this a foreground service keeps the process alive but the CPU still sleeps, which
+    // silently stalls background sync.
+    private var wakeLock: PowerManager.WakeLock? = null
 
     @Volatile
     private var engine: SyncEngine? = null
@@ -62,9 +69,27 @@ class SyncForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /**
+     * The user swiped the app away from Recents. The service is not bound to the task
+     * (stopWithTask defaults to false), but some OEMs tear the process down anyway.
+     * Re-assert ourselves so sync survives the swipe.
+     */
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        if (settings.serviceEnabled) {
+            val restart = Intent(applicationContext, SyncForegroundService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                applicationContext.startForegroundService(restart)
+            } else {
+                applicationContext.startService(restart)
+            }
+        }
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onDestroy() {
         engine?.stop()
         engine = null
+        releaseWakeLock()
         if (activeEngineHolder === this) activeEngineHolder = null
         scope.cancel()
         super.onDestroy()
@@ -77,9 +102,24 @@ class SyncForegroundService : Service() {
             return
         }
         settings.serviceEnabled = true
+        acquireWakeLock()
         val newEngine = SyncEngine(config, clipboard)
         engine = newEngine
         newEngine.start(scope)
+    }
+
+    private fun acquireWakeLock() {
+        if (wakeLock?.isHeld == true) return
+        val pm = getSystemService(POWER_SERVICE) as? PowerManager ?: return
+        wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_TAG).apply {
+            setReferenceCounted(false)
+            acquire()
+        }
+    }
+
+    private fun releaseWakeLock() {
+        runCatching { if (wakeLock?.isHeld == true) wakeLock?.release() }
+        wakeLock = null
     }
 
     private fun restartEngine() {
@@ -92,6 +132,7 @@ class SyncForegroundService : Service() {
         settings.serviceEnabled = false
         engine?.stop()
         engine = null
+        releaseWakeLock()
         SyncState.reset()
         stopForegroundCompat()
         stopSelf()
@@ -179,6 +220,7 @@ class SyncForegroundService : Service() {
     companion object {
         private const val CHANNEL_ID = "syncclipboard_sync"
         private const val NOTIFICATION_ID = 1001
+        private const val WAKELOCK_TAG = "SyncClipboard::SyncWakeLock"
         const val ACTION_STOP = "com.syncclipboard.mobile.STOP"
         const val ACTION_RESTART = "com.syncclipboard.mobile.RESTART"
 
