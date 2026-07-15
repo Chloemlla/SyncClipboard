@@ -90,14 +90,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun currentConfig(): ServerConfig = _ui.value.let {
-        ServerConfig(
-            baseUrl = it.baseUrl.trim(),
-            username = it.username,
-            password = it.password,
-            pollSeconds = it.pollSeconds,
-            pullEnabled = it.pullEnabled,
-            pushEnabled = it.pushEnabled,
+    private fun currentConfig(): ServerConfig {
+        val ui = _ui.value
+        // Preserve advanced type toggles / size limit from disk (defaults match Linux desktop).
+        val stored = settings.load()
+        return ServerConfig(
+            baseUrl = ui.baseUrl.trim(),
+            username = ui.username,
+            password = ui.password,
+            pollSeconds = ui.pollSeconds,
+            pullEnabled = ui.pullEnabled,
+            pushEnabled = ui.pushEnabled,
+            enablePushText = stored.enablePushText,
+            enablePushImage = stored.enablePushImage,
+            enablePushFile = stored.enablePushFile,
+            enablePullImage = stored.enablePullImage,
+            enablePullFile = stored.enablePullFile,
+            maxFileBytes = stored.maxFileBytes,
         )
     }
 

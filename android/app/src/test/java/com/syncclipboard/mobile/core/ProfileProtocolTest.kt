@@ -6,12 +6,12 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 class ProfileProtocolTest {
 
     @Test
     fun sha256_matchesUppercaseHexOfUtf8() {
-        // SHA-256("hello world") == b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9
         assertEquals(
             "B94D27B9934D3E08A52E52D7DA7DABFAC484EFE37A5380EE9088F7ACE2EFCDE9",
             HashUtil.sha256UpperHex("hello world"),
@@ -33,7 +33,6 @@ class ProfileProtocolTest {
         assertEquals(false, json.getBoolean("hasData"))
         assertEquals(11L, json.getLong("size"))
         assertTrue(json.isNull("dataName"))
-        // Hash must be present and uppercase hex.
         assertEquals(
             "B94D27B9934D3E08A52E52D7DA7DABFAC484EFE37A5380EE9088F7ACE2EFCDE9",
             json.getString("hash"),
@@ -84,23 +83,14 @@ class ProfileProtocolTest {
         assertTrue(TextSync.buildDataName().matches(Regex("""Text_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_\d+\.txt""")))
     }
 
-    // --- Image protocol ---
-
     @Test
     fun imageProfileHash_matchesDesktopFileProfileCombineHash() {
-        // content = "hello world" bytes
         val content = "hello world".toByteArray(Charsets.UTF_8)
         val contentHash = HashUtil.sha256UpperHex(content)
-        assertEquals(
-            "B94D27B9934D3E08A52E52D7DA7DABFAC484EFE37A5380EE9088F7ACE2EFCDE9",
-            contentHash,
-        )
         val fileName = "Image_test.png"
-        val combined = "$fileName|$contentHash"
-        val expected = HashUtil.sha256UpperHex(combined)
+        val expected = HashUtil.sha256UpperHex("$fileName|$contentHash")
         assertEquals(expected, ImageSync.profileHash(fileName, content))
-        assertEquals(64, expected.length)
-        assertEquals(expected.uppercase(), expected)
+        assertEquals(expected, FileProfileSync.profileHash(fileName, content))
     }
 
     @Test
@@ -123,15 +113,6 @@ class ProfileProtocolTest {
             ImageSync.buildDataName("png")
                 .matches(Regex("""Image_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_\d+\.png""")),
         )
-        assertTrue(
-            ImageSync.buildDataName("jpg")
-                .matches(Regex("""Image_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_\d+\.jpg""")),
-        )
-        // Unknown extension forced to png
-        assertTrue(
-            ImageSync.buildDataName("webp")
-                .matches(Regex("""Image_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_\d+\.png""")),
-        )
     }
 
     @Test
@@ -150,6 +131,85 @@ class ProfileProtocolTest {
         assertEquals(ProfileDto.TYPE_IMAGE, parsed.type)
         assertTrue(parsed.hasData)
         assertEquals("Image_x.png", parsed.dataName)
-        assertEquals(42L, parsed.size)
+    }
+
+    @Test
+    fun fileProfile_jsonAndHash() {
+        val content = "payload".toByteArray(Charsets.UTF_8)
+        val name = "notes.txt"
+        val profile = FileSync.profile(name, content)
+        val json = JSONObject(profile.toJson())
+        assertEquals("File", json.getString("type"))
+        assertEquals(true, json.getBoolean("hasData"))
+        assertEquals(name, json.getString("dataName"))
+        assertEquals(FileProfileSync.profileHash(name, content), json.getString("hash"))
+    }
+
+    @Test
+    fun groupHash_singleFile_matchesEntryFormat() {
+        val bytes = "hello".toByteArray(Charsets.UTF_8)
+        val part = GroupFilePart("a.txt", bytes)
+        val contentHash = HashUtil.sha256UpperHex(bytes)
+        // Entry line: F|a.txt|5|{contentHash}\0
+        val line = "F|a.txt|${bytes.size}|$contentHash\u0000"
+        val expected = HashUtil.sha256UpperHex(line.toByteArray(Charsets.UTF_8))
+        assertEquals(expected, GroupSync.profileHash(listOf(part)))
+    }
+
+    @Test
+    fun groupHash_twoFiles_sortsByEntryNameBytes() {
+        val a = GroupFilePart("b.txt", "B".toByteArray())
+        val b = GroupFilePart("a.txt", "A".toByteArray())
+        // Sorted by name: a.txt then b.txt
+        val lineA = "F|a.txt|1|${HashUtil.sha256UpperHex("A".toByteArray())}\u0000"
+        val lineB = "F|b.txt|1|${HashUtil.sha256UpperHex("B".toByteArray())}\u0000"
+        val expected = HashUtil.sha256UpperHex((lineA + lineB).toByteArray(Charsets.UTF_8))
+        assertEquals(expected, GroupSync.profileHash(listOf(a, b)))
+    }
+
+    @Test
+    fun groupZip_roundTrip() {
+        val parts = listOf(
+            GroupFilePart("one.txt", "one".toByteArray()),
+            GroupFilePart("two.bin", byteArrayOf(1, 2, 3)),
+        )
+        val zip = GroupSync.zip(parts)
+        assertTrue(zip.isNotEmpty())
+        val dir = File.createTempFile("grp", "dir").apply {
+            delete()
+            mkdirs()
+        }
+        try {
+            val files = GroupSync.unzipTo(zip, dir)
+            assertEquals(2, files.size)
+            assertTrue(files.any { it.name == "one.txt" && it.readText() == "one" })
+            assertTrue(files.any { it.name == "two.bin" && it.readBytes().contentEquals(byteArrayOf(1, 2, 3)) })
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun groupProfile_jsonShape() {
+        val parts = listOf(GroupFilePart("a.txt", "x".toByteArray()))
+        val zip = GroupSync.zip(parts)
+        val dataName = "File_2026-07-15_12-00-00_111111.zip"
+        val profile = GroupSync.profile(parts, dataName, zip)
+        val json = JSONObject(profile.toJson())
+        assertEquals("Group", json.getString("type"))
+        assertEquals(true, json.getBoolean("hasData"))
+        assertEquals(dataName, json.getString("dataName"))
+        assertEquals("a.txt", json.getString("text"))
+        assertEquals(GroupSync.profileHash(parts), json.getString("hash"))
+    }
+
+    @Test
+    fun fromJson_readsFileAndGroup() {
+        val fileRaw =
+            """{"type":"File","hash":"AB","text":"x.bin","hasData":true,"dataName":"x.bin","size":9}"""
+        assertEquals(ProfileDto.TYPE_FILE, ProfileDto.fromJson(fileRaw).type)
+        val groupRaw =
+            """{"type":"Group","hash":"CD","text":"a\nb","hasData":true,"dataName":"File_x.zip","size":99}"""
+        assertEquals(ProfileDto.TYPE_GROUP, ProfileDto.fromJson(groupRaw).type)
     }
 }

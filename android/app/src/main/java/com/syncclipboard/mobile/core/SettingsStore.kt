@@ -34,6 +34,12 @@ class SettingsStore(context: Context) {
         pollSeconds = prefs.getInt(KEY_POLL, ServerConfig.DEFAULT_POLL_SECONDS),
         pullEnabled = prefs.getBoolean(KEY_PULL, true),
         pushEnabled = prefs.getBoolean(KEY_PUSH, true),
+        enablePushText = prefs.getBoolean(KEY_PUSH_TEXT, true),
+        enablePushImage = prefs.getBoolean(KEY_PUSH_IMAGE, true),
+        enablePushFile = prefs.getBoolean(KEY_PUSH_FILE, true),
+        enablePullImage = prefs.getBoolean(KEY_PULL_IMAGE, true),
+        enablePullFile = prefs.getBoolean(KEY_PULL_FILE, true),
+        maxFileBytes = prefs.getLong(KEY_MAX_FILE_BYTES, FileProfileSync.DEFAULT_MAX_FILE_BYTES),
     )
 
     fun save(config: ServerConfig) {
@@ -44,6 +50,12 @@ class SettingsStore(context: Context) {
             .putInt(KEY_POLL, config.pollSeconds)
             .putBoolean(KEY_PULL, config.pullEnabled)
             .putBoolean(KEY_PUSH, config.pushEnabled)
+            .putBoolean(KEY_PUSH_TEXT, config.enablePushText)
+            .putBoolean(KEY_PUSH_IMAGE, config.enablePushImage)
+            .putBoolean(KEY_PUSH_FILE, config.enablePushFile)
+            .putBoolean(KEY_PULL_IMAGE, config.enablePullImage)
+            .putBoolean(KEY_PULL_FILE, config.enablePullFile)
+            .putLong(KEY_MAX_FILE_BYTES, config.maxFileBytes)
             .apply()
     }
 
@@ -59,6 +71,12 @@ class SettingsStore(context: Context) {
         private const val KEY_POLL = "poll_seconds"
         private const val KEY_PULL = "pull_enabled"
         private const val KEY_PUSH = "push_enabled"
+        private const val KEY_PUSH_TEXT = "push_text"
+        private const val KEY_PUSH_IMAGE = "push_image"
+        private const val KEY_PUSH_FILE = "push_file"
+        private const val KEY_PULL_IMAGE = "pull_image"
+        private const val KEY_PULL_FILE = "pull_file"
+        private const val KEY_MAX_FILE_BYTES = "max_file_bytes"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
     }
 }

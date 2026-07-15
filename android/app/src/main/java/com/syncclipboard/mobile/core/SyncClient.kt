@@ -165,6 +165,37 @@ class SyncClient(config: ServerConfig) {
     }
 
     /**
+     * Push a single non-image file as type=File (desktop FileProfile).
+     */
+    fun pushFile(fileName: String, contentBytes: ByteArray) {
+        if (contentBytes.isEmpty()) throw IOException("empty file")
+        putFileBytes(fileName, contentBytes)
+        putProfile(FileSync.profile(fileName, contentBytes))
+    }
+
+    /**
+     * Push multiple files as type=Group: zip them, upload the zip, then PUT profile.
+     */
+    fun pushGroup(parts: List<GroupFilePart>): ProfileDto {
+        if (parts.isEmpty()) throw IOException("empty group")
+        val dataName = GroupSync.buildDataName()
+        val zipBytes = GroupSync.zip(parts)
+        putFileBytes(dataName, zipBytes)
+        val profile = GroupSync.profile(parts, dataName, zipBytes)
+        putProfile(profile)
+        return profile
+    }
+
+    /** Download transfer bytes for File / Image / Group profiles. */
+    fun resolveTransferBytes(profile: ProfileDto): ByteArray? {
+        if (!profile.hasData) return null
+        val name = profile.dataName?.takeIf { it.isNotBlank() }
+            ?: profile.text.takeIf { it.isNotBlank() && profile.type != ProfileDto.TYPE_GROUP }
+            ?: return null
+        return getFileBytes(name)
+    }
+
+    /**
      * Resolve the full text of a text profile, downloading the transfer file
      * when [ProfileDto.hasData] is set. Returns null for non-text profiles.
      */

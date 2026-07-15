@@ -23,23 +23,15 @@ object ImageSync {
     fun extensionOf(fileName: String): String =
         fileName.substringAfterLast('.', missingDelimiterValue = "").lowercase()
 
-    /**
-     * Desktop FileProfile hash: SHA256(UTF8("{fileName}|{CONTENT_SHA256_UPPER}")).
-     */
-    fun profileHash(fileName: String, contentBytes: ByteArray): String {
-        val contentHash = HashUtil.sha256UpperHex(contentBytes)
-        return HashUtil.sha256UpperHex("$fileName|$contentHash")
-    }
+    fun profileHash(fileName: String, contentBytes: ByteArray): String =
+        FileProfileSync.profileHash(fileName, contentBytes)
 
-    fun contentHash(contentBytes: ByteArray): String = HashUtil.sha256UpperHex(contentBytes)
+    fun contentHash(contentBytes: ByteArray): String = FileProfileSync.contentHash(contentBytes)
 
     fun buildDataName(extension: String = "png"): String {
         val ext = extension.lowercase().removePrefix(".").ifBlank { "png" }
         val safeExt = if (ext in DESKTOP_EXTENSIONS) ext else "png"
-        val ts = java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", java.util.Locale.US)
-            .format(java.util.Date())
-        val random = (100000..999999).random()
-        return "Image_${ts}_$random.$safeExt"
+        return FileProfileSync.timeStampName("Image", safeExt)
     }
 
     fun extensionFromMime(mimeType: String?): String? {
