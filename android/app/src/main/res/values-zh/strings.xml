@@ -7,18 +7,42 @@
     <string name="channel_sync">剪贴板同步</string>
     <string name="channel_sync_desc">后台剪贴板同步的常驻通知。</string>
 
-    <string name="status_connected">已连接 · 同步中</string>
+    <string name="status_connected">已连接 · 就绪</string>
     <string name="status_connecting">连接中…</string>
     <string name="status_error">同步错误：%1$s</string>
     <string name="status_stopped">已停止</string>
     <string name="status_not_configured">未配置服务器</string>
     <string name="last_synced">最近：%1$s</string>
 
-    <string name="notif_synced_summary">已同步 · %1$s</string>
-    <string name="notif_chip_connecting">连接中</string>
-    <string name="notif_chip_error">错误</string>
-    <string name="notif_chip_synced">已同步</string>
-    <string name="notif_chip_stopped">停止</string>
+    <!-- 前台 / Live Update 通知文案 -->
+    <string name="notif_title_connecting">正在连接</string>
+    <string name="notif_title_connected">同步就绪</string>
+    <string name="notif_title_synced">刚刚同步</string>
+    <string name="notif_title_error">同步异常</string>
+    <string name="notif_title_stopped">同步已停止</string>
+
+    <string name="notif_body_connecting">正在连接 SyncClipboard 服务器…</string>
+    <string name="notif_body_connected_idle">后台同步运行中。通知不展示完整剪贴板内容。</string>
+    <string name="notif_body_connected_last_text">最近：%1$s</string>
+    <string name="notif_body_connected_last_image">最近：图片</string>
+    <string name="notif_body_connected_last_file">最近：文件</string>
+    <string name="notif_body_connected_last_group">最近：多个文件</string>
+    <string name="notif_body_synced_generic">剪贴板刚刚已更新</string>
+    <string name="notif_body_synced_text">%1$s</string>
+    <string name="notif_body_synced_image">图片刚刚已同步</string>
+    <string name="notif_body_synced_file">文件刚刚已同步</string>
+    <string name="notif_body_synced_group">多个文件刚刚已同步</string>
+    <string name="notif_body_error_generic">暂时无法同步，打开应用可重试。</string>
+    <string name="notif_body_stopped">后台剪贴板同步已关闭</string>
+
+    <string name="notif_sub_connecting">连接中</string>
+    <string name="notif_sub_synced">已同步</string>
+    <string name="notif_sub_error">需要处理</string>
+
+    <string name="notif_chip_connecting">连接</string>
+    <string name="notif_chip_error">异常</string>
+    <string name="notif_chip_synced">完成</string>
+    <string name="notif_chip_stopped">关闭</string>
 
     <string name="section_server">服务器</string>
     <string name="section_permissions">权限</string>

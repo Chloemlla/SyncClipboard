@@ -7,18 +7,42 @@
     <string name="channel_sync">Clipboard sync</string>
     <string name="channel_sync_desc">Ongoing notification for background clipboard synchronization.</string>
 
-    <string name="status_connected">Connected · syncing</string>
+    <string name="status_connected">Connected · ready</string>
     <string name="status_connecting">Connecting…</string>
     <string name="status_error">Sync error: %1$s</string>
     <string name="status_stopped">Stopped</string>
     <string name="status_not_configured">Server not configured</string>
     <string name="last_synced">Last: %1$s</string>
 
-    <string name="notif_synced_summary">Synced · %1$s</string>
+    <!-- Foreground / Live Update notification copy -->
+    <string name="notif_title_connecting">Connecting</string>
+    <string name="notif_title_connected">Sync ready</string>
+    <string name="notif_title_synced">Just synced</string>
+    <string name="notif_title_error">Sync issue</string>
+    <string name="notif_title_stopped">Sync stopped</string>
+
+    <string name="notif_body_connecting">Reaching your SyncClipboard server…</string>
+    <string name="notif_body_connected_idle">Background sync is running. Clipboard stays private here.</string>
+    <string name="notif_body_connected_last_text">Last item: %1$s</string>
+    <string name="notif_body_connected_last_image">Last item: image</string>
+    <string name="notif_body_connected_last_file">Last item: file</string>
+    <string name="notif_body_connected_last_group">Last item: files</string>
+    <string name="notif_body_synced_generic">Clipboard updated just now</string>
+    <string name="notif_body_synced_text">%1$s</string>
+    <string name="notif_body_synced_image">Image updated just now</string>
+    <string name="notif_body_synced_file">File updated just now</string>
+    <string name="notif_body_synced_group">Files updated just now</string>
+    <string name="notif_body_error_generic">Couldn\'t sync. Open the app to retry.</string>
+    <string name="notif_body_stopped">Background clipboard sync is off</string>
+
+    <string name="notif_sub_connecting">Connecting</string>
+    <string name="notif_sub_synced">Synced</string>
+    <string name="notif_sub_error">Needs attention</string>
+
     <string name="notif_chip_connecting">Wait</string>
-    <string name="notif_chip_error">Error</string>
-    <string name="notif_chip_synced">Synced</string>
-    <string name="notif_chip_stopped">Stop</string>
+    <string name="notif_chip_error">Err</string>
+    <string name="notif_chip_synced">Done</string>
+    <string name="notif_chip_stopped">Off</string>
 
     <string name="section_server">Server</string>
     <string name="section_permissions">Permissions</string>

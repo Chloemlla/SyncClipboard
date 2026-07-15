@@ -253,41 +253,118 @@ class SyncForegroundService : Service() {
             Intent(this, SyncForegroundService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val statusText = notificationContentText(snapshot)
+        val title = notificationTitle(snapshot)
+        val body = notificationBody(snapshot)
         val requestPromoted = shouldRequestPromotedOngoing(snapshot)
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setLargeIcon(largeIcon)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText(statusText)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(statusText))
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().setBigContentTitle(title).bigText(body))
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
+            .setShowWhen(false)
             .setContentIntent(openIntent)
             .addAction(0, getString(R.string.action_stop), stopIntent)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setRequestPromotedOngoing(requestPromoted)
+            .setSubText(notificationSubText(snapshot, requestPromoted))
 
         if (requestPromoted) {
+            // Keep chip text very short so status-bar chips remain readable.
             builder.setShortCriticalText(shortCriticalText(snapshot))
         }
 
         return builder.build()
     }
 
-    private fun notificationContentText(snapshot: SyncSnapshot): String {
+    /**
+     * Title carries the high-signal state. Body holds supporting context so the
+     * collapsed notification stays scannable on lock screen / shade.
+     */
+    private fun notificationTitle(snapshot: SyncSnapshot): String {
         return when (snapshot.status) {
+            SyncStatus.CONNECTING -> getString(R.string.notif_title_connecting)
+            SyncStatus.ERROR -> getString(R.string.notif_title_error)
             SyncStatus.CONNECTED -> {
-                if (SyncState.isLiveUpdateActive(snapshot) && snapshot.lastText.isNotBlank()) {
-                    getString(R.string.notif_synced_summary, snapshot.lastText)
+                if (SyncState.isLiveUpdateActive(snapshot)) {
+                    getString(R.string.notif_title_synced)
                 } else {
-                    getString(R.string.status_connected)
+                    getString(R.string.notif_title_connected)
                 }
             }
-            SyncStatus.CONNECTING -> getString(R.string.status_connecting)
-            SyncStatus.ERROR -> getString(R.string.status_error, snapshot.message)
-            SyncStatus.STOPPED -> getString(R.string.status_stopped)
+            SyncStatus.STOPPED -> getString(R.string.notif_title_stopped)
+        }
+    }
+
+    private fun notificationBody(snapshot: SyncSnapshot): String {
+        return when (snapshot.status) {
+            SyncStatus.CONNECTING -> getString(R.string.notif_body_connecting)
+            SyncStatus.ERROR -> {
+                val detail = snapshot.message.trim().ifBlank {
+                    getString(R.string.notif_body_error_generic)
+                }
+                SyncNotificationCopy.truncatePreview(detail, maxChars = 96)
+            }
+            SyncStatus.CONNECTED -> {
+                if (SyncState.isLiveUpdateActive(snapshot)) {
+                    syncedSummaryBody(snapshot.lastText)
+                } else {
+                    idleConnectedBody(snapshot.lastText)
+                }
+            }
+            SyncStatus.STOPPED -> getString(R.string.notif_body_stopped)
+        }
+    }
+
+    private fun syncedSummaryBody(lastText: String): String {
+        val kind = SyncNotificationCopy.previewKind(lastText)
+        return when (kind) {
+            SyncNotificationCopy.PreviewKind.IMAGE -> getString(R.string.notif_body_synced_image)
+            SyncNotificationCopy.PreviewKind.FILE -> getString(R.string.notif_body_synced_file)
+            SyncNotificationCopy.PreviewKind.GROUP -> getString(R.string.notif_body_synced_group)
+            SyncNotificationCopy.PreviewKind.EMPTY -> getString(R.string.notif_body_synced_generic)
+            SyncNotificationCopy.PreviewKind.TEXT -> {
+                val preview = SyncNotificationCopy.truncatePreview(lastText)
+                if (preview.isBlank()) {
+                    getString(R.string.notif_body_synced_generic)
+                } else {
+                    getString(R.string.notif_body_synced_text, preview)
+                }
+            }
+        }
+    }
+
+    private fun idleConnectedBody(lastText: String): String {
+        val kind = SyncNotificationCopy.previewKind(lastText)
+        return when (kind) {
+            SyncNotificationCopy.PreviewKind.EMPTY -> getString(R.string.notif_body_connected_idle)
+            SyncNotificationCopy.PreviewKind.IMAGE -> getString(R.string.notif_body_connected_last_image)
+            SyncNotificationCopy.PreviewKind.FILE -> getString(R.string.notif_body_connected_last_file)
+            SyncNotificationCopy.PreviewKind.GROUP -> getString(R.string.notif_body_connected_last_group)
+            SyncNotificationCopy.PreviewKind.TEXT -> {
+                val preview = SyncNotificationCopy.truncatePreview(lastText, maxChars = 36)
+                if (preview.isBlank()) {
+                    getString(R.string.notif_body_connected_idle)
+                } else {
+                    getString(R.string.notif_body_connected_last_text, preview)
+                }
+            }
+        }
+    }
+
+    private fun notificationSubText(snapshot: SyncSnapshot, requestPromoted: Boolean): String? {
+        // Subtext is only useful while promoted / active; keep idle notifications quiet.
+        if (!requestPromoted && snapshot.status != SyncStatus.ERROR) return null
+        return when (snapshot.status) {
+            SyncStatus.CONNECTING -> getString(R.string.notif_sub_connecting)
+            SyncStatus.ERROR -> getString(R.string.notif_sub_error)
+            SyncStatus.CONNECTED -> getString(R.string.notif_sub_synced)
+            SyncStatus.STOPPED -> null
         }
     }
 
