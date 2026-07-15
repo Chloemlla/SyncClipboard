@@ -5,6 +5,7 @@ import android.content.Intent
 import android.util.Log
 import com.chloemlla.syncclipboard.mobile.ImageDownloadConfirmActivity
 import com.chloemlla.syncclipboard.mobile.core.FileProfileSync
+import com.chloemlla.syncclipboard.mobile.core.GallerySaver
 import com.chloemlla.syncclipboard.mobile.core.FileSync
 import com.chloemlla.syncclipboard.mobile.core.GroupFilePart
 import com.chloemlla.syncclipboard.mobile.core.GroupSync
@@ -215,6 +216,12 @@ class SyncEngine(
         lastBinaryContentHash = FileProfileSync.contentHash(bytes)
         val written = withContext(Dispatchers.Main) { clipboard.writeImage(bytes, fileName) }
         if (written == null) Log.w(TAG, "failed to write image to clipboard: $fileName")
+        val galleryUri = withContext(Dispatchers.IO) { GallerySaver.saveImage(appContext, bytes, fileName) }
+        if (galleryUri == null) {
+            Log.w(TAG, "failed to save image to gallery: $fileName")
+        } else {
+            Log.i(TAG, "saved image to gallery: $galleryUri")
+        }
         return "[Image] $fileName (${bytes.size} B)"
     }
 
@@ -254,6 +261,14 @@ class SyncEngine(
             else clipboard.writeFile(bytes, fileName)
         }
         if (written == null) Log.w(TAG, "failed to write file to clipboard: $fileName")
+        if (isImageName) {
+            val galleryUri = withContext(Dispatchers.IO) { GallerySaver.saveImage(appContext, bytes, fileName) }
+            if (galleryUri == null) {
+                Log.w(TAG, "failed to save image-named file to gallery: $fileName")
+            } else {
+                Log.i(TAG, "saved image-named file to gallery: $galleryUri")
+            }
+        }
         return "[File] $fileName (${bytes.size} B)"
     }
 

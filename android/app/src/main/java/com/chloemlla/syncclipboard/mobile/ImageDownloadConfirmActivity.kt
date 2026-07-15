@@ -1,16 +1,37 @@
 package com.chloemlla.syncclipboard.mobile
 
-import android.app.Activity
-import android.app.AlertDialog
 import android.os.Bundle
-import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.chloemlla.syncclipboard.mobile.sync.ImageDownloadConfirmBridge
+import com.chloemlla.syncclipboard.mobile.ui.SyncClipboardTheme
 
 /**
- * Transparent activity that asks whether a remote image should be downloaded
- * into the device clipboard. Completes [ImageDownloadConfirmBridge] and finishes.
+ * Dialog-style activity that asks whether a remote image should be downloaded
+ * into the gallery and clipboard. Completes [ImageDownloadConfirmBridge] and finishes.
+ *
+ * UI matches the Material 3 dialog language used by [com.chloemlla.syncclipboard.mobile.ui.MainScreen].
  */
-class ImageDownloadConfirmActivity : Activity() {
+class ImageDownloadConfirmActivity : ComponentActivity() {
     private var requestId: Long = -1L
     private var completed = false
 
@@ -23,30 +44,16 @@ class ImageDownloadConfirmActivity : Activity() {
             return
         }
 
-        val messageView = TextView(this).apply {
-            text = getString(
-                R.string.image_download_confirm_message,
-                request.fileName,
-                formatSize(request.sizeBytes),
-            )
-            setPadding(48, 24, 48, 8)
-            textSize = 15f
+        setContent {
+            SyncClipboardTheme {
+                ImageDownloadConfirmDialog(
+                    fileName = request.fileName,
+                    sizeLabel = formatSize(request.sizeBytes),
+                    onConfirm = { complete(true) },
+                    onDismiss = { complete(false) },
+                )
+            }
         }
-
-        AlertDialog.Builder(this)
-            .setTitle(R.string.image_download_confirm_title)
-            .setView(messageView)
-            .setPositiveButton(R.string.image_download_confirm_accept) { _, _ ->
-                complete(true)
-            }
-            .setNegativeButton(R.string.dialog_cancel) { _, _ ->
-                complete(false)
-            }
-            .setOnCancelListener {
-                complete(false)
-            }
-            .setCancelable(true)
-            .show()
     }
 
     override fun onDestroy() {
@@ -64,6 +71,7 @@ class ImageDownloadConfirmActivity : Activity() {
     }
 
     private fun formatSize(bytes: Long): String {
+        if (bytes <= 0L) return getString(R.string.image_download_size_unknown)
         if (bytes < 1024) return "$bytes B"
         val kb = bytes / 1024.0
         if (kb < 1024) return String.format("%.1f KB", kb)
@@ -74,4 +82,67 @@ class ImageDownloadConfirmActivity : Activity() {
     companion object {
         const val EXTRA_REQUEST_ID = "request_id"
     }
+}
+
+@Composable
+private fun ImageDownloadConfirmDialog(
+    fileName: String,
+    sizeLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.Image,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        },
+        title = {
+            Text(
+                text = stringResource(R.string.image_download_confirm_title),
+                fontWeight = FontWeight.SemiBold,
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.image_download_confirm_message, fileName, sizeLabel),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = stringResource(R.string.image_download_confirm_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) {
+                DialogButtonLabel(
+                    icon = Icons.Outlined.Download,
+                    text = stringResource(R.string.image_download_confirm_accept),
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.dialog_cancel))
+            }
+        },
+    )
+}
+
+@Composable
+private fun DialogButtonLabel(icon: ImageVector, text: String) {
+    Icon(
+        imageVector = icon,
+        contentDescription = null,
+        modifier = Modifier.size(18.dp),
+    )
+    Spacer(modifier = Modifier.size(8.dp))
+    Text(text)
 }

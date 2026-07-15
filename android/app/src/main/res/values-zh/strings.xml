@@ -119,7 +119,9 @@
 
     <!-- Remote image download confirmation -->
     <string name="image_download_confirm_title">是否下载图片？</string>
-    <string name="image_download_confirm_message">收到远程图片“%1$s”（%2$s）。是否下载并保存到剪贴板？</string>
-    <string name="image_download_confirm_accept">下载</string>
+    <string name="image_download_confirm_message">收到远程图片“%1$s”（%2$s）。</string>
+    <string name="image_download_confirm_hint">将保存到相册 Pictures/SyncClipboard，并写入系统剪贴板。</string>
+    <string name="image_download_confirm_accept">保存到相册</string>
+    <string name="image_download_size_unknown">大小未知</string>
     <string name="dialog_cancel">取消</string>
 </resources>

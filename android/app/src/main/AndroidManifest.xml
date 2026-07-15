@@ -10,6 +10,10 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Legacy gallery write for Android 9 and below. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <!-- Shizuku: advanced keep-alive + accessibility-free background clipboard read. -->
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
@@ -53,7 +57,7 @@
             android:excludeFromRecents="true"
             android:taskAffinity=""
             android:launchMode="singleTop"
-            android:theme="@android:style/Theme.Material.Light.Dialog.Alert" />
+            android:theme="@style/Theme.SyncClipboard.Dialog" />
 
         <activity
             android:name=".ExportSettingsActivity"

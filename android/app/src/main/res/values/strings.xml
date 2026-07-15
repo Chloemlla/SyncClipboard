@@ -119,7 +119,9 @@
 
     <!-- Remote image download confirmation -->
     <string name="image_download_confirm_title">Download image?</string>
-    <string name="image_download_confirm_message">Received remote image "%1$s" (%2$s). Download and save it to the clipboard?</string>
-    <string name="image_download_confirm_accept">Download</string>
+    <string name="image_download_confirm_message">Received remote image "%1$s" (%2$s).</string>
+    <string name="image_download_confirm_hint">It will be saved to the Pictures/SyncClipboard album and written to the clipboard.</string>
+    <string name="image_download_confirm_accept">Save to gallery</string>
+    <string name="image_download_size_unknown">size unknown</string>
     <string name="dialog_cancel">Cancel</string>
 </resources>
