@@ -198,10 +198,20 @@ class SyncEngine(
     suspend fun pushText(text: String) {
         if (!config.pushEnabled || text.isEmpty()) return
         val hash = HashUtil.sha256UpperHex(text)
-        ioMutex.withLock {
-            if (hash == lastSyncedHash) return
-            withContext(Dispatchers.IO) { client.pushText(text) }
-            lastSyncedHash = hash
+        try {
+            ioMutex.withLock {
+                if (hash == lastSyncedHash) return
+                withContext(Dispatchers.IO) { client.pushText(text) }
+                lastSyncedHash = hash
+            }
+        } catch (t: kotlinx.coroutines.CancellationException) {
+            throw t
+        } catch (t: Throwable) {
+            // Previously push failures were swallowed silently, so a failed
+            // phone -> server push looked like nothing happened. Surface it.
+            Log.w(TAG, "push failed", t)
+            SyncState.setStatus(SyncStatus.ERROR, t.message ?: "push failed")
+            return
         }
         SyncState.recordText(text)
     }
