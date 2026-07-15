@@ -551,6 +551,25 @@ namespace SyncClipboard.Core.I18n {
         }
         
         /// <summary>
+        ///   查找类似 Download Image? 的本地化字符串。
+        /// </summary>
+        public static string ConfirmDownloadImageTitle {
+            get {
+                return ResourceManager.GetString("ConfirmDownloadImageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Received a remote image "{0}". Download and save it to the local clipboard? 的本地化字符串。
+        /// </summary>
+        public static string ConfirmDownloadImageMessage {
+            get {
+                return ResourceManager.GetString("ConfirmDownloadImageMessage", resourceCulture);
+            }
+        }
+        
+        
+        /// <summary>
         ///   查找类似 Connection Details 的本地化字符串。
         /// </summary>
         public static string ConnectionDetails {

@@ -1,6 +1,9 @@
 package com.chloemlla.syncclipboard.mobile.sync
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
+import com.chloemlla.syncclipboard.mobile.ImageDownloadConfirmActivity
 import com.chloemlla.syncclipboard.mobile.core.FileProfileSync
 import com.chloemlla.syncclipboard.mobile.core.FileSync
 import com.chloemlla.syncclipboard.mobile.core.GroupFilePart
@@ -42,6 +45,7 @@ import kotlin.math.min
  * re-generated dataName does not cause echo loops.
  */
 class SyncEngine(
+    private val appContext: Context,
     private val config: ServerConfig,
     private val clipboard: ClipboardBridge,
 ) {
@@ -186,6 +190,18 @@ class SyncEngine(
             Log.d(TAG, "skip image pull (disabled)")
             return null
         }
+        val fileName = profile.dataName?.takeIf { it.isNotBlank() }
+            ?: profile.text.takeIf { it.isNotBlank() }
+            ?: ImageSync.buildDataName("png")
+        val sizeHint = profile.size.takeIf { it > 0 } ?: 0L
+
+        // Ask before downloading binary image payloads so auto-pull never silently saves.
+        if (!confirmImageDownload(fileName, sizeHint)) {
+            lastSyncedIdentity = identity.key
+            Log.i(TAG, "user declined image download: $fileName")
+            return null
+        }
+
         val bytes = withContext(Dispatchers.IO) {
             client.resolveImageBytes(profile) ?: client.resolveTransferBytes(profile)
         } ?: return null
@@ -194,9 +210,6 @@ class SyncEngine(
             Log.w(TAG, "skip oversized image pull ${bytes.size}")
             return null
         }
-        val fileName = profile.dataName?.takeIf { it.isNotBlank() }
-            ?: profile.text.takeIf { it.isNotBlank() }
-            ?: ImageSync.buildDataName("png")
 
         lastSyncedIdentity = identity.key
         lastBinaryContentHash = FileProfileSync.contentHash(bytes)
@@ -210,21 +223,32 @@ class SyncEngine(
             Log.d(TAG, "skip file pull (disabled)")
             return null
         }
+        val fileName = profile.dataName?.takeIf { it.isNotBlank() }
+            ?: profile.text.takeIf { it.isNotBlank() }
+            ?: FileSync.transferName("file.bin")
+        val isImageName = ImageSync.isDesktopImageName(fileName)
+
+        // Image-named files are written as image clips; ask the same confirm first.
+        if (isImageName) {
+            val sizeHint = profile.size.takeIf { it > 0 } ?: 0L
+            if (!confirmImageDownload(fileName, sizeHint)) {
+                lastSyncedIdentity = identity.key
+                Log.i(TAG, "user declined image-named file download: $fileName")
+                return null
+            }
+        }
+
         val bytes = withContext(Dispatchers.IO) { client.resolveTransferBytes(profile) } ?: return null
         if (bytes.isEmpty()) return null
         if (bytes.size.toLong() > config.maxFileBytes) {
             Log.w(TAG, "skip oversized file pull ${bytes.size}")
             return null
         }
-        val fileName = profile.dataName?.takeIf { it.isNotBlank() }
-            ?: profile.text.takeIf { it.isNotBlank() }
-            ?: FileSync.transferName("file.bin")
 
         // Desktop may label an image as File when extension matches ImageTool —
         // treat image-named files as images on the clipboard for better paste UX.
         lastSyncedIdentity = identity.key
         lastBinaryContentHash = FileProfileSync.contentHash(bytes)
-        val isImageName = ImageSync.isDesktopImageName(fileName)
         val written = withContext(Dispatchers.Main) {
             if (isImageName) clipboard.writeImage(bytes, fileName)
             else clipboard.writeFile(bytes, fileName)
@@ -427,6 +451,32 @@ class SyncEngine(
             extension = downloaded.extension,
             mimeType = downloaded.mimeType,
         )
+    }
+
+
+    private suspend fun confirmImageDownload(fileName: String, sizeBytes: Long): Boolean {
+        val request = ImageDownloadConfirmBridge.create(fileName, sizeBytes)
+        val launched = withContext(Dispatchers.Main) {
+            runCatching {
+                val intent = Intent(appContext, ImageDownloadConfirmActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .putExtra(ImageDownloadConfirmActivity.EXTRA_REQUEST_ID, request.id)
+                appContext.startActivity(intent)
+                true
+            }.onFailure {
+                Log.w(TAG, "failed to show image download confirm", it)
+            }.getOrDefault(false)
+        }
+        if (!launched) {
+            ImageDownloadConfirmBridge.cancel(request.id)
+            return false
+        }
+        return try {
+            request.deferred.await()
+        } catch (_: Throwable) {
+            ImageDownloadConfirmBridge.cancel(request.id)
+            false
+        }
     }
 
     private fun looksImageBytes(bytes: ByteArray): Boolean {

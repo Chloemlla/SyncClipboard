@@ -116,5 +116,10 @@
     <string name="stop_confirm_title">停止剪贴板同步</string>
     <string name="stop_confirm_message">后台服务将停止，剪贴板在你重新启动前不再同步。</string>
     <string name="stop_confirm_confirm">停止</string>
+
+    <!-- Remote image download confirmation -->
+    <string name="image_download_confirm_title">是否下载图片？</string>
+    <string name="image_download_confirm_message">收到远程图片“%1$s”（%2$s）。是否下载并保存到剪贴板？</string>
+    <string name="image_download_confirm_accept">下载</string>
     <string name="dialog_cancel">取消</string>
 </resources>

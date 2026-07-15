@@ -116,5 +116,10 @@
     <string name="stop_confirm_title">Stop clipboard sync</string>
     <string name="stop_confirm_message">The background service will stop and the clipboard will no longer sync until you start it again.</string>
     <string name="stop_confirm_confirm">Stop</string>
+
+    <!-- Remote image download confirmation -->
+    <string name="image_download_confirm_title">Download image?</string>
+    <string name="image_download_confirm_message">Received remote image "%1$s" (%2$s). Download and save it to the clipboard?</string>
+    <string name="image_download_confirm_accept">Download</string>
     <string name="dialog_cancel">Cancel</string>
 </resources>

@@ -1126,4 +1126,10 @@ This operation cannot be undone.</value>
   <data name="Synced" xml:space="preserve">
     <value>Synced</value>
   </data>
+  <data name="ConfirmDownloadImageTitle" xml:space="preserve">
+    <value>Download Image?</value>
+  </data>
+  <data name="ConfirmDownloadImageMessage" xml:space="preserve">
+    <value>Received a remote image "{0}". Download and save it to the local clipboard?</value>
+  </data>
 </root>

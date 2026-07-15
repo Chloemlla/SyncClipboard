@@ -50,6 +50,9 @@ public class DownloadService : Service
     private readonly RemoteClipboardServerFactory _remoteClipboardServerFactory;
     private readonly HistoryManager _historyManager;
     private readonly ProfileNotificationHelper _clipboardNotificationHelper;
+    private readonly IMainWindowDialog _dialog;
+    private readonly IMainWindow _mainWindow;
+    private readonly IThreadDispatcher _dispatcher;
     private SyncConfig _syncConfig;
     private ServerConfig _serverConfig;
 
@@ -117,7 +120,10 @@ public class DownloadService : Service
         HotkeyManager hotkeyManager,
         RemoteClipboardServerFactory remoteClipboardServerFactory,
         ProfileNotificationHelper clipboardNotificationHelper,
-        LocalClipboardSetter localClipboardSetter)
+        LocalClipboardSetter localClipboardSetter,
+        IMainWindowDialog dialog,
+        IMainWindow mainWindow,
+        IThreadDispatcher dispatcher)
     {
         _serviceProvider = serviceProvider;
         _logger = _serviceProvider.GetRequiredService<ILogger>();
@@ -139,6 +145,9 @@ public class DownloadService : Service
         _historyManager = _serviceProvider.GetRequiredService<HistoryManager>();
         _clipboardNotificationHelper = clipboardNotificationHelper;
         _localClipboardSetter = localClipboardSetter;
+        _dialog = dialog;
+        _mainWindow = mainWindow;
+        _dispatcher = dispatcher;
 
         _remoteClipboardServerFactory.CurrentServerChanged += OnCurrentServerChanged;
         _hotkeyManager.RegisterCommands(CommandCollection);
@@ -443,6 +452,14 @@ public class DownloadService : Service
 
     private async Task DownloadAndSetRemoteProfileToLocal(Profile remoteProfile, CancellationToken cancelToken)
     {
+        if (!await ConfirmImageDownloadIfNeeded(remoteProfile, cancelToken))
+        {
+            // Cache declined profile so the same remote image does not re-prompt forever.
+            _remoteProfileCache = remoteProfile;
+            await _logger.WriteAsync(LOG_TAG, $"User declined download for image: {remoteProfile.ShortDisplayText}");
+            return;
+        }
+
         if (await Profile.Same(remoteProfile, _remoteProfileCache, cancelToken))
         {
             remoteProfile = _remoteProfileCache!;
@@ -485,6 +502,27 @@ public class DownloadService : Service
                 _clipboardNotificationHelper.Notify(remoteProfile, cancelToken);
             }
         }
+    }
+
+
+    private async Task<bool> ConfirmImageDownloadIfNeeded(Profile profile, CancellationToken token)
+    {
+        // Manual/quick download should remain one-shot without extra prompts.
+        if (_isQuickDownload || profile is not ImageProfile)
+        {
+            return true;
+        }
+
+        var confirmed = await _dispatcher.RunOnMainThreadAsync(async () =>
+        {
+            _mainWindow.Show();
+            return await _dialog.ShowConfirmationAsync(
+                I18n.Strings.ConfirmDownloadImageTitle,
+                string.Format(I18n.Strings.ConfirmDownloadImageMessage, profile.ShortDisplayText));
+        });
+
+        token.ThrowIfCancellationRequested();
+        return confirmed;
     }
 
     private async Task DownloadFileProfileData(Profile profile, CancellationToken cancelToken)

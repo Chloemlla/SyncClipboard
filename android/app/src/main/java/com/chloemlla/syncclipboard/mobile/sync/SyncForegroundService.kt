@@ -111,7 +111,7 @@ class SyncForegroundService : Service() {
         settings.serviceEnabled = true
         acquireWakeLock()
         applyShizukuKeepAlive()
-        val newEngine = SyncEngine(config, clipboard)
+        val newEngine = SyncEngine(applicationContext, config, clipboard)
         engine = newEngine
         newEngine.start(scope)
     }

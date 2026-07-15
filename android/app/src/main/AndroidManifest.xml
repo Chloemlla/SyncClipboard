@@ -46,6 +46,15 @@
         </activity>
 
         <!-- Transparent export entry for migration; same signature only. -->
+
+        <activity
+            android:name=".ImageDownloadConfirmActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTop"
+            android:theme="@android:style/Theme.Material.Light.Dialog.Alert" />
+
         <activity
             android:name=".ExportSettingsActivity"
             android:exported="true"
