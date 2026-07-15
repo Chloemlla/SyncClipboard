@@ -3,6 +3,20 @@
 
 中文 | [English](docs/README_EN.md)  
 
+> [!IMPORTANT]
+> **本仓库为 [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) 分支**，在上游 [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard) 基础上，重点新增并持续维护一个**全新的原生 Android 客户端**（`android/`，包名 `com.syncclipboard.mobile`）。上游本身不含官方原生安卓客户端，仅提供基于第三方工具的方案。
+>
+> 本分支的主要改进：
+>
+> - **原生 Kotlin + Jetpack Compose 客户端**：Material 3 设计语言，无需依赖任何第三方自动化工具即可开箱同步。
+> - **实时同步**：接入桌面端同款 SignalR Hub（`/SyncClipboardHub`），服务器变更近乎零延迟唤醒；配合自适应轮询作为兜底，实时通道正常时降频为慢心跳（省电省流量），不可用时回退到快轮询并指数退避。
+> - **双向同步**：拉取（服务器 → 手机，后台自动写入剪贴板）+ 推送（手机 → 服务器，通过无障碍服务捕获复制内容）。
+> - **Shizuku 支持**：借助 Shizuku 实现高级保活与**免无障碍**的后台剪贴板读取。
+> - **稳定的后台保活**：前台 `dataSync` 服务 + 电池优化豁免 + 开机自启，修复了退到后台 / 熄屏后同步失效的问题。
+> - **完善的 CI**：Java 21 + 固定 Gradle 版本的验证流水线，并支持**自动签发发布**签名安卓安装包到 GitHub Release。
+>
+> 安卓客户端的详细说明见 [android/README.md](android/README.md)。以下内容为上游原始文档。
+
 <details>
 <summary>目录</summary>
 

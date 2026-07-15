@@ -2,6 +2,20 @@
 
 [中文](../README.md) | English
 
+> [!IMPORTANT]
+> **This repository is the [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) fork.** On top of upstream [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard), it adds and actively maintains a **brand-new native Android client** (`android/`, package `com.syncclipboard.mobile`). Upstream ships no official native Android client — only third-party-tool-based approaches.
+>
+> Key improvements in this fork:
+>
+> - **Native Kotlin + Jetpack Compose client**: Material 3 design language, syncs out of the box with no third-party automation tools required.
+> - **Real-time sync**: connects to the same SignalR hub (`/SyncClipboardHub`) the desktop client uses, waking on server changes with near-zero latency; adaptive polling backs it up — a slow heartbeat (battery/data friendly) while realtime is healthy, falling back to fast polling with exponential backoff when the hub is unavailable.
+> - **Two-way sync**: pull (server → phone, applied to the clipboard in the background) + push (phone → server, capturing copies via an accessibility service).
+> - **Shizuku support**: advanced keep-alive and **accessibility-free** background clipboard reads via Shizuku.
+> - **Reliable background keep-alive**: foreground `dataSync` service + battery-optimization exemption + start-on-boot, fixing sync stalls after backgrounding / screen-off.
+> - **Complete CI**: a Java 21 + pinned-Gradle verification pipeline, plus **automatic signed-release publishing** of the Android APK to GitHub Releases.
+>
+> See [android/README.md](../android/README.md) for full Android client details. The content below is the original upstream documentation.
+
 <details>
 <summary>Contents</summary>
 
