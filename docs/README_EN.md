@@ -10,7 +10,9 @@
 > - **Native Kotlin + Jetpack Compose client**: Material 3 design language, syncs out of the box with no third-party automation tools required.
 > - **Real-time sync**: connects to the same SignalR hub (`/SyncClipboardHub`) the desktop client uses, waking on server changes with near-zero latency; adaptive polling backs it up — a slow heartbeat (battery/data friendly) while realtime is healthy, falling back to fast polling with exponential backoff when the hub is unavailable.
 > - **Two-way sync**: pull (server → phone, applied to the clipboard in the background) + push (phone → server, capturing copies via an accessibility service).
-> - **Shizuku support**: advanced keep-alive and **accessibility-free** background clipboard reads via Shizuku.
+> - **Full profile parity with desktop**: bidirectional Text / Image / File / Group; hashes match desktop `FileProfile` / `GroupProfile`.
+> - **Clipboard assist (EasyCopyImage)**: download web images and optionally rewrite the local clipboard for better Windows image interop.
+> - **Shizuku support**: advanced keep-alive and **accessibility-free** background **text** clipboard reads (Accessibility still recommended for image/file push).
 > - **Reliable background keep-alive**: foreground `dataSync` service + battery-optimization exemption + start-on-boot, fixing sync stalls after backgrounding / screen-off.
 > - **Complete CI**: a Java 21 + pinned-Gradle verification pipeline, plus **automatic signed-release publishing** of the Android APK to GitHub Releases.
 >
@@ -272,7 +274,23 @@ Multiple `--command-{command-name}` arguments are supported, multiple commands a
 - Sync Automatically, import this [Shortcut](https://www.icloud.com/shortcuts/05e7ac5aca5f4f588b776117cf740587). This shortcut keeps running in the background forever, you need to stop it manually. You can also change whether to send notifications and querying interval time manullay.
 
 ### Android
-#### Use [SyncClipboard Mobile](https://github.com/Jeric-X/syncclipboard-mobile)
+#### Use this repo's native client (recommended, this fork)
+
+Native Android client maintained in this fork. Source: [`android/`](../android/), package `com.syncclipboard.mobile`.
+
+- **Text / Image / File / Group** bidirectional sync with Windows / Linux / macOS desktop
+- SignalR real-time wake + adaptive polling fallback
+- AccessibilityService for background capture (required for image/file push); optional Shizuku for keep-alive and text push
+- EasyCopyImage-style assist: download web images, rewrite local clipboard for Windows interop
+- `dataSync` foreground service, battery exemption, boot autostart
+- CI builds and signed APK releases
+
+Install from this repo's [Releases](../../../releases) or build per [android/README.md](../android/README.md).  
+Configure the same server as the desktop client (`host:port`, default `5033`, `admin`/`admin`).
+
+Full docs: **[android/README.md](../android/README.md)**.
+
+#### Use [SyncClipboard Mobile](https://github.com/Jeric-X/syncclipboard-mobile) (upstream third-party)
 
 - Quick manual trigger from notification center, home screen shortcut, and share menu
 - Limited background sync capability

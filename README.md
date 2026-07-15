@@ -11,7 +11,9 @@
 > - **原生 Kotlin + Jetpack Compose 客户端**：Material 3 设计语言，无需依赖任何第三方自动化工具即可开箱同步。
 > - **实时同步**：接入桌面端同款 SignalR Hub（`/SyncClipboardHub`），服务器变更近乎零延迟唤醒；配合自适应轮询作为兜底，实时通道正常时降频为慢心跳（省电省流量），不可用时回退到快轮询并指数退避。
 > - **双向同步**：拉取（服务器 → 手机，后台自动写入剪贴板）+ 推送（手机 → 服务器，通过无障碍服务捕获复制内容）。
-> - **Shizuku 支持**：借助 Shizuku 实现高级保活与**免无障碍**的后台剪贴板读取。
+> - **完整 profile 对齐桌面**：Text / Image / File / Group 双向同步；协议 hash 与桌面 `FileProfile` / `GroupProfile` 一致。
+> - **剪贴板辅助（EasyCopyImage）**：下载网页图片并可选改写本机剪贴板，提升与 Windows 图片互通。
+> - **Shizuku 支持**：借助 Shizuku 实现高级保活与**免无障碍**的后台文本剪贴板读取（图片/文件推送仍建议开无障碍）。
 > - **稳定的后台保活**：前台 `dataSync` 服务 + 电池优化豁免 + 开机自启，修复了退到后台 / 熄屏后同步失效的问题。
 > - **完善的 CI**：Java 21 + 固定 Gradle 版本的验证流水线，并支持**自动签发发布**签名安卓安装包到 GitHub Release。
 >
@@ -278,7 +280,23 @@ paru -Sy syncclipboard-desktop
 - 自动上传短信验证码，参考这个帖子中的视频教程 https://github.com/Jeric-X/SyncClipboard/discussions/60
 
 ### Android
-#### 使用[SyncClipboard Mobile](https://github.com/Jeric-X/syncclipboard-mobile)
+#### 使用本仓库原生客户端（推荐，本 fork）
+
+本分支维护的原生 Android 客户端，源码位于 [`android/`](android/)，包名 `com.syncclipboard.mobile`。
+
+- **Text / Image / File / Group** 与 Windows / Linux / macOS 桌面端双向同步
+- SignalR 实时唤醒 + 自适应轮询兜底
+- 无障碍服务捕获后台复制（图片/文件推送必需）；可选 Shizuku 保活与文本推送
+- EasyCopyImage 风格辅助：下载网页图片、改写本机剪贴板，改善与 Windows 图片互通
+- 前台 `dataSync` 服务保活、电池优化豁免、开机自启
+- CI 自动构建与签名发布 APK
+
+安装：从本仓库 [Releases](../../releases) 下载 APK，或按 [android/README.md](android/README.md) 本地构建。  
+配置：服务器地址 `host:port`（默认 `5033`）、用户名/密码（默认 `admin`/`admin`），与桌面端同一服务器即可。
+
+完整说明、协议摘要与权限列表见 **[android/README.md](android/README.md)**。
+
+#### 使用[SyncClipboard Mobile](https://github.com/Jeric-X/syncclipboard-mobile)（上游第三方）
 
 - 从通知中心、桌面快捷方式、分享菜单中快捷手动触发
 - 一定程度的后台同步能力
