@@ -1354,7 +1354,7 @@ namespace SyncClipboard.Core.I18n {
         }
         
         /// <summary>
-        ///   查找类似 You can specify the hotkey to open the history panel in the Hotkey settings 的本地化字符串。
+        ///   查找类似 You can specify hotkeys for the history panel in the Hotkey settings 的本地化字符串。
         /// </summary>
         public static string HistoryPanelHotkeyDescription {
             get {
@@ -2810,6 +2810,15 @@ namespace SyncClipboard.Core.I18n {
         public static string TimeoutSeconds {
             get {
                 return ResourceManager.GetString("TimeoutSeconds", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Open/Hide History Panel 的本地化字符串。
+        /// </summary>
+        public static string ToggleHistoryPanel {
+            get {
+                return ResourceManager.GetString("ToggleHistoryPanel", resourceCulture);
             }
         }
         

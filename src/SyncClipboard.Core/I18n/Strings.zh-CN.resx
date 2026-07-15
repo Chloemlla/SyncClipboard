@@ -822,6 +822,9 @@ Esc：关闭面板</value>
   <data name="OpenHistoryPanel" xml:space="preserve">
     <value>打开历史记录面板</value>
   </data>
+  <data name="ToggleHistoryPanel" xml:space="preserve">
+    <value>打开/隐藏历史记录面板</value>
+  </data>
   <data name="HistoryFilterAll" xml:space="preserve">
     <value>全部</value>
   </data>
@@ -853,7 +856,7 @@ Esc：关闭面板</value>
     <value>自动回到顶部</value>
   </data>
   <data name="HistoryPanelHotkeyDescription" xml:space="preserve">
-    <value>在快捷键设置中可以指定打开历史记录面板的快捷键</value>
+    <value>在快捷键设置中可以指定历史记录面板的快捷键</value>
   </data>
   <data name="SyncAccount" xml:space="preserve">
     <value>同步账号</value>

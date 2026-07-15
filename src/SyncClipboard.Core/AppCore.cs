@@ -203,6 +203,11 @@ namespace SyncClipboard.Core
                         Strings.OpenHistoryPanel,
                         "OpenHistoryPanel",
                         HistoryWindow.Focus
+                    ),
+                    new UniqueCommand(
+                        Strings.ToggleHistoryPanel,
+                        "ToggleHistoryPanel",
+                        HistoryWindow.SwitchVisible
                     )
                 }
             };

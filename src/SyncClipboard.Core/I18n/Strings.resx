@@ -824,6 +824,9 @@ Middle click: Copy and paste</value>
   <data name="OpenHistoryPanel" xml:space="preserve">
     <value>Open History Panel</value>
   </data>
+  <data name="ToggleHistoryPanel" xml:space="preserve">
+    <value>Open/Hide History Panel</value>
+  </data>
   <data name="HistoryFilterAll" xml:space="preserve">
     <value>All</value>
   </data>
@@ -855,7 +858,7 @@ Middle click: Copy and paste</value>
     <value>Auto scroll to top</value>
   </data>
   <data name="HistoryPanelHotkeyDescription" xml:space="preserve">
-    <value>You can specify the hotkey to open the history panel in the Hotkey settings</value>
+    <value>You can specify hotkeys for the history panel in the Hotkey settings</value>
   </data>
   <data name="SyncAccount" xml:space="preserve">
     <value>Sync Account</value>
