@@ -11,6 +11,7 @@ import com.syncclipboard.mobile.core.ProfileDto
 import com.syncclipboard.mobile.core.RealtimeChannel
 import com.syncclipboard.mobile.core.ServerConfig
 import com.syncclipboard.mobile.core.SyncClient
+import com.syncclipboard.mobile.core.WebImageAssist
 import com.syncclipboard.mobile.shizuku.ShizukuManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -384,12 +385,48 @@ class SyncEngine(
     }
 
     suspend fun pushContent(content: ClipboardContent) {
-        when (content) {
-            is ClipboardContent.Text -> pushText(content.value)
-            is ClipboardContent.Image -> pushImage(content.bytes, content.extension)
-            is ClipboardContent.FileItem -> pushFile(content.fileName, content.bytes)
-            is ClipboardContent.Files -> pushGroup(content.parts)
+        val assisted = maybeAssist(content)
+        when (assisted) {
+            is ClipboardContent.Text -> pushText(assisted.value)
+            is ClipboardContent.Image -> pushImage(assisted.bytes, assisted.extension)
+            is ClipboardContent.FileItem -> pushFile(assisted.fileName, assisted.bytes)
+            is ClipboardContent.Files -> pushGroup(assisted.parts)
         }
+    }
+
+    /**
+     * Desktop EasyCopyImage / DownloadWebImage analog applied at push time:
+     * - If text/HTML embeds an http(s) image URL and downloadWebImage (or easyCopyImage)
+     *   is on, download and promote to Image so Windows receives a real Image profile.
+     * - Complex image formats on File items are already re-encoded in ClipboardBridge;
+     *   this path covers the common "browser copy" case that only leaves HTML/text.
+     */
+    private suspend fun maybeAssist(content: ClipboardContent): ClipboardContent {
+        if (content !is ClipboardContent.Text) return content
+        if (!config.downloadWebImage && !config.easyCopyImage) return content
+        if (!config.enablePushImage) return content
+
+        val source = content.value
+        val url = WebImageAssist.extractImageUrl(source) ?: return content
+        Log.i(TAG, "assist: downloading web image $url")
+        val downloaded = withContext(Dispatchers.IO) {
+            WebImageAssist.downloadAsDesktopImage(url, config.maxFileBytes)
+        } ?: return content
+
+        // Optionally rewrite local clipboard so subsequent local pastes get a real image
+        // (mirrors desktop AdjustClipboard). Best-effort; push still proceeds either way.
+        if (config.easyCopyImage) {
+            val name = ImageSync.buildDataName(downloaded.extension)
+            withContext(Dispatchers.Main) {
+                runCatching { clipboard.writeImage(downloaded.bytes, name) }
+            }
+        }
+
+        return ClipboardContent.Image(
+            bytes = downloaded.bytes,
+            extension = downloaded.extension,
+            mimeType = downloaded.mimeType,
+        )
     }
 
     private fun looksImageBytes(bytes: ByteArray): Boolean {

@@ -25,6 +25,12 @@
 
     <string name="toggle_pull">Pull from server → device</string>
     <string name="toggle_push">Push device → server</string>
+    <string name="section_assist">Clipboard assist</string>
+    <string name="section_assist_subtitle">Match Windows EasyCopyImage helpers for better image interop.</string>
+    <string name="toggle_easy_copy_image">Easy copy image</string>
+    <string name="toggle_easy_copy_image_hint">When pushing browser/HTML image copies, rewrite the local clipboard as a real image (Windows EasyCopyImage).</string>
+    <string name="toggle_download_web_image">Download web image</string>
+    <string name="toggle_download_web_image_hint">If the clipboard is HTML with an image URL, download it and push as Image so Windows can paste.</string>
 
     <string name="perm_battery">Ignore battery optimization</string>
     <string name="perm_accessibility">Clipboard capture (accessibility)</string>

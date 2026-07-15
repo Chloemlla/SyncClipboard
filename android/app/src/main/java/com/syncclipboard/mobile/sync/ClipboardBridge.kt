@@ -47,7 +47,6 @@ sealed class ClipboardContent {
         }
     }
 
-    /** Single non-image file (desktop File profile). */
     data class FileItem(
         val fileName: String,
         val bytes: ByteArray,
@@ -61,7 +60,6 @@ sealed class ClipboardContent {
         override fun hashCode(): Int = 31 * fileName.hashCode() + bytes.contentHashCode()
     }
 
-    /** Multiple files (desktop Group profile). */
     data class Files(
         val parts: List<GroupFilePart>,
     ) : ClipboardContent()
@@ -93,10 +91,19 @@ class ClipboardBridge(context: Context) {
 
     fun read(): String? = readText()
 
+    /** Raw HTML of the primary clip if present (browser EasyCopyImage path). */
+    fun readHtml(): String? {
+        val clip = runCatching { manager.primaryClip }.getOrNull() ?: return null
+        if (clip.itemCount == 0) return null
+        return runCatching { clip.getItemAt(0)?.htmlText }.getOrNull()?.takeIf { it.isNotBlank() }
+    }
+
     /**
      * Best-effort read of the primary clip as text / image / file(s).
      * URI items take precedence over plain text so file/image copies are not
-     * mis-classified as their path string.
+     * mis-classified as their path string. When no URI is present, HTML is
+     * preferred over plain text so browser `<img src="https://...">` copies are
+     * available for [com.syncclipboard.mobile.core.WebImageAssist].
      */
     fun readContent(maxBytes: Long = FileProfileSync.DEFAULT_MAX_FILE_BYTES): ClipboardContent? {
         val clip = runCatching { manager.primaryClip }.getOrNull() ?: return null
@@ -113,8 +120,15 @@ class ClipboardBridge(context: Context) {
             return readUriItems(uriItems, maxBytes)
         }
 
-        val text = clip.getItemAt(0)?.coerceToText(appContext)?.toString()
-        if (!text.isNullOrEmpty()) return ClipboardContent.Text(text)
+        val html = runCatching { clip.getItemAt(0)?.htmlText }.getOrNull()?.takeIf { it.isNotBlank() }
+        val text = clip.getItemAt(0)?.coerceToText(appContext)?.toString()?.takeIf { it.isNotEmpty() }
+        val combined = when {
+            !html.isNullOrBlank() && !text.isNullOrBlank() && html != text -> html
+            !html.isNullOrBlank() -> html
+            !text.isNullOrBlank() -> text
+            else -> null
+        }
+        if (!combined.isNullOrEmpty()) return ClipboardContent.Text(combined)
         return null
     }
 
@@ -122,7 +136,6 @@ class ClipboardBridge(context: Context) {
         uriItems: List<Pair<Uri, String?>>,
         maxBytes: Long,
     ): ClipboardContent? {
-
         val loaded = mutableListOf<LoadedUri>()
         for ((uri, mime) in uriItems) {
             val item = loadUriBytes(uri, mime, maxBytes) ?: continue
@@ -148,7 +161,6 @@ class ClipboardBridge(context: Context) {
             }
         }
 
-        // Multi-file clipboard → desktop Group profile.
         val parts = loaded.map { item ->
             GroupFilePart(entryName = FileProfileSync.safeFileName(item.name), bytes = item.bytes)
         }
@@ -238,9 +250,6 @@ class ClipboardBridge(context: Context) {
     fun writeFile(bytes: ByteArray, fileName: String): File? =
         writeSingleFileClip(bytes, fileName, forceImageMime = false)
 
-    /**
-     * Write multiple files (extracted group) as a multi-URI clip.
-     */
     fun writeFiles(files: List<File>): Boolean {
         if (files.isEmpty()) return false
         return runCatching {
@@ -271,7 +280,6 @@ class ClipboardBridge(context: Context) {
         if (bytes.isEmpty()) return null
         return runCatching {
             cacheRoot.mkdirs()
-            // Prune previous pull_* artifacts we own.
             cacheRoot.listFiles()?.forEach { f ->
                 if (f.name.startsWith("pull_") || f.isDirectory && f.name.startsWith("group_")) {
                     runCatching { f.deleteRecursively() }
@@ -307,7 +315,6 @@ class ClipboardBridge(context: Context) {
         }.onFailure { Log.w(TAG, "writeSingleFileClip failed", it) }.getOrNull()
     }
 
-    /** Prepare a fresh dir for group extraction. */
     fun prepareGroupDir(): File {
         cacheRoot.mkdirs()
         val dir = File(cacheRoot, "group_${System.currentTimeMillis()}")

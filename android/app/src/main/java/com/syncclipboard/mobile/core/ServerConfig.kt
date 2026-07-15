@@ -26,6 +26,18 @@ data class ServerConfig(
      * Oversized payloads are skipped with an error status.
      */
     val maxFileBytes: Long = FileProfileSync.DEFAULT_MAX_FILE_BYTES,
+    /**
+     * Desktop EasyCopyImage analog: when pushing, prefer promoting incomplete /
+     * browser image clips to a real Image profile so Windows can paste images.
+     * Default ON for better Win↔Android interop (desktop defaults this OFF because
+     * it rewrites the local clipboard; we only rewrite the *uploaded* profile).
+     */
+    val easyCopyImage: Boolean = true,
+    /**
+     * Desktop DownloadWebImage: when the clip is HTML with `<img src="http(s)://...">`
+     * (or a direct image URL), download and push as Image.
+     */
+    val downloadWebImage: Boolean = true,
 ) {
     fun isConfigured(): Boolean = baseUrl.isNotBlank()
 

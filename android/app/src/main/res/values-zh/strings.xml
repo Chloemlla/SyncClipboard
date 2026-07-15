@@ -25,6 +25,12 @@
 
     <string name="toggle_pull">服务器 → 本机 拉取</string>
     <string name="toggle_push">本机 → 服务器 推送</string>
+    <string name="section_assist">剪贴板辅助</string>
+    <string name="section_assist_subtitle">对齐 Windows EasyCopyImage，提升图片互通体验。</string>
+    <string name="toggle_easy_copy_image">快速复制图片</string>
+    <string name="toggle_easy_copy_image_hint">推送浏览器/HTML 图片时，将本机剪贴板改写为真实图片（对应 Windows EasyCopyImage）。</string>
+    <string name="toggle_download_web_image">下载网页图片</string>
+    <string name="toggle_download_web_image_hint">若剪贴板是带图片 URL 的 HTML，则下载并作为 Image 推送，便于 Windows 粘贴。</string>
 
     <string name="perm_battery">忽略电池优化（保活）</string>
     <string name="perm_accessibility">剪贴板捕获（无障碍）</string>

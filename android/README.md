@@ -22,6 +22,11 @@ Supports the same clipboard profile types the desktop client syncs:
 - **Push:** optional `AccessibilityService` observes clipboard changes (text, images,
   files) and uploads via `PUT /file/{name}` + `PUT /SyncClipboard.json`. Shizuku can
   push **text** without accessibility; binary types need Accessibility (content URIs).
+- **Clipboard assist (Windows EasyCopyImage parity):**
+  - **Download web image** — if the clip is HTML with `<img src="http(s)://...">` (or a
+    direct image URL), download it and push as `type=Image` so Windows can paste a real image.
+  - **Easy copy image** — after a successful web-image download, also rewrite the local
+    clipboard as an image URI (desktop AdjustClipboard behavior).
 - **Size limit:** default **20 MiB** (`MaxFileByte` on desktop). Oversized transfers
   are skipped and reported as an error status.
 - **Stays resident:** foreground service + battery-optimization exemption +

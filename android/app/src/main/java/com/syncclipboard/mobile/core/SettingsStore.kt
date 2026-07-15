@@ -40,6 +40,8 @@ class SettingsStore(context: Context) {
         enablePullImage = prefs.getBoolean(KEY_PULL_IMAGE, true),
         enablePullFile = prefs.getBoolean(KEY_PULL_FILE, true),
         maxFileBytes = prefs.getLong(KEY_MAX_FILE_BYTES, FileProfileSync.DEFAULT_MAX_FILE_BYTES),
+        easyCopyImage = prefs.getBoolean(KEY_EASY_COPY_IMAGE, true),
+        downloadWebImage = prefs.getBoolean(KEY_DOWNLOAD_WEB_IMAGE, true),
     )
 
     fun save(config: ServerConfig) {
@@ -56,6 +58,8 @@ class SettingsStore(context: Context) {
             .putBoolean(KEY_PULL_IMAGE, config.enablePullImage)
             .putBoolean(KEY_PULL_FILE, config.enablePullFile)
             .putLong(KEY_MAX_FILE_BYTES, config.maxFileBytes)
+            .putBoolean(KEY_EASY_COPY_IMAGE, config.easyCopyImage)
+            .putBoolean(KEY_DOWNLOAD_WEB_IMAGE, config.downloadWebImage)
             .apply()
     }
 
@@ -77,6 +81,8 @@ class SettingsStore(context: Context) {
         private const val KEY_PULL_IMAGE = "pull_image"
         private const val KEY_PULL_FILE = "pull_file"
         private const val KEY_MAX_FILE_BYTES = "max_file_bytes"
+        private const val KEY_EASY_COPY_IMAGE = "easy_copy_image"
+        private const val KEY_DOWNLOAD_WEB_IMAGE = "download_web_image"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
     }
 }

@@ -241,6 +241,24 @@ fun MainScreen(viewModel: MainViewModel) {
                 )
 
                 SectionTitle(
+                    text = context.getString(R.string.section_assist),
+                    subtitle = context.getString(R.string.section_assist_subtitle),
+                    icon = Icons.Outlined.Info,
+                )
+                ToggleCard(
+                    icon = Icons.Outlined.Download,
+                    label = context.getString(R.string.toggle_download_web_image),
+                    checked = ui.downloadWebImage,
+                    onChange = viewModel::onDownloadWebImageChange,
+                )
+                ToggleCard(
+                    icon = Icons.Outlined.Upload,
+                    label = context.getString(R.string.toggle_easy_copy_image),
+                    checked = ui.easyCopyImage,
+                    onChange = viewModel::onEasyCopyImageChange,
+                )
+
+                SectionTitle(
                     text = context.getString(R.string.section_permissions),
                     subtitle = context.getString(R.string.section_permissions_subtitle),
                     icon = Icons.Outlined.Security,

@@ -31,6 +31,8 @@ data class UiState(
     val pollSeconds: Int = ServerConfig.DEFAULT_POLL_SECONDS,
     val pullEnabled: Boolean = true,
     val pushEnabled: Boolean = true,
+    val easyCopyImage: Boolean = true,
+    val downloadWebImage: Boolean = true,
     val serviceRunning: Boolean = false,
     val batteryOptExempt: Boolean = false,
     val accessibilityEnabled: Boolean = false,
@@ -64,6 +66,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             pollSeconds = config.pollSeconds,
             pullEnabled = config.pullEnabled,
             pushEnabled = config.pushEnabled,
+            easyCopyImage = config.easyCopyImage,
+            downloadWebImage = config.downloadWebImage,
             serviceRunning = settings.serviceEnabled,
         )
     }
@@ -74,6 +78,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun onPollChange(value: Int) = _ui.update { it.copy(pollSeconds = value.coerceAtLeast(ServerConfig.MIN_POLL_SECONDS)) }
     fun onPullChange(value: Boolean) = _ui.update { it.copy(pullEnabled = value) }
     fun onPushChange(value: Boolean) = _ui.update { it.copy(pushEnabled = value) }
+    fun onEasyCopyImageChange(value: Boolean) = _ui.update { it.copy(easyCopyImage = value) }
+    fun onDownloadWebImageChange(value: Boolean) = _ui.update { it.copy(downloadWebImage = value) }
 
     /** Refresh permission state; call from onResume so returning from Settings updates the UI. */
     fun refreshPermissions() {
@@ -107,6 +113,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             enablePullImage = stored.enablePullImage,
             enablePullFile = stored.enablePullFile,
             maxFileBytes = stored.maxFileBytes,
+            easyCopyImage = ui.easyCopyImage,
+            downloadWebImage = ui.downloadWebImage,
         )
     }
 
