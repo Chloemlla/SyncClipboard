@@ -16,13 +16,14 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.chloemlla.syncclipboard.mobile.MainActivity
 import com.chloemlla.syncclipboard.mobile.R
-import com.chloemlla.syncclipboard.mobile.core.ServerConfig
 import com.chloemlla.syncclipboard.mobile.core.SettingsStore
 import com.chloemlla.syncclipboard.mobile.shizuku.ShizukuManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -31,6 +32,11 @@ import kotlinx.coroutines.launch
  * in the background and provides the push entry point used by the accessibility
  * service. Runs as a dataSync foreground service with an ongoing notification so
  * Android does not kill it under Doze / background limits.
+ *
+ * On devices that support Live Update (promoted ongoing) notifications, the same
+ * FGS notification is temporarily promoted only during active phases: connecting,
+ * error, and a short window after a successful sync event. Stable connected idle
+ * stays a normal ongoing notification to avoid ambient Live Update misuse.
  */
 class SyncForegroundService : Service() {
 
@@ -51,6 +57,9 @@ class SyncForegroundService : Service() {
     // ongoing notification carries the real app logo (not just the monochrome status
     // glyph). Decoded once and reused across the frequent status-driven rebuilds.
     private val largeIcon by lazy { BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher) }
+
+    /** Cancels a pending demote rebuild after the post-sync Live Update short window. */
+    private var liveUpdateDemoteJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -94,6 +103,8 @@ class SyncForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        liveUpdateDemoteJob?.cancel()
+        liveUpdateDemoteJob = null
         engine?.stop()
         engine = null
         releaseWakeLock()
@@ -153,6 +164,8 @@ class SyncForegroundService : Service() {
     }
 
     private fun stopEngineAndSelf() {
+        liveUpdateDemoteJob?.cancel()
+        liveUpdateDemoteJob = null
         settings.serviceEnabled = false
         engine?.stop()
         engine = null
@@ -179,6 +192,32 @@ class SyncForegroundService : Service() {
             SyncState.snapshot.collectLatest { snapshot ->
                 val manager = getSystemService(NotificationManager::class.java)
                 manager?.notify(NOTIFICATION_ID, buildNotification(snapshot))
+                scheduleLiveUpdateDemoteIfNeeded(snapshot)
+            }
+        }
+    }
+
+    /**
+     * After a successful-sync short window, rebuild the notification so the Live
+     * Update promote request is cleared even if no further SyncState change arrives.
+     */
+    private fun scheduleLiveUpdateDemoteIfNeeded(snapshot: SyncSnapshot) {
+        liveUpdateDemoteJob?.cancel()
+        val remaining = SyncState.liveUpdateWindowRemainingMs(snapshot)
+        if (remaining <= 0L) {
+            liveUpdateDemoteJob = null
+            return
+        }
+        val expectedSyncAt = snapshot.lastSyncEpochMs
+        liveUpdateDemoteJob = scope.launch {
+            delay(remaining + 25L)
+            val current = SyncState.snapshot.value
+            if (current.status == SyncStatus.CONNECTED &&
+                current.lastSyncEpochMs == expectedSyncAt &&
+                !SyncState.isLiveUpdateActive(current)
+            ) {
+                val manager = getSystemService(NotificationManager::class.java)
+                manager?.notify(NOTIFICATION_ID, buildNotification(current))
             }
         }
     }
@@ -214,23 +253,75 @@ class SyncForegroundService : Service() {
             Intent(this, SyncForegroundService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val statusText = when (snapshot.status) {
-            SyncStatus.CONNECTED -> getString(R.string.status_connected)
-            SyncStatus.CONNECTING -> getString(R.string.status_connecting)
-            SyncStatus.ERROR -> getString(R.string.status_error, snapshot.message)
-            SyncStatus.STOPPED -> getString(R.string.status_stopped)
-        }
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        val statusText = notificationContentText(snapshot)
+        val requestPromoted = shouldRequestPromotedOngoing(snapshot)
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setLargeIcon(largeIcon)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(statusText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(statusText))
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
             .setSilent(true)
             .setContentIntent(openIntent)
             .addAction(0, getString(R.string.action_stop), stopIntent)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .build()
+            .setRequestPromotedOngoing(requestPromoted)
+
+        if (requestPromoted) {
+            builder.setShortCriticalText(shortCriticalText(snapshot))
+        }
+
+        return builder.build()
+    }
+
+    private fun notificationContentText(snapshot: SyncSnapshot): String {
+        return when (snapshot.status) {
+            SyncStatus.CONNECTED -> {
+                if (SyncState.isLiveUpdateActive(snapshot) && snapshot.lastText.isNotBlank()) {
+                    getString(R.string.notif_synced_summary, snapshot.lastText)
+                } else {
+                    getString(R.string.status_connected)
+                }
+            }
+            SyncStatus.CONNECTING -> getString(R.string.status_connecting)
+            SyncStatus.ERROR -> getString(R.string.status_error, snapshot.message)
+            SyncStatus.STOPPED -> getString(R.string.status_stopped)
+        }
+    }
+
+    /**
+     * Status-chip text for Live Update surfaces. Keep short (docs suggest ≤7 chars).
+     */
+    private fun shortCriticalText(snapshot: SyncSnapshot): String {
+        return when (snapshot.status) {
+            SyncStatus.CONNECTING -> getString(R.string.notif_chip_connecting)
+            SyncStatus.ERROR -> getString(R.string.notif_chip_error)
+            SyncStatus.CONNECTED -> getString(R.string.notif_chip_synced)
+            SyncStatus.STOPPED -> getString(R.string.notif_chip_stopped)
+        }
+    }
+
+    /**
+     * Request promotion only during active phases and only when the system still
+     * allows promoted notifications. Failures fall back to a normal ongoing FGS
+     * notification so keep-alive is never blocked by Live Update availability.
+     */
+    private fun shouldRequestPromotedOngoing(snapshot: SyncSnapshot): Boolean {
+        if (!SyncState.isLiveUpdateActive(snapshot)) return false
+        return canPostPromotedNotifications()
+    }
+
+    private fun canPostPromotedNotifications(): Boolean {
+        return runCatching {
+            val manager = getSystemService(NotificationManager::class.java) ?: return false
+            // Available on Live Update capable platform builds; older devices lack the API.
+            val method = manager.javaClass.methods.firstOrNull {
+                it.name == "canPostPromotedNotifications" && it.parameterTypes.isEmpty()
+            } ?: return true
+            method.invoke(manager) as? Boolean ?: true
+        }.getOrDefault(true)
     }
 
     private fun createChannel() {

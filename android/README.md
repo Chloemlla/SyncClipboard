@@ -57,6 +57,7 @@ so the desktop `ImageTool` extensions (png/jpg/jpeg/gif/bmp) can accept them.
 | Accessibility (optional but recommended for push) | Background clipboard **read** on Android 10+ |
 | Shizuku (optional) | Advanced keep-alive + text push without Accessibility |
 | Notifications (Android 13+) | Ongoing sync status |
+| Live Update / promoted ongoing (when supported) | Temporarily promote the FGS notification during connecting, errors, and ~5s after a successful sync |
 
 ### Background clipboard limitation
 
@@ -182,3 +183,4 @@ android/
 
 - Full fork overview: [root README](../README.md)
 - Upstream desktop project: [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard)
+

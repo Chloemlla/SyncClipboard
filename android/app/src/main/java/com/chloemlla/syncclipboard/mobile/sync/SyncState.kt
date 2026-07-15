@@ -22,6 +22,9 @@ data class SyncSnapshot(
  * can observe it without binding to the service.
  */
 object SyncState {
+    /** Live Update short window after a successful sync event (PRD: 5s). */
+    const val LIVE_UPDATE_WINDOW_MS: Long = 5_000L
+
     private val _snapshot = MutableStateFlow(SyncSnapshot())
     val snapshot: StateFlow<SyncSnapshot> = _snapshot.asStateFlow()
 
@@ -42,5 +45,38 @@ object SyncState {
 
     fun reset() {
         _snapshot.value = SyncSnapshot()
+    }
+
+    /**
+     * True when the current snapshot represents a time-sensitive active phase that
+     * may request a Live Update (promoted ongoing) notification.
+     *
+     * Active phases:
+     * - CONNECTING / ERROR: ongoing problem or connection attempt
+     * - successful sync short window (default 5s) while otherwise CONNECTED
+     */
+    fun isLiveUpdateActive(
+        snapshot: SyncSnapshot = _snapshot.value,
+        nowMs: Long = System.currentTimeMillis(),
+        windowMs: Long = LIVE_UPDATE_WINDOW_MS,
+    ): Boolean {
+        return when (snapshot.status) {
+            SyncStatus.CONNECTING, SyncStatus.ERROR -> true
+            SyncStatus.CONNECTED ->
+                snapshot.lastSyncEpochMs > 0L &&
+                    nowMs - snapshot.lastSyncEpochMs < windowMs
+            SyncStatus.STOPPED -> false
+        }
+    }
+
+    /** Remaining millis in the post-sync Live Update window, or 0 if inactive. */
+    fun liveUpdateWindowRemainingMs(
+        snapshot: SyncSnapshot = _snapshot.value,
+        nowMs: Long = System.currentTimeMillis(),
+        windowMs: Long = LIVE_UPDATE_WINDOW_MS,
+    ): Long {
+        if (snapshot.status != SyncStatus.CONNECTED || snapshot.lastSyncEpochMs <= 0L) return 0L
+        val remaining = windowMs - (nowMs - snapshot.lastSyncEpochMs)
+        return remaining.coerceAtLeast(0L)
     }
 }
