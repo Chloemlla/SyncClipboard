@@ -31,6 +31,16 @@
     <string name="hint_push_requires_accessibility">Android 禁止后台读取剪贴板。开启无障碍服务后，应用可捕获其他应用中的复制内容并推送到服务器。拉取无需此权限。</string>
     <string name="perm_shizuku">Shizuku（高级保活）</string>
     <string name="hint_shizuku_active">Shizuku 已激活。它会应用 Doze 白名单保活，并可在后台读取剪贴板——因此即使不开启无障碍服务，推送也能工作。</string>
+    <string name="shizuku_state_ready">已激活——特权保活与后台剪贴板读取已开启。</string>
+    <string name="shizuku_state_needs_permission">正在运行，但尚未授予访问权限。</string>
+    <string name="shizuku_state_denied">访问已被永久拒绝。请在 Shizuku 应用中授予。</string>
+    <string name="shizuku_state_not_running">已安装，但 Shizuku 服务未运行。请先启动它，再返回此处。</string>
+    <string name="shizuku_state_not_installed">未安装。可选——安装 Shizuku 可在不开启无障碍服务的情况下实现保活。</string>
+    <string name="shizuku_action_grant">授予</string>
+    <string name="shizuku_action_open">打开 Shizuku</string>
+    <string name="shizuku_action_install">安装</string>
+    <string name="shizuku_keepalive_ok">保活已应用。</string>
+    <string name="shizuku_keepalive_failed">保活未能应用。</string>
 
     <string name="state_granted">已授予</string>
     <string name="state_missing">未授予</string>

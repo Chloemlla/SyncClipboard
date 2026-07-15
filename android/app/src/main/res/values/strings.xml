@@ -31,6 +31,16 @@
     <string name="hint_push_requires_accessibility">Android blocks background clipboard reads. Enabling the accessibility service lets the app capture copies from other apps and push them to the server. Pull works without it.</string>
     <string name="perm_shizuku">Shizuku (advanced keep-alive)</string>
     <string name="hint_shizuku_active">Shizuku is active. It applies Doze-whitelist keep-alive and can read the clipboard in the background — so push works even without the accessibility service.</string>
+    <string name="shizuku_state_ready">Active — privileged keep-alive and background clipboard read are on.</string>
+    <string name="shizuku_state_needs_permission">Running, but access hasn\'t been granted yet.</string>
+    <string name="shizuku_state_denied">Access was permanently denied. Grant it from the Shizuku app.</string>
+    <string name="shizuku_state_not_running">Installed, but the Shizuku service isn\'t running. Start it, then return here.</string>
+    <string name="shizuku_state_not_installed">Not installed. Optional — install Shizuku for keep-alive without the accessibility service.</string>
+    <string name="shizuku_action_grant">Grant</string>
+    <string name="shizuku_action_open">Open Shizuku</string>
+    <string name="shizuku_action_install">Install</string>
+    <string name="shizuku_keepalive_ok">Keep-alive applied.</string>
+    <string name="shizuku_keepalive_failed">Keep-alive couldn\'t be applied.</string>
 
     <string name="state_granted">Granted</string>
     <string name="state_missing">Not granted</string>

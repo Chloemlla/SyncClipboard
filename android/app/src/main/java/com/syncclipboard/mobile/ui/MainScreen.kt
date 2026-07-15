@@ -76,6 +76,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.syncclipboard.mobile.R
+import com.syncclipboard.mobile.shizuku.ShizukuAvailability
 import com.syncclipboard.mobile.sync.PermissionHelper
 import com.syncclipboard.mobile.sync.SyncStatus
 
@@ -265,22 +266,27 @@ fun MainScreen(viewModel: MainViewModel) {
                     onAction = { context.startActivity(PermissionHelper.accessibilitySettingsIntent()) },
                 )
                 // Shizuku: optional advanced backend for keep-alive + accessibility-free
-                // background clipboard read. Only surfaced when the app is installed/running.
-                if (ui.shizukuRunning) {
-                    PermissionCard(
-                        label = context.getString(R.string.perm_shizuku),
-                        granted = ui.shizukuGranted,
-                        actionLabel = context.getString(R.string.action_grant),
-                        onAction = { viewModel.requestShizuku() },
-                    )
-                }
-                if (ui.shizukuGranted) {
-                    InfoCard(
-                        title = context.getString(R.string.perm_shizuku),
-                        icon = Icons.Outlined.Security,
-                        lines = listOf(context.getString(R.string.hint_shizuku_active)),
-                    )
-                } else if (ui.pushEnabled && !ui.accessibilityEnabled) {
+                // background clipboard read. Always surfaced (even when not installed) so
+                // users can discover it; the card adapts its label/action to the state.
+                ShizukuCard(
+                    availability = ui.shizuku,
+                    permanentlyDenied = ui.shizukuPermanentlyDenied,
+                    keepAliveOk = ui.shizukuKeepAliveOk,
+                    onAction = {
+                        val intent = viewModel.onShizukuAction()
+                        if (intent != null) {
+                            runCatching { context.startActivity(intent) }
+                                .onFailure {
+                                    runCatching {
+                                        context.startActivity(viewModel.shizukuInstallFallbackIntent())
+                                    }
+                                }
+                        }
+                    },
+                )
+                if (ui.shizuku != ShizukuAvailability.READY &&
+                    ui.pushEnabled && !ui.accessibilityEnabled
+                ) {
                     InfoCard(
                         title = context.getString(R.string.perm_accessibility),
                         icon = Icons.Outlined.Info,
@@ -795,4 +801,86 @@ private fun ButtonLabel(icon: ImageVector, text: String) {
     )
     Spacer(modifier = Modifier.size(8.dp))
     Text(text)
+}
+
+/**
+ * Card for the optional Shizuku backend. Adapts its description and action button to the
+ * current [availability]: install when absent, open when not running, grant when it needs
+ * permission (or was permanently denied), and a passive "active" state once ready. The last
+ * keep-alive result is surfaced when known so the user can see the privileged step worked.
+ */
+@Composable
+private fun ShizukuCard(
+    availability: ShizukuAvailability,
+    permanentlyDenied: Boolean,
+    keepAliveOk: Boolean?,
+    onAction: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val ready = availability == ShizukuAvailability.READY
+    val stateText = when (availability) {
+        ShizukuAvailability.READY -> context.getString(R.string.shizuku_state_ready)
+        ShizukuAvailability.NEEDS_PERMISSION ->
+            if (permanentlyDenied) {
+                context.getString(R.string.shizuku_state_denied)
+            } else {
+                context.getString(R.string.shizuku_state_needs_permission)
+            }
+        ShizukuAvailability.NOT_RUNNING -> context.getString(R.string.shizuku_state_not_running)
+        ShizukuAvailability.NOT_INSTALLED -> context.getString(R.string.shizuku_state_not_installed)
+    }
+    val actionLabel = when (availability) {
+        ShizukuAvailability.READY -> null
+        ShizukuAvailability.NEEDS_PERMISSION -> context.getString(R.string.shizuku_action_grant)
+        ShizukuAvailability.NOT_RUNNING -> context.getString(R.string.shizuku_action_open)
+        ShizukuAvailability.NOT_INSTALLED -> context.getString(R.string.shizuku_action_install)
+    }
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = if (ready) Icons.Outlined.CheckCircle else Icons.Outlined.Security,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = if (ready) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = context.getString(R.string.perm_shizuku),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = stateText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (ready) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (actionLabel != null) {
+                    OutlinedButton(onClick = onAction) { Text(actionLabel) }
+                }
+            }
+            if (keepAliveOk != null) {
+                Text(
+                    text = context.getString(
+                        if (keepAliveOk) R.string.shizuku_keepalive_ok else R.string.shizuku_keepalive_failed,
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (keepAliveOk) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.syncclipboard.mobile.ui
 
 import android.app.Application
+import android.content.Intent
 import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +11,7 @@ import com.syncclipboard.mobile.core.SettingsStore
 import com.syncclipboard.mobile.core.SyncClient
 import com.syncclipboard.mobile.core.SyncErrorKind
 import com.syncclipboard.mobile.core.asSyncException
+import com.syncclipboard.mobile.shizuku.ShizukuAvailability
 import com.syncclipboard.mobile.shizuku.ShizukuManager
 import com.syncclipboard.mobile.sync.PermissionHelper
 import com.syncclipboard.mobile.sync.SyncForegroundService
@@ -32,10 +34,12 @@ data class UiState(
     val serviceRunning: Boolean = false,
     val batteryOptExempt: Boolean = false,
     val accessibilityEnabled: Boolean = false,
-    /** Shizuku app is installed and its binder is alive. */
-    val shizukuRunning: Boolean = false,
-    /** Shizuku is running AND this app has been granted access. */
-    val shizukuGranted: Boolean = false,
+    /** Full Shizuku availability, drives which affordance the card shows. */
+    val shizuku: ShizukuAvailability = ShizukuAvailability.NOT_INSTALLED,
+    /** True when the user permanently denied Shizuku access (must grant in-app). */
+    val shizukuPermanentlyDenied: Boolean = false,
+    /** Last keep-alive apply status, surfaced so the user sees it worked. null = none. */
+    val shizukuKeepAliveOk: Boolean? = null,
     val testing: Boolean = false,
     /** Result of the last connection test: null = none, true = ok, false = failed. */
     val testOk: Boolean? = null,
@@ -78,15 +82,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             it.copy(
                 batteryOptExempt = PermissionHelper.isIgnoringBatteryOptimizations(app),
                 accessibilityEnabled = PermissionHelper.isAccessibilityServiceEnabled(app),
-                shizukuRunning = ShizukuManager.isRunning(),
-                shizukuGranted = ShizukuManager.hasPermission(),
+                shizuku = ShizukuManager.availability(app),
+                shizukuPermanentlyDenied = ShizukuManager.isPermanentlyDenied(),
+                shizukuKeepAliveOk = ShizukuManager.lastKeepAliveOk,
                 serviceRunning = settings.serviceEnabled,
             )
         }
     }
-
-    /** Ask Shizuku for access; the result arrives via the listener wired in MainActivity. */
-    fun requestShizuku() = ShizukuManager.requestPermission()
 
     private fun currentConfig(): ServerConfig = _ui.value.let {
         ServerConfig(
@@ -157,10 +159,30 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         _ui.update { it.copy(serviceRunning = false) }
     }
 
-    /** Prompt for Shizuku access (no-op if unavailable / already granted). */
-    fun requestShizuku() {
-        ShizukuManager.requestPermission()
+    /**
+     * Handle a tap on the Shizuku card's action button. The right move depends on state:
+     *  - READY: nothing to do.
+     *  - NEEDS_PERMISSION: try the in-app permission prompt; if it can't be shown
+     *    (permanently denied), fall back to opening the Shizuku app to grant manually.
+     *  - NOT_RUNNING: open the Shizuku app so the user can start the service.
+     *  - NOT_INSTALLED: open the store/releases page to install it.
+     *
+     * Returns an [Intent] the Activity should launch, or null when the action was handled
+     * in-process (permission prompt shown) and no navigation is needed.
+     */
+    fun onShizukuAction(): Intent? {
+        val app = getApplication<Application>()
+        return when (ShizukuManager.availability(app)) {
+            ShizukuAvailability.READY -> null
+            ShizukuAvailability.NEEDS_PERMISSION ->
+                if (ShizukuManager.requestPermission()) null else ShizukuManager.launchShizukuIntent(app)
+            ShizukuAvailability.NOT_RUNNING -> ShizukuManager.launchShizukuIntent(app)
+            ShizukuAvailability.NOT_INSTALLED -> ShizukuManager.installShizukuIntent()
+        }
     }
+
+    /** Fallback install target when the market intent can't be resolved on the device. */
+    fun shizukuInstallFallbackIntent(): Intent = ShizukuManager.installShizukuFallbackIntent()
 
     private inline fun MutableStateFlow<UiState>.update(block: (UiState) -> UiState) {
         value = block(value)
