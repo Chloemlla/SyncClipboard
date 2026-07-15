@@ -6,11 +6,13 @@ import com.syncclipboard.mobile.core.ProfileDto
 import com.syncclipboard.mobile.core.RealtimeChannel
 import com.syncclipboard.mobile.core.ServerConfig
 import com.syncclipboard.mobile.core.SyncClient
+import com.syncclipboard.mobile.shizuku.ShizukuManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -59,8 +61,16 @@ class SyncEngine(
     private val wake = Channel<Unit>(Channel.CONFLATED)
     private var lastRealtimeAttempt: Long = 0L
 
+    // Shizuku-backed background clipboard read (device -> server) for when the
+    // accessibility service isn't enabled. Runs at shell UID, so it can read the
+    // clipboard in the background where the app process cannot.
+    private var shizukuPushJob: Job? = null
+
     fun start(scope: CoroutineScope) {
         if (pullJob?.isActive == true) return
+        if (config.pushEnabled) {
+            shizukuPushJob = scope.launch(Dispatchers.IO) { shizukuPushLoop() }
+        }
         if (!config.pullEnabled) {
             // Realtime only serves the pull direction; with pull off we just report ready.
             SyncState.setStatus(SyncStatus.CONNECTED)
@@ -72,9 +82,31 @@ class SyncEngine(
     fun stop() {
         pullJob?.cancel()
         pullJob = null
+        shizukuPushJob?.cancel()
+        shizukuPushJob = null
         realtime?.disconnect()
         realtime = null
         realtimeConnected = false
+    }
+
+    /**
+     * Poll the clipboard via Shizuku and push changes. This is the background push path
+     * that does NOT require the accessibility service. It stays cheap when Shizuku is
+     * absent (long idle sleep) and dedups against [lastSyncedHash], so it coexists safely
+     * with the accessibility-driven push (whichever observes a copy first wins).
+     */
+    private suspend fun shizukuPushLoop() {
+        while (currentCoroutineContext().isActive) {
+            val ready = runCatching { ShizukuManager.isReady() }.getOrDefault(false)
+            if (ready) {
+                val text = runCatching { ShizukuManager.readClipboardText() }.getOrNull()
+                if (!text.isNullOrEmpty()) {
+                    runCatching { pushText(text) }
+                        .onFailure { Log.w(TAG, "shizuku push failed", it) }
+                }
+            }
+            delay(if (ready) SHIZUKU_POLL_MS else SHIZUKU_IDLE_MS)
+        }
     }
 
     private suspend fun pullLoop() {
@@ -186,5 +218,11 @@ class SyncEngine(
         /** Backoff ceiling for repeated poll failures. */
         private const val MAX_BACKOFF_MS = 60_000L
         private const val MAX_BACKOFF_SHIFT = 5
+
+        /** Shizuku clipboard poll cadence while it's the active push path. */
+        private const val SHIZUKU_POLL_MS = 1_500L
+
+        /** Idle sleep when Shizuku isn't ready, so the loop is nearly free. */
+        private const val SHIZUKU_IDLE_MS = 10_000L
     }
 }

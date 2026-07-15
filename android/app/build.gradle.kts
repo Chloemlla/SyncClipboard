@@ -43,6 +43,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        aidl = true
     }
 
     val releaseSigningConfig = if (hasReleaseSigningConfig) {
@@ -116,6 +117,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     // Real-time push over the same /SyncClipboardHub SignalR feed the desktop client uses.
     implementation("com.microsoft.signalr:signalr:8.0.11")
+    // Shizuku: run privileged shell operations (keep-alive whitelisting + background
+    // clipboard reads) via a UserService bound at the shell (adb) UID.
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")

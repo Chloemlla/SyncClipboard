@@ -11,11 +11,13 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.syncclipboard.mobile.MainActivity
 import com.syncclipboard.mobile.R
 import com.syncclipboard.mobile.core.ServerConfig
 import com.syncclipboard.mobile.core.SettingsStore
+import com.syncclipboard.mobile.shizuku.ShizukuManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -102,9 +104,26 @@ class SyncForegroundService : Service() {
         }
         settings.serviceEnabled = true
         acquireWakeLock()
+        applyShizukuKeepAlive()
         val newEngine = SyncEngine(config, clipboard)
         engine = newEngine
         newEngine.start(scope)
+    }
+
+    /**
+     * If Shizuku is available and granted, use its shell privileges to whitelist us
+     * from Doze and pin the standby bucket to active — the strongest keep-alive we can
+     * apply without root. No-op (and silent) when Shizuku isn't ready.
+     */
+    private fun applyShizukuKeepAlive() {
+        scope.launch {
+            runCatching {
+                if (ShizukuManager.isReady()) {
+                    val log = ShizukuManager.applyKeepAlive(packageName)
+                    if (log != null) Log.i(TAG, "shizuku keep-alive:\n$log")
+                }
+            }.onFailure { Log.w(TAG, "shizuku keep-alive failed", it) }
+        }
     }
 
     private fun acquireWakeLock() {
@@ -215,6 +234,7 @@ class SyncForegroundService : Service() {
     }
 
     companion object {
+        private const val TAG = "SyncForegroundService"
         private const val CHANNEL_ID = "syncclipboard_sync"
         private const val NOTIFICATION_ID = 1001
         private const val WAKELOCK_TAG = "SyncClipboard::SyncWakeLock"

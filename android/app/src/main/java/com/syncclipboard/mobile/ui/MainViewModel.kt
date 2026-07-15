@@ -10,6 +10,7 @@ import com.syncclipboard.mobile.core.SettingsStore
 import com.syncclipboard.mobile.core.SyncClient
 import com.syncclipboard.mobile.core.SyncErrorKind
 import com.syncclipboard.mobile.core.asSyncException
+import com.syncclipboard.mobile.shizuku.ShizukuManager
 import com.syncclipboard.mobile.sync.PermissionHelper
 import com.syncclipboard.mobile.sync.SyncForegroundService
 import com.syncclipboard.mobile.sync.SyncState
@@ -31,6 +32,10 @@ data class UiState(
     val serviceRunning: Boolean = false,
     val batteryOptExempt: Boolean = false,
     val accessibilityEnabled: Boolean = false,
+    /** Shizuku app is installed and its binder is alive. */
+    val shizukuRunning: Boolean = false,
+    /** Shizuku is running AND this app has been granted access. */
+    val shizukuGranted: Boolean = false,
     val testing: Boolean = false,
     /** Result of the last connection test: null = none, true = ok, false = failed. */
     val testOk: Boolean? = null,
@@ -73,10 +78,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             it.copy(
                 batteryOptExempt = PermissionHelper.isIgnoringBatteryOptimizations(app),
                 accessibilityEnabled = PermissionHelper.isAccessibilityServiceEnabled(app),
+                shizukuRunning = ShizukuManager.isRunning(),
+                shizukuGranted = ShizukuManager.hasPermission(),
                 serviceRunning = settings.serviceEnabled,
             )
         }
     }
+
+    /** Ask Shizuku for access; the result arrives via the listener wired in MainActivity. */
+    fun requestShizuku() = ShizukuManager.requestPermission()
 
     private fun currentConfig(): ServerConfig = _ui.value.let {
         ServerConfig(
@@ -145,6 +155,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun stopService() {
         SyncForegroundService.stop(getApplication())
         _ui.update { it.copy(serviceRunning = false) }
+    }
+
+    /** Prompt for Shizuku access (no-op if unavailable / already granted). */
+    fun requestShizuku() {
+        ShizukuManager.requestPermission()
     }
 
     private inline fun MutableStateFlow<UiState>.update(block: (UiState) -> UiState) {

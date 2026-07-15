@@ -29,6 +29,8 @@
     <string name="perm_battery">忽略电池优化（保活）</string>
     <string name="perm_accessibility">剪贴板捕获（无障碍）</string>
     <string name="hint_push_requires_accessibility">Android 禁止后台读取剪贴板。开启无障碍服务后，应用可捕获其他应用中的复制内容并推送到服务器。拉取无需此权限。</string>
+    <string name="perm_shizuku">Shizuku（高级保活）</string>
+    <string name="hint_shizuku_active">Shizuku 已激活。它会应用 Doze 白名单保活，并可在后台读取剪贴板——因此即使不开启无障碍服务，推送也能工作。</string>
 
     <string name="state_granted">已授予</string>
     <string name="state_missing">未授予</string>

@@ -264,7 +264,23 @@ fun MainScreen(viewModel: MainViewModel) {
                     actionLabel = context.getString(R.string.action_open),
                     onAction = { context.startActivity(PermissionHelper.accessibilitySettingsIntent()) },
                 )
-                if (ui.pushEnabled && !ui.accessibilityEnabled) {
+                // Shizuku: optional advanced backend for keep-alive + accessibility-free
+                // background clipboard read. Only surfaced when the app is installed/running.
+                if (ui.shizukuRunning) {
+                    PermissionCard(
+                        label = context.getString(R.string.perm_shizuku),
+                        granted = ui.shizukuGranted,
+                        actionLabel = context.getString(R.string.action_grant),
+                        onAction = { viewModel.requestShizuku() },
+                    )
+                }
+                if (ui.shizukuGranted) {
+                    InfoCard(
+                        title = context.getString(R.string.perm_shizuku),
+                        icon = Icons.Outlined.Security,
+                        lines = listOf(context.getString(R.string.hint_shizuku_active)),
+                    )
+                } else if (ui.pushEnabled && !ui.accessibilityEnabled) {
                     InfoCard(
                         title = context.getString(R.string.perm_accessibility),
                         icon = Icons.Outlined.Info,

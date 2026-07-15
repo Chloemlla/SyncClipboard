@@ -20,3 +20,11 @@
 -dontwarn com.google.gson.**
 -dontwarn io.reactivex.rxjava3.**
 -dontwarn org.slf4j.**
+
+# Shizuku: the library binds our UserService reflectively and the AIDL Stub is
+# invoked across processes, so both must survive R8. The user service also reflects
+# into the hidden android.content.IClipboard API.
+-keep class rikka.shizuku.** { *; }
+-dontwarn rikka.shizuku.**
+-keep class com.syncclipboard.mobile.shizuku.** { *; }
+-keep interface com.syncclipboard.mobile.shizuku.IShizukuUserService { *; }
