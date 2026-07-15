@@ -12,16 +12,16 @@ import android.view.accessibility.AccessibilityEvent
  * having an active window, which lifts that restriction, so we can observe copies
  * made in other apps and forward them to the sync engine.
  *
- * We only read clipboard TEXT and only forward it to the user's configured LAN
- * server via [SyncForegroundService]. No accessibility node content is inspected
+ * We read clipboard TEXT and IMAGE only and forward them to the user's configured
+ * LAN server via [SyncForegroundService]. No accessibility node content is inspected
  * or stored.
  */
 class ClipboardAccessibilityService : AccessibilityService() {
 
     private var clipboard: ClipboardBridge? = null
     private val clipListener = ClipboardManager.OnPrimaryClipChangedListener {
-        val text = clipboard?.read() ?: return@OnPrimaryClipChangedListener
-        SyncForegroundService.deliverLocalText(text)
+        val content = clipboard?.readContent() ?: return@OnPrimaryClipChangedListener
+        SyncForegroundService.deliverLocalContent(content)
     }
 
     override fun onServiceConnected() {

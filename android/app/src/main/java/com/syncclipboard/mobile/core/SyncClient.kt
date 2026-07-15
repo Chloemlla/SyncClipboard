@@ -6,7 +6,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 import java.net.UnknownHostException
@@ -20,7 +19,7 @@ import javax.net.ssl.SSLException
  *
  * Endpoints used:
  *  - GET/PUT  /SyncClipboard.json  (current clipboard profile)
- *  - GET/PUT  /file/{name}         (large-text transfer data)
+ *  - GET/PUT  /file/{name}         (transfer data: large text or binary image)
  *
  * Auth is HTTP Basic (base64(user:password), UTF-8). The built-in LAN server
  * serves plain HTTP by default, so callers should treat traffic as unencrypted
@@ -33,9 +32,9 @@ class SyncClient(config: ServerConfig) {
 
     private val http: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .callTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
+        .callTimeout(120, TimeUnit.SECONDS)
         .build()
 
     /**
@@ -97,6 +96,18 @@ class SyncClient(config: ServerConfig) {
 
     /** GET /file/{name} — full UTF-8 text for a large-text profile. */
     fun getFileText(dataName: String): String {
+        val bytes = getFileBytes(dataName)
+        return bytes.toString(Charsets.UTF_8)
+    }
+
+    /** PUT /file/{name} — upload BOM-less UTF-8 bytes for large text. */
+    fun putFileText(dataName: String, content: String) {
+        val bytes = content.toByteArray(Charsets.UTF_8) // Kotlin UTF-8 has no BOM
+        putFileBytes(dataName, bytes)
+    }
+
+    /** GET /file/{name} as raw bytes (images / transfer blobs). */
+    fun getFileBytes(dataName: String): ByteArray {
         val request = Request.Builder()
             .url(fileUrl(dataName))
             .header("Authorization", authHeader)
@@ -104,13 +115,12 @@ class SyncClient(config: ServerConfig) {
             .build()
         http.newCall(request).execute().use { resp ->
             if (!resp.isSuccessful) throw IOException("GET file failed: HTTP ${resp.code}")
-            return resp.body?.string().orEmpty()
+            return resp.body?.bytes() ?: ByteArray(0)
         }
     }
 
-    /** PUT /file/{name} — upload BOM-less UTF-8 bytes for large text. */
-    fun putFileText(dataName: String, content: String) {
-        val bytes = content.toByteArray(Charsets.UTF_8) // Kotlin UTF-8 has no BOM
+    /** PUT /file/{name} raw bytes (images / transfer blobs). */
+    fun putFileBytes(dataName: String, bytes: ByteArray) {
         val request = Request.Builder()
             .url(fileUrl(dataName))
             .header("Authorization", authHeader)
@@ -145,6 +155,16 @@ class SyncClient(config: ServerConfig) {
     }
 
     /**
+     * Push an image: upload raw bytes first, then PUT an Image profile whose
+     * hash matches desktop FileProfile (fileName|contentSha256).
+     */
+    fun pushImage(fileName: String, contentBytes: ByteArray) {
+        if (contentBytes.isEmpty()) throw IOException("empty image")
+        putFileBytes(fileName, contentBytes)
+        putProfile(ImageSync.profile(fileName, contentBytes))
+    }
+
+    /**
      * Resolve the full text of a text profile, downloading the transfer file
      * when [ProfileDto.hasData] is set. Returns null for non-text profiles.
      */
@@ -152,6 +172,17 @@ class SyncClient(config: ServerConfig) {
         if (profile.type != ProfileDto.TYPE_TEXT) return null
         val name = profile.dataName
         return if (profile.hasData && !name.isNullOrBlank()) getFileText(name) else profile.text
+    }
+
+    /**
+     * Download image transfer bytes for an Image profile. Returns null when the
+     * profile is not an image or has no dataName.
+     */
+    fun resolveImageBytes(profile: ProfileDto): ByteArray? {
+        if (profile.type != ProfileDto.TYPE_IMAGE) return null
+        val name = profile.dataName?.takeIf { it.isNotBlank() } ?: profile.text.takeIf { it.isNotBlank() }
+        if (name.isNullOrBlank()) return null
+        return getFileBytes(name)
     }
 
     private fun fileUrl(dataName: String): HttpUrl =

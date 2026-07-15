@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">SyncClipboard</string>
     <string name="accessibility_service_label">SyncClipboard clipboard capture</string>
-    <string name="accessibility_service_description">Lets SyncClipboard read copied text in the background so it can push it to your LAN server. Only clipboard text is read; screen content is not inspected.</string>
+    <string name="accessibility_service_description">Lets SyncClipboard read copied text and images in the background so it can push them to your LAN server. Only clipboard content is read; screen content is not inspected.</string>
 
     <string name="channel_sync">Clipboard sync</string>
     <string name="channel_sync_desc">Ongoing notification for background clipboard synchronization.</string>
@@ -28,9 +28,9 @@
 
     <string name="perm_battery">Ignore battery optimization</string>
     <string name="perm_accessibility">Clipboard capture (accessibility)</string>
-    <string name="hint_push_requires_accessibility">Android blocks background clipboard reads. Enabling the accessibility service lets the app capture copies from other apps and push them to the server. Pull works without it.</string>
+    <string name="hint_push_requires_accessibility">Android blocks background clipboard reads. Enabling the accessibility service lets the app capture text and images from other apps and push them to the server. Pull works without it. Image push requires accessibility (Shizuku currently pushes text only).</string>
     <string name="perm_shizuku">Shizuku (advanced keep-alive)</string>
-    <string name="hint_shizuku_active">Shizuku is active. It applies Doze-whitelist keep-alive and can read the clipboard in the background — so push works even without the accessibility service.</string>
+    <string name="hint_shizuku_active">Shizuku is active. It applies Doze-whitelist keep-alive and can read clipboard text in the background. For image push, enable the accessibility service as well.</string>
     <string name="shizuku_state_ready">Active — privileged keep-alive and background clipboard read are on.</string>
     <string name="shizuku_state_needs_permission">Running, but access hasn\'t been granted yet.</string>
     <string name="shizuku_state_denied">Access was permanently denied. Grant it from the Shizuku app.</string>

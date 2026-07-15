@@ -168,6 +168,12 @@ class SyncForegroundService : Service() {
         scope.launch { runCatching { current.pushText(text) } }
     }
 
+    /** Called by the accessibility service when text or image is observed. */
+    fun submitLocalContent(content: ClipboardContent) {
+        val current = engine ?: return
+        scope.launch { runCatching { current.pushContent(content) } }
+    }
+
     private fun observeStatusForNotification() {
         scope.launch {
             SyncState.snapshot.collectLatest { snapshot ->
@@ -254,6 +260,10 @@ class SyncForegroundService : Service() {
 
         fun deliverLocalText(text: String) {
             activeEngineHolder?.submitLocalText(text)
+        }
+
+        fun deliverLocalContent(content: ClipboardContent) {
+            activeEngineHolder?.submitLocalContent(content)
         }
 
         fun start(context: Context) {
