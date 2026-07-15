@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
@@ -45,6 +46,11 @@ class SyncForegroundService : Service() {
 
     @Volatile
     private var engine: SyncEngine? = null
+
+    // The app's colored launcher icon, shown as the notification's large icon so the
+    // ongoing notification carries the real app logo (not just the monochrome status
+    // glyph). Decoded once and reused across the frequent status-driven rebuilds.
+    private val largeIcon by lazy { BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher) }
 
     override fun onCreate() {
         super.onCreate()
@@ -210,6 +216,7 @@ class SyncForegroundService : Service() {
         }
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
+            .setLargeIcon(largeIcon)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(statusText)
             .setOngoing(true)
