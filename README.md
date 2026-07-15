@@ -4,7 +4,7 @@
 中文 | [English](docs/README_EN.md)  
 
 > [!IMPORTANT]
-> **本仓库为 [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) 分支**，在上游 [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard) 基础上，重点新增并持续维护一个**全新的原生 Android 客户端**（`android/`，包名 `com.syncclipboard.mobile`）。上游本身不含官方原生安卓客户端，仅提供基于第三方工具的方案。
+> **本仓库为 [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) 分支**，在上游 [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard) 基础上，重点新增并持续维护一个**全新的原生 Android 客户端**（`android/`，包名 `com.chloemlla.syncclipboard.mobile`）。上游本身不含官方原生安卓客户端，仅提供基于第三方工具的方案。
 >
 > 本分支的主要改进：
 >
@@ -282,7 +282,7 @@ paru -Sy syncclipboard-desktop
 ### Android
 #### 使用本仓库原生客户端（推荐，本 fork）
 
-本分支维护的原生 Android 客户端，源码位于 [`android/`](android/)，包名 `com.syncclipboard.mobile`。
+本分支维护的原生 Android 客户端，源码位于 [`android/`](android/)，包名 `com.chloemlla.syncclipboard.mobile`。
 
 - **Text / Image / File / Group** 与 Windows / Linux / macOS 桌面端双向同步
 - SignalR 实时唤醒 + 自适应轮询兜底

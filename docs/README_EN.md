@@ -3,7 +3,7 @@
 [中文](../README.md) | English
 
 > [!IMPORTANT]
-> **This repository is the [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) fork.** On top of upstream [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard), it adds and actively maintains a **brand-new native Android client** (`android/`, package `com.syncclipboard.mobile`). Upstream ships no official native Android client — only third-party-tool-based approaches.
+> **This repository is the [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) fork.** On top of upstream [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard), it adds and actively maintains a **brand-new native Android client** (`android/`, package `com.chloemlla.syncclipboard.mobile`). Upstream ships no official native Android client — only third-party-tool-based approaches.
 >
 > Key improvements in this fork:
 >
@@ -276,7 +276,7 @@ Multiple `--command-{command-name}` arguments are supported, multiple commands a
 ### Android
 #### Use this repo's native client (recommended, this fork)
 
-Native Android client maintained in this fork. Source: [`android/`](../android/), package `com.syncclipboard.mobile`.
+Native Android client maintained in this fork. Source: [`android/`](../android/), package `com.chloemlla.syncclipboard.mobile`.
 
 - **Text / Image / File / Group** bidirectional sync with Windows / Linux / macOS desktop
 - SignalR real-time wake + adaptive polling fallback

@@ -4,7 +4,7 @@ Kotlin Android client for background LAN clipboard synchronization with the
 SyncClipboard Windows / Linux / macOS desktop clients (and the built-in server),
 over the HTTP(S) WebDAV storage protocol.
 
-Package: `com.syncclipboard.mobile` · Sources: `android/`
+Package: `com.chloemlla.syncclipboard.mobile` · Sources: `android/`
 
 ## Features
 

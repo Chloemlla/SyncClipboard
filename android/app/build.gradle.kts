@@ -23,11 +23,11 @@ val hasReleaseSigningConfig = listOf(
 ).all { it.isNotBlank() }
 
 android {
-    namespace = "com.syncclipboard.mobile"
+    namespace = "com.chloemlla.syncclipboard.mobile"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.syncclipboard.mobile"
+        applicationId = "com.chloemlla.syncclipboard.mobile"
         minSdk = 26
         targetSdk = 35
         versionCode = providers.environmentVariable("SYNCCLIPBOARD_ANDROID_VERSION_CODE")

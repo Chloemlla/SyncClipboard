@@ -26,5 +26,5 @@
 # into the hidden android.content.IClipboard API.
 -keep class rikka.shizuku.** { *; }
 -dontwarn rikka.shizuku.**
--keep class com.syncclipboard.mobile.shizuku.** { *; }
--keep interface com.syncclipboard.mobile.shizuku.IShizukuUserService { *; }
+-keep class com.chloemlla.syncclipboard.mobile.shizuku.** { *; }
+-keep interface com.chloemlla.syncclipboard.mobile.shizuku.IShizukuUserService { *; }
