@@ -1130,6 +1130,6 @@ This operation cannot be undone.</value>
     <value>Download Image?</value>
   </data>
   <data name="ConfirmDownloadImageMessage" xml:space="preserve">
-    <value>Received a remote image "{0}". Download and save it to the local clipboard?</value>
+    <value>Received a remote image "{0}". Download and save it to Pictures/SyncClipboard and the local clipboard?</value>
   </data>
 </root>

@@ -496,6 +496,11 @@ public class DownloadService : Service
             _localProfileCache = remoteProfile;
             await _logger.WriteAsync(SERVICE_NAME, "Success set Local clipboard with remote profile: " + remoteProfile.ShortDisplayText);
 
+            if (remoteProfile is ImageProfile imageProfile)
+            {
+                await SaveImageToGallery(imageProfile, cancelToken);
+            }
+
             await Task.Delay(TimeSpan.FromMilliseconds(50), cancelToken);   // 设置本地剪贴板可能有延迟，延迟发送事件
             if (_syncConfig.NotifyOnDownloaded)
             {
@@ -504,6 +509,27 @@ public class DownloadService : Service
         }
     }
 
+
+
+    private async Task SaveImageToGallery(ImageProfile imageProfile, CancellationToken token)
+    {
+        try
+        {
+            var savedPath = await GallerySaver.SaveImageAsync(imageProfile.FullPath, imageProfile.FileName, token);
+            if (savedPath is null)
+            {
+                await _logger.WriteAsync(LOG_TAG, $"Failed to save image to gallery: {imageProfile.ShortDisplayText}");
+            }
+            else
+            {
+                await _logger.WriteAsync(LOG_TAG, $"Saved image to gallery: {savedPath}");
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            await _logger.WriteAsync(LOG_TAG, $"Save image to gallery failed: {ex.Message}");
+        }
+    }
 
     private async Task<bool> ConfirmImageDownloadIfNeeded(Profile profile, CancellationToken token)
     {

@@ -1128,6 +1128,6 @@ Esc：关闭面板</value>
     <value>是否下载图片？</value>
   </data>
   <data name="ConfirmDownloadImageMessage" xml:space="preserve">
-    <value>收到远程图片“{0}”，是否下载并保存到本地剪贴板？</value>
+    <value>收到远程图片“{0}”，是否下载并保存到“图片/SyncClipboard”相册与本地剪贴板？</value>
   </data>
 </root>
