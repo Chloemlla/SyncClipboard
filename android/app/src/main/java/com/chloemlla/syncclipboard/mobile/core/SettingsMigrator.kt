@@ -132,8 +132,13 @@ object SettingsMigrator {
     /** Export current settings for other packages (same signature ContentProvider). */
     fun exportSnapshot(context: Context, store: SettingsStore): Snapshot {
         val snap = Snapshot(store.load(), store.serviceEnabled)
-        writeLocalSnapshot(context, snap)
-        markerPrefs(context).edit().putBoolean(KEY_EXPORTED, true).apply()
+        // Do not overwrite a previously exported non-empty snapshot with an empty one
+        // (e.g. modern package first launch before import).
+        val existing = loadLocalSnapshot(context)
+        if (snap.config.baseUrl.isNotBlank() || existing == null || existing.config.baseUrl.isBlank()) {
+            writeLocalSnapshot(context, snap)
+            markerPrefs(context).edit().putBoolean(KEY_EXPORTED, true).apply()
+        }
         return snap
     }
 
