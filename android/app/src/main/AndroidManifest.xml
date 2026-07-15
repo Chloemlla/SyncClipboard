@@ -14,6 +14,12 @@
     <!-- Shizuku: advanced keep-alive + accessibility-free background clipboard read. -->
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
 
+    <!-- Same-signature read of sibling package settings during applicationId rename. -->
+    <permission
+        android:name="com.chloemlla.syncclipboard.mobile.permission.READ_LEGACY_SETTINGS"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.chloemlla.syncclipboard.mobile.permission.READ_LEGACY_SETTINGS" />
+
     <application
         android:name=".SyncClipboardApp"
         android:allowBackup="false"
@@ -31,6 +37,23 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Legacy package: allow modern package to request a settings re-export. -->
+            <intent-filter>
+                <action android:name="com.syncclipboard.mobile.action.EXPORT_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Transparent export entry for migration; same signature only. -->
+        <activity
+            android:name=".ExportSettingsActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="com.syncclipboard.mobile.action.EXPORT_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
@@ -51,6 +74,7 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -61,6 +85,16 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!--
+          Cross-package settings export for the applicationId rename.
+          Authority is ${applicationId}.migration so legacy and modern packages
+          each expose their own provider; modern queries the legacy authority.
+        -->
+        <provider
+            android:name=".core.SettingsMigrationProvider"
+            android:authorities="${applicationId}.migration"
+            android:exported="true"
+            android:permission="com.chloemlla.syncclipboard.mobile.permission.READ_LEGACY_SETTINGS" />
 
         <provider
             android:name="rikka.shizuku.ShizukuProvider"

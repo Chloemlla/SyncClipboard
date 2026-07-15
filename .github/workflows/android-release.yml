@@ -66,14 +66,14 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle assembleRelease --no-daemon --warning-mode all
+        run: gradle assembleProductionRelease assembleLegacyMigrateRelease --no-daemon --warning-mode all
 
       - name: Collect release assets
         run: |
           mkdir -p "$GITHUB_WORKSPACE/android-assets"
           VERSION="${SYNCCLIPBOARD_ANDROID_VERSION_NAME}"
-          APK_DIR="app/build/outputs/apk/release"
-          AGGREGATED_APK="$(find "$APK_DIR" -maxdepth 1 -type f \( -name "app-universal-release.apk" -o -name "app-universal-release-unsigned.apk" -o -name "app-release.apk" -o -name "app-release-unsigned.apk" \) | head -n 1)"
+          APK_DIR="app/build/outputs/apk/production/release"
+          AGGREGATED_APK="$(find "$APK_DIR" -maxdepth 1 -type f \( -name "*universal*release*.apk" -o -name "*universal*release*unsigned*.apk" -o -name "*production*release*.apk" -o -name "*production*release*unsigned*.apk" \) | head -n 1)"
           if [ -z "$AGGREGATED_APK" ]; then
             echo "::error::Release APK not found."
             ls -lh "$APK_DIR" || true
@@ -81,7 +81,7 @@ jobs:
           fi
           cp "$AGGREGATED_APK" "$GITHUB_WORKSPACE/android-assets/SyncClipboard_android_${VERSION}.apk"
           for variant in armeabi-v7a arm64-v8a x86 x86_64; do
-            VARIANT_APK="$(find "$APK_DIR" -maxdepth 1 -type f \( -name "app-${variant}-release.apk" -o -name "app-${variant}-release-unsigned.apk" \) | head -n 1)"
+            VARIANT_APK="$(find "$APK_DIR" -maxdepth 1 -type f \( -name "*${variant}*release*.apk" -o -name "*${variant}*release*unsigned*.apk" \) | head -n 1)"
             if [ -n "$VARIANT_APK" ]; then
               cp "$VARIANT_APK" "$GITHUB_WORKSPACE/android-assets/SyncClipboard_android_${VERSION}_${variant}.apk"
             fi

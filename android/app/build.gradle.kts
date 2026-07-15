@@ -27,7 +27,6 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.chloemlla.syncclipboard.mobile"
         minSdk = 26
         targetSdk = 35
         versionCode = providers.environmentVariable("SYNCCLIPBOARD_ANDROID_VERSION_CODE")
@@ -38,6 +37,23 @@ android {
             .orNull
             ?.takeIf { it.isNotBlank() }
             ?: "1.0.0"
+    }
+
+    // dual applicationId strategy for settings migration:
+    //  - production: com.chloemlla.syncclipboard.mobile (new id)
+    //  - legacyMigrate: com.syncclipboard.mobile so existing installs can update,
+    //    export encrypted settings, and hand off to the production package.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("production") {
+            dimension = "distribution"
+            isDefault = true
+            applicationId = "com.chloemlla.syncclipboard.mobile"
+        }
+        create("legacyMigrate") {
+            dimension = "distribution"
+            applicationId = "com.syncclipboard.mobile"
+        }
     }
 
     buildFeatures {

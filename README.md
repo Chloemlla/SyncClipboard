@@ -294,7 +294,7 @@ paru -Sy syncclipboard-desktop
 安装：从本仓库 [Releases](../../releases) 下载 APK，或按 [android/README.md](android/README.md) 本地构建。  
 配置：服务器地址 `host:port`（默认 `5033`）、用户名/密码（默认 `admin`/`admin`），与桌面端同一服务器即可。
 
-完整说明、协议摘要与权限列表见 **[android/README.md](android/README.md)**。
+完整说明、协议摘要、权限列表与**旧包名配置迁移**见 **[android/README.md](android/README.md)**。
 
 #### 使用[SyncClipboard Mobile](https://github.com/Jeric-X/syncclipboard-mobile)（上游第三方）
 

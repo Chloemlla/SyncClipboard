@@ -39,19 +39,19 @@ jobs:
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
-        run: gradle testDebugUnitTest --no-daemon --warning-mode all
+        run: gradle testProductionDebugUnitTest --no-daemon --warning-mode all
 
       - name: Run Android lint
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
-        run: gradle lintDebug --no-daemon --warning-mode all
+        run: gradle lintProductionDebug --no-daemon --warning-mode all
 
       - name: Build debug APK for verification
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
-        run: gradle assembleDebug --no-daemon --warning-mode all
+        run: gradle assembleProductionDebug --no-daemon --warning-mode all
 
       - name: Upload verification reports
         if: always()
@@ -60,6 +60,6 @@ jobs:
           name: syncclipboard-android-verification-reports
           path: |
             android/app/build/reports/tests/**
-            android/app/build/reports/lint-results-debug.html
-            android/app/build/reports/lint-results-debug.xml
+            android/app/build/reports/lint-results-productionDebug.html
+            android/app/build/reports/lint-results-productionDebug.xml
           retention-days: 14

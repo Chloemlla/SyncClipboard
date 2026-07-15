@@ -288,7 +288,7 @@ Native Android client maintained in this fork. Source: [`android/`](../android/)
 Install from this repo's [Releases](../../../releases) or build per [android/README.md](../android/README.md).  
 Configure the same server as the desktop client (`host:port`, default `5033`, `admin`/`admin`).
 
-Full docs: **[android/README.md](../android/README.md)**.
+Full docs (including **settings migration** after the package rename): **[android/README.md](../android/README.md)**.
 
 #### Use [SyncClipboard Mobile](https://github.com/Jeric-X/syncclipboard-mobile) (upstream third-party)
 

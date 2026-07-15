@@ -120,6 +120,26 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun save() = settings.save(currentConfig())
 
+    /** Reload form fields after a settings migration import. */
+    fun reloadFromSettings() {
+        val config = settings.load()
+        _ui.update {
+            it.copy(
+                baseUrl = config.baseUrl,
+                username = config.username,
+                password = config.password,
+                pollSeconds = config.pollSeconds,
+                pullEnabled = config.pullEnabled,
+                pushEnabled = config.pushEnabled,
+                easyCopyImage = config.easyCopyImage,
+                downloadWebImage = config.downloadWebImage,
+                serviceRunning = settings.serviceEnabled,
+                testOk = null,
+                testMessage = "",
+            )
+        }
+    }
+
     /**
      * Probe the configured server on a background thread and surface a classified,
      * localized result so the user knows exactly what to fix before starting sync.

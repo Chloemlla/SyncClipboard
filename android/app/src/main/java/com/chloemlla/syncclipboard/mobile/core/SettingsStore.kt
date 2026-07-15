@@ -61,11 +61,16 @@ class SettingsStore(context: Context) {
             .putBoolean(KEY_EASY_COPY_IMAGE, config.easyCopyImage)
             .putBoolean(KEY_DOWNLOAD_WEB_IMAGE, config.downloadWebImage)
             .apply()
+        // Keep a local snapshot for package-rename migration / ContentProvider export.
+        SettingsMigrator.exportSnapshot(appContext, this)
     }
 
     var serviceEnabled: Boolean
         get() = prefs.getBoolean(KEY_SERVICE_ENABLED, false)
-        set(value) = prefs.edit().putBoolean(KEY_SERVICE_ENABLED, value).apply()
+        set(value) {
+            prefs.edit().putBoolean(KEY_SERVICE_ENABLED, value).apply()
+            SettingsMigrator.exportSnapshot(appContext, this)
+        }
 
     companion object {
         private const val STORE_NAME = "syncclipboard_settings"

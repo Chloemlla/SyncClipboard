@@ -61,19 +61,19 @@ jobs:
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
-        run: gradle testDebugUnitTest --no-daemon --warning-mode all
+        run: gradle testProductionDebugUnitTest --no-daemon --warning-mode all
 
       - name: Run Android lint
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
-        run: gradle lintDebug --no-daemon --warning-mode all
+        run: gradle lintProductionDebug --no-daemon --warning-mode all
 
       - name: Build release APK for verification
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
-        run: gradle assembleRelease --no-daemon --warning-mode all
+        run: gradle assembleProductionRelease assembleLegacyMigrateRelease --no-daemon --warning-mode all
 
       - name: Upload verification reports
         if: always()
@@ -82,8 +82,8 @@ jobs:
           name: syncclipboard-android-verification-reports
           path: |
             android/app/build/reports/tests/**
-            android/app/build/reports/lint-results-debug.html
-            android/app/build/reports/lint-results-debug.xml
+            android/app/build/reports/lint-results-productionDebug.html
+            android/app/build/reports/lint-results-productionDebug.xml
           retention-days: 14
 
   release:
@@ -165,14 +165,14 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle assembleRelease --no-daemon --warning-mode all
+        run: gradle assembleProductionRelease assembleLegacyMigrateRelease --no-daemon --warning-mode all
 
       - name: Prepare release assets
         run: |
           mkdir -p "$GITHUB_WORKSPACE/release-assets"
           VERSION="${SYNCCLIPBOARD_ANDROID_RELEASE_VERSION}"
-          APK_DIR="app/build/outputs/apk/release"
-          AGGREGATED_APK="$(find "$APK_DIR" -maxdepth 1 -type f \( -name "app-universal-release.apk" -o -name "app-release.apk" \) | head -n 1)"
+          APK_DIR="app/build/outputs/apk/production/release"
+          AGGREGATED_APK="$(find "$APK_DIR" -maxdepth 1 -type f \( -name "*universal*release*.apk" -o -name "*production*release*.apk" \) | head -n 1)"
 
           if [ -z "$AGGREGATED_APK" ]; then
             echo "::error::Aggregated signed release APK was not found."
@@ -183,7 +183,7 @@ jobs:
           cp "$AGGREGATED_APK" "$GITHUB_WORKSPACE/release-assets/SyncClipboard_android_${VERSION}.apk"
 
           for variant in armeabi-v7a arm64-v8a x86 x86_64; do
-            VARIANT_APK="$(find "$APK_DIR" -maxdepth 1 -type f -name "app-${variant}-release.apk" | head -n 1)"
+            VARIANT_APK="$(find "$APK_DIR" -maxdepth 1 -type f -name "*${variant}*release*.apk" | head -n 1)"
             if [ -n "$VARIANT_APK" ]; then
               cp "$VARIANT_APK" "$GITHUB_WORKSPACE/release-assets/SyncClipboard_android_${VERSION}_${variant}.apk"
             fi

@@ -66,6 +66,39 @@ foreground app or the active IME. A foreground service and battery exemption do
 accessibility service (or Shizuku for **text** only). *Writing* the clipboard
 (pull) is not restricted.
 
+## Settings migration (package rename)
+
+`applicationId` was renamed from `com.syncclipboard.mobile` to
+`com.chloemlla.syncclipboard.mobile`. Encrypted preferences cannot be read across
+UIDs, so migration is automatic when possible via a **same-signature
+ContentProvider**:
+
+1. Install a build that still uses the **legacy** id
+   (`legacyMigrate` flavor → `com.syncclipboard.mobile`) *or* keep the old app
+   installed after updating it once with a migrate-capable build.
+2. Install / open the **production** app (`com.chloemlla.syncclipboard.mobile`).
+3. On first launch, if the new app has no server URL, it queries
+   `content://com.syncclipboard.mobile.migration/settings` (signature permission)
+   and imports server URL, credentials, toggles, and service-enabled flag.
+4. If import succeeds and the old app had sync running, the new app restarts the
+   foreground service automatically.
+
+**Product flavors**
+
+| Flavor | applicationId | Purpose |
+|---|---|---|
+| `production` (default) | `com.chloemlla.syncclipboard.mobile` | Normal releases |
+| `legacyMigrate` | `com.syncclipboard.mobile` | Update path for existing installs so they can export settings |
+
+Recommended upgrade path for end users who already have the old package:
+
+1. Install `legacyMigrate` release over the old app (same id) → exports snapshot.
+2. Install `production` release → imports via ContentProvider.
+3. Uninstall the legacy app when satisfied.
+
+If only the production APK is installed on a clean device, there is nothing to
+import (manual re-entry of server settings is required).
+
 ## Quick start
 
 1. On desktop, enable the built-in server (default port `5033`, user/password
@@ -123,8 +156,10 @@ release APK). Both use Java 21 and a pinned Gradle version.
 ```bash
 # From repo root (or android/)
 cd android
-./gradlew :app:testDebugUnitTest
-./gradlew :app:assembleDebug
+./gradlew :app:testProductionDebugUnitTest
+./gradlew :app:assembleProductionDebug
+# Optional: legacy applicationId build for exporting settings from old installs
+./gradlew :app:assembleLegacyMigrateRelease
 ```
 
 Release signing reads `KEYSTORE_FILE` / `KEYSTORE_PASSWORD` / `KEY_ALIAS` /
