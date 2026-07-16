@@ -24,7 +24,8 @@ val hasReleaseSigningConfig = listOf(
 
 android {
     namespace = "com.chloemlla.syncclipboard.mobile"
-    compileSdk = 35
+    // androidx.core 1.17.0+ requires compileSdk 36+ (AAR metadata check).
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
