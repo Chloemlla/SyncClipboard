@@ -7,6 +7,7 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.IBinder
+import android.os.Build
 import android.util.Log
 import com.chloemlla.syncclipboard.mobile.BuildConfig
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -117,7 +118,15 @@ object ShizukuManager {
 
     /** Whether the Shizuku manager app is installed on the device. */
     fun isInstalled(context: Context): Boolean = runCatching {
-        context.packageManager.getPackageInfo(SHIZUKU_PACKAGE, 0)
+        if (Build.VERSION.SDK_INT >= 33) {
+            context.packageManager.getPackageInfo(
+                SHIZUKU_PACKAGE,
+                PackageManager.PackageInfoFlags.of(0),
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getPackageInfo(SHIZUKU_PACKAGE, 0)
+        }
         true
     }.getOrDefault(false)
 

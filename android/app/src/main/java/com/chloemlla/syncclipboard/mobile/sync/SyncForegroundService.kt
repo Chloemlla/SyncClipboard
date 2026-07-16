@@ -1,5 +1,6 @@
 package com.chloemlla.syncclipboard.mobile.sync
 
+import android.app.ForegroundServiceStartNotAllowedException
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -77,6 +78,13 @@ class SyncForegroundService : Service() {
                 stopEngineAndSelf()
                 return START_NOT_STICKY
             }
+            ACTION_TIMEOUT -> {
+                // dataSync FGS daily timeout (Android 15+): stop cleanly instead of crashing.
+                Log.w(TAG, "dataSync FGS timeout; stopping service")
+                SyncState.setStatus(SyncStatus.STOPPED, getString(R.string.status_stopped))
+                stopEngineAndSelf()
+                return START_NOT_STICKY
+            }
             ACTION_RESTART -> restartEngine()
             else -> if (engine == null) startEngine()
         }
@@ -92,12 +100,7 @@ class SyncForegroundService : Service() {
      */
     override fun onTaskRemoved(rootIntent: Intent?) {
         if (settings.serviceEnabled) {
-            val restart = Intent(applicationContext, SyncForegroundService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                applicationContext.startForegroundService(restart)
-            } else {
-                applicationContext.startService(restart)
-            }
+            startSafely(applicationContext)
         }
         super.onTaskRemoved(rootIntent)
     }
@@ -111,6 +114,17 @@ class SyncForegroundService : Service() {
         if (activeEngineHolder === this) activeEngineHolder = null
         scope.cancel()
         super.onDestroy()
+    }
+
+    /**
+     * Android 15+ enforces a daily timeout on dataSync foreground services.
+     * Stop promptly so the system does not force-kill the process.
+     */
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        Log.w(TAG, "onTimeout(startId=$startId, fgsType=$fgsType)")
+        SyncState.setStatus(SyncStatus.STOPPED, getString(R.string.status_stopped))
+        stopEngineAndSelf()
+        super.onTimeout(startId, fgsType)
     }
 
     private fun startEngine() {
@@ -435,26 +449,43 @@ class SyncForegroundService : Service() {
         }
 
         fun start(context: Context) {
-            val intent = Intent(context, SyncForegroundService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            startSafely(context)
         }
 
         fun restart(context: Context) {
             val intent = Intent(context, SyncForegroundService::class.java).setAction(ACTION_RESTART)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
-            }
+            startSafely(context, intent)
         }
 
         fun stop(context: Context) {
             val intent = Intent(context, SyncForegroundService::class.java).setAction(ACTION_STOP)
             context.startService(intent)
+        }
+
+        /**
+         * Android 12+ can refuse background FGS starts. Never crash the caller;
+         * BootReceiver / next foreground action can retry.
+         */
+        private fun startSafely(
+            context: Context,
+            intent: Intent = Intent(context, SyncForegroundService::class.java),
+        ) {
+            val appContext = context.applicationContext
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    appContext.startForegroundService(intent)
+                } else {
+                    appContext.startService(intent)
+                }
+            }.onFailure { error ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                    error is ForegroundServiceStartNotAllowedException
+                ) {
+                    Log.w(TAG, "background FGS start refused; will retry later", error)
+                } else {
+                    Log.w(TAG, "failed to start SyncForegroundService", error)
+                }
+            }
         }
     }
 }

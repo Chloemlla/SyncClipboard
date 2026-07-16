@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.activity.enableEdgeToEdge
 import com.chloemlla.syncclipboard.mobile.core.SettingsMigrator
 import com.chloemlla.syncclipboard.mobile.core.SettingsStore
 import com.chloemlla.syncclipboard.mobile.shizuku.ShizukuManager
@@ -28,6 +29,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Android 15+ enforces edge-to-edge for targetSdk 35+; keep transparent bars + insets.
+        enableEdgeToEdge()
         handleMigrationIntent(intent)
         ShizukuManager.addPermissionResultListener(shizukuPermissionListener)
         ShizukuManager.addStateListener(shizukuStateListener)

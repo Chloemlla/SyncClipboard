@@ -29,7 +29,8 @@ android {
 
     defaultConfig {
         minSdk = 26
-        targetSdk = 35
+        // Align with compileSdk and Android 17 adaptation path.
+        targetSdk = 37
         versionCode = providers.environmentVariable("SYNCCLIPBOARD_ANDROID_VERSION_CODE")
             .orNull
             ?.toIntOrNull()

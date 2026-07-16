@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SyncClipboard" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.SyncClipboard" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
     <!-- Transparent host for Compose Material3 dialogs launched from the service. -->
     <style name="Theme.SyncClipboard.Dialog" parent="android:Theme.Material.Light.Dialog.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>

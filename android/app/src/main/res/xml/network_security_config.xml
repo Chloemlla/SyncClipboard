@@ -5,6 +5,9 @@
   element does not support IP/CIDR ranges, so per-subnet scoping is not possible).
   Users syncing sensitive content should enable HTTPS on the server; the client
   supports https:// URLs, which are used verbatim when configured.
+
+  Network policy lives only here (no Manifest usesCleartextTraffic) so targetSdk 37
+  cleartext deprecation path still has a single explicit source of truth.
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true" />
