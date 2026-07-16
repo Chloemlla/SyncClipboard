@@ -435,6 +435,7 @@ class SyncForegroundService : Service() {
         private const val WAKELOCK_TAG = "SyncClipboard::SyncWakeLock"
         const val ACTION_STOP = "com.chloemlla.syncclipboard.mobile.STOP"
         const val ACTION_RESTART = "com.chloemlla.syncclipboard.mobile.RESTART"
+        const val ACTION_TIMEOUT = "com.chloemlla.syncclipboard.mobile.TIMEOUT"
 
         /** Live instance so the accessibility service can hand off captured text. */
         @Volatile
