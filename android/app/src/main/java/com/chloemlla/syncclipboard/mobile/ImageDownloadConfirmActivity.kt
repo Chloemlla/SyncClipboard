@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.chloemlla.syncclipboard.mobile.sync.ImageDownloadConfirmBridge
 import com.chloemlla.syncclipboard.mobile.ui.SyncClipboardTheme
+import com.chloemlla.syncclipboard.mobile.ui.SyncCardShape
+import com.chloemlla.syncclipboard.mobile.ui.SyncPreferenceShape
 
 /**
  * Dialog-style activity that asks whether a remote image should be downloaded
@@ -93,6 +95,8 @@ private fun ImageDownloadConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = SyncCardShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         icon = {
             Icon(
                 imageVector = Icons.Outlined.Image,
@@ -121,7 +125,10 @@ private fun ImageDownloadConfirmDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onConfirm) {
+            Button(
+                onClick = onConfirm,
+                shape = SyncPreferenceShape,
+            ) {
                 DialogButtonLabel(
                     icon = Icons.Outlined.Download,
                     text = stringResource(R.string.image_download_confirm_accept),

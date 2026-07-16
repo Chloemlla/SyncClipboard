@@ -4,7 +4,6 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -41,7 +39,6 @@ import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,12 +56,12 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -126,6 +123,7 @@ fun MainScreen(viewModel: MainViewModel) {
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
             )
@@ -137,14 +135,14 @@ fun MainScreen(viewModel: MainViewModel) {
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(PaddingValues(16.dp)),
+                .padding(PaddingValues(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 24.dp)),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 760.dp)
+                    .widthIn(max = 720.dp)
                     .align(Alignment.TopCenter),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 AppHeader(ui = ui, sync = sync)
 
@@ -171,6 +169,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     label = { Text(context.getString(R.string.label_server_url)) },
                     placeholder = { Text(context.getString(R.string.url_placeholder)) },
                     singleLine = true,
+                    shape = SyncPreferenceShape,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
@@ -178,6 +177,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     onValueChange = viewModel::onUsernameChange,
                     label = { Text(context.getString(R.string.label_username)) },
                     singleLine = true,
+                    shape = SyncPreferenceShape,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
@@ -185,6 +185,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     onValueChange = viewModel::onPasswordChange,
                     label = { Text(context.getString(R.string.label_password)) },
                     singleLine = true,
+                    shape = SyncPreferenceShape,
                     visualTransformation = if (passwordVisible) {
                         VisualTransformation.None
                     } else {
@@ -212,6 +213,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     label = { Text(context.getString(R.string.label_poll_seconds)) },
                     supportingText = { Text(context.getString(R.string.poll_hint)) },
                     singleLine = true,
+                    shape = SyncPreferenceShape,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -326,15 +328,18 @@ fun MainScreen(viewModel: MainViewModel) {
                             ensureNotificationPermission()
                             viewModel.startService()
                         },
+                        shape = SyncPreferenceShape,
                         modifier = Modifier.weight(1f),
                     ) { ButtonLabel(Icons.Outlined.PlayArrow, context.getString(R.string.action_start)) }
                     OutlinedButton(
                         onClick = { viewModel.applyAndRestart() },
+                        shape = SyncPreferenceShape,
                         modifier = Modifier.weight(1f),
                     ) { ButtonLabel(Icons.Outlined.Refresh, context.getString(R.string.action_apply)) }
                 }
                 OutlinedButton(
                     onClick = { showStopConfirm = true },
+                    shape = SyncPreferenceShape,
                     modifier = Modifier.fillMaxWidth(),
                 ) { ButtonLabel(Icons.Outlined.Stop, context.getString(R.string.action_stop)) }
 
@@ -359,6 +364,46 @@ fun MainScreen(viewModel: MainViewModel) {
 }
 
 @Composable
+private fun SoftSurface(
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    content: @Composable () -> Unit,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = SyncCardShape,
+        color = color,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        border = syncCardBorder(),
+        content = content,
+    )
+}
+
+@Composable
+private fun LeadingIconChip(
+    icon: ImageVector,
+    active: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f),
+    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(SyncIconChipShape)
+            .background(if (active) containerColor else MaterialTheme.colorScheme.surfaceContainerHigh),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(22.dp),
+            tint = if (active) contentColor else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
 private fun TestConnectionRow(
     testing: Boolean,
     testOk: Boolean?,
@@ -370,6 +415,7 @@ private fun TestConnectionRow(
         OutlinedButton(
             onClick = onTest,
             enabled = !testing,
+            shape = SyncPreferenceShape,
             modifier = Modifier.fillMaxWidth(),
         ) {
             if (testing) {
@@ -411,13 +457,7 @@ private fun AppHeader(ui: UiState, sync: com.chloemlla.syncclipboard.mobile.sync
     val running = sync.status == SyncStatus.CONNECTED || sync.status == SyncStatus.CONNECTING
     val host = ui.baseUrl.ifBlank { context.getString(R.string.status_not_configured) }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 2.dp,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
+    SoftSurface {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -428,7 +468,7 @@ private fun AppHeader(ui: UiState, sync: com.chloemlla.syncclipboard.mobile.sync
             ) {
                 Box(
                     modifier = Modifier
-                        .size(46.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center,
@@ -488,6 +528,7 @@ private fun AppHeader(ui: UiState, sync: com.chloemlla.syncclipboard.mobile.sync
     }
 }
 
+
 private fun connectionLabel(context: android.content.Context, status: SyncStatus): String =
     when (status) {
         SyncStatus.CONNECTED -> context.getString(R.string.pill_on)
@@ -506,9 +547,15 @@ private fun StatusPill(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(10.dp),
-        color = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = SyncPillShape,
+        color = if (active) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.88f)
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        },
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        border = null,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
@@ -542,32 +589,39 @@ private fun StatusPill(
     }
 }
 
+
 @Composable
 private fun StatusBanner(status: SyncStatus, message: String, lastText: String) {
     val context = LocalContext.current
     if (status == SyncStatus.STOPPED && lastText.isBlank()) return
 
     val isError = status == SyncStatus.ERROR
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        color = if (isError) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
-        border = BorderStroke(
-            width = 1.dp,
-            color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
-        ),
+    SoftSurface(
+        color = if (isError) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.secondaryContainer
+        },
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Icon(
-                imageVector = if (isError) Icons.Outlined.ErrorOutline else Icons.Outlined.CheckCircle,
-                contentDescription = null,
-                tint = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
+            LeadingIconChip(
+                icon = if (isError) Icons.Outlined.ErrorOutline else Icons.Outlined.CheckCircle,
+                containerColor = if (isError) {
+                    MaterialTheme.colorScheme.error.copy(alpha = 0.16f)
+                } else {
+                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.16f)
+                },
+                contentColor = if (isError) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.secondary
+                },
             )
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 val label = when (status) {
@@ -604,6 +658,7 @@ private fun StatusBanner(status: SyncStatus, message: String, lastText: String) 
     }
 }
 
+
 @Composable
 private fun ToggleCard(
     icon: ImageVector,
@@ -611,32 +666,23 @@ private fun ToggleCard(
     checked: Boolean,
     onChange: (Boolean) -> Unit,
 ) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
+    SoftSurface {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            LeadingIconChip(icon = icon, active = checked)
             Text(
                 text = label,
                 modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
             )
             Switch(checked = checked, onCheckedChange = onChange)
         }
     }
 }
+
 
 @Composable
 private fun PermissionCard(
@@ -646,25 +692,28 @@ private fun PermissionCard(
     onAction: () -> Unit,
 ) {
     val context = LocalContext.current
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
+    SoftSurface {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                imageVector = if (granted) Icons.Outlined.CheckCircle else Icons.Outlined.ErrorOutline,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = if (granted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
+            LeadingIconChip(
+                icon = if (granted) Icons.Outlined.CheckCircle else Icons.Outlined.ErrorOutline,
+                active = true,
+                containerColor = if (granted) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.errorContainer
+                },
+                contentColor = if (granted) {
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onErrorContainer
+                },
             )
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(text = label, style = MaterialTheme.typography.bodyMedium)
+                Text(text = label, style = MaterialTheme.typography.bodyLarge)
                 Text(
                     text = if (granted) {
                         context.getString(R.string.state_granted)
@@ -680,11 +729,15 @@ private fun PermissionCard(
                 )
             }
             if (!granted) {
-                OutlinedButton(onClick = onAction) { Text(actionLabel) }
+                OutlinedButton(
+                    onClick = onAction,
+                    shape = SyncPreferenceShape,
+                ) { Text(actionLabel) }
             }
         }
     }
 }
+
 
 @Composable
 private fun SectionTitle(
@@ -693,25 +746,14 @@ private fun SectionTitle(
     icon: ImageVector? = null,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (icon != null) {
-            Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-            }
+            LeadingIconChip(icon = icon)
         }
         Column(
             modifier = Modifier.weight(1f),
@@ -733,6 +775,7 @@ private fun SectionTitle(
     }
 }
 
+
 @Composable
 private fun InfoCard(
     title: String,
@@ -741,24 +784,20 @@ private fun InfoCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = SyncCardShape,
+        colors = syncCardColors(),
+        elevation = syncCardElevation(),
+        border = syncCardBorder(),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
+                LeadingIconChip(icon = icon)
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleSmall,
@@ -776,6 +815,7 @@ private fun InfoCard(
     }
 }
 
+
 @Composable
 private fun ConfirmActionDialog(
     title: String,
@@ -788,6 +828,8 @@ private fun ConfirmActionDialog(
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
+        shape = SyncCardShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         icon = {
             Icon(
                 imageVector = Icons.Outlined.ErrorOutline,
@@ -798,7 +840,10 @@ private fun ConfirmActionDialog(
         title = { Text(title) },
         text = { Text(text = message, style = MaterialTheme.typography.bodyMedium) },
         confirmButton = {
-            Button(onClick = onConfirm) {
+            Button(
+                onClick = onConfirm,
+                shape = SyncPreferenceShape,
+            ) {
                 ButtonLabel(confirmIcon, confirmText)
             }
         },
@@ -809,6 +854,7 @@ private fun ConfirmActionDialog(
         },
     )
 }
+
 
 @Composable
 private fun ButtonLabel(icon: ImageVector, text: String) {
@@ -821,12 +867,6 @@ private fun ButtonLabel(icon: ImageVector, text: String) {
     Text(text)
 }
 
-/**
- * Card for the optional Shizuku backend. Adapts its description and action button to the
- * current [availability]: install when absent, open when not running, grant when it needs
- * permission (or was permanently denied), and a passive "active" state once ready. The last
- * keep-alive result is surfaced when known so the user can see the privileged step worked.
- */
 @Composable
 private fun ShizukuCard(
     availability: ShizukuAvailability,
@@ -855,39 +895,49 @@ private fun ShizukuCard(
         ShizukuAvailability.NOT_INSTALLED -> context.getString(R.string.shizuku_action_install)
     }
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
+    SoftSurface(modifier = modifier) {
         Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = if (ready) Icons.Outlined.CheckCircle else Icons.Outlined.Security,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = if (ready) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                LeadingIconChip(
+                    icon = if (ready) Icons.Outlined.CheckCircle else Icons.Outlined.Security,
+                    active = true,
+                    containerColor = if (ready) {
+                        MaterialTheme.colorScheme.secondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.72f)
+                    },
+                    contentColor = if (ready) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    },
                 )
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text = context.getString(R.string.perm_shizuku),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                     )
                     Text(
                         text = stateText,
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (ready) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (ready) {
+                            MaterialTheme.colorScheme.secondary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                     )
                 }
                 if (actionLabel != null) {
-                    OutlinedButton(onClick = onAction) { Text(actionLabel) }
+                    OutlinedButton(
+                        onClick = onAction,
+                        shape = SyncPreferenceShape,
+                    ) { Text(actionLabel) }
                 }
             }
             if (keepAliveOk != null) {
@@ -896,9 +946,14 @@ private fun ShizukuCard(
                         if (keepAliveOk) R.string.shizuku_keepalive_ok else R.string.shizuku_keepalive_failed,
                     ),
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (keepAliveOk) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.error,
+                    color = if (keepAliveOk) {
+                        MaterialTheme.colorScheme.secondary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
                 )
             }
         }
     }
 }
+
