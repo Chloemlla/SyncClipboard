@@ -2,6 +2,7 @@ package com.chloemlla.syncclipboard.mobile.ui
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -70,7 +71,7 @@ enum class OpenSourceNoticeMode {
 @Composable
 fun OpenSourceNoticeScreen(
     mode: OpenSourceNoticeMode,
-    onContinue: () -> Unit,
+    onContinue: () -> Unit = {},
     onClose: (() -> Unit)? = null,
     onExitApp: (() -> Unit)? = null,
 ) {
@@ -82,7 +83,11 @@ fun OpenSourceNoticeScreen(
     // Browse: back closes the notice.
     BackHandler {
         if (isFirstRun) {
-            onExitApp?.invoke()
+            if (onExitApp != null) {
+                onExitApp()
+            } else {
+                (context as? android.app.Activity)?.finish()
+            }
         } else {
             onClose?.invoke()
         }
@@ -90,7 +95,11 @@ fun OpenSourceNoticeScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = WindowInsets.safeDrawing,
+        // Content owns top+horizontal safe areas; bottomBar owns bottom+horizontal so the
+        // sticky CTA is not double-padded and not covered by the system navigation bar.
+        contentWindowInsets = WindowInsets.safeDrawing.only(
+            WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+        ),
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -117,7 +126,6 @@ fun OpenSourceNoticeScreen(
             )
         },
         bottomBar = {
-            // Edge-to-edge: keep CTA above system nav / cutout safe sides.
             Surface(
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp,
@@ -471,5 +479,12 @@ private fun openUrl(context: android.content.Context, url: String) {
     if (context !is android.app.Activity) {
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
-    runCatching { context.startActivity(launch) }
+    val ok = runCatching { context.startActivity(launch) }.isSuccess
+    if (!ok) {
+        Toast.makeText(
+            context.applicationContext,
+            context.getString(R.string.oss_open_link_failed),
+            Toast.LENGTH_SHORT,
+        ).show()
+    }
 }

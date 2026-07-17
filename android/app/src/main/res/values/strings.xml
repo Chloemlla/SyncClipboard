@@ -189,4 +189,5 @@
     <string name="oss_dep_coroutines">Structured concurrency for background sync work.</string>
     <string name="oss_dep_signalr">Realtime client for the desktop-compatible SyncClipboardHub feed.</string>
     <string name="oss_dep_shizuku">Optional privileged keep-alive and background text clipboard access.</string>
+    <string name="oss_open_link_failed">Couldn\'t open the link. Install a browser and try again.</string>
 </resources>

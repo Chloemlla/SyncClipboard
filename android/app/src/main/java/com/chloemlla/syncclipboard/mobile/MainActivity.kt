@@ -26,6 +26,12 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
     private val settingsStore by lazy { SettingsStore(this) }
 
+    /**
+     * Gate state shared with Compose. Not rememberSaveable: process death / recreation
+     * re-reads [SettingsStore], and package import can flip this after first frame.
+     */
+    private var ossAcknowledged by mutableStateOf(false)
+
     // Refresh the UI once the user responds to the Shizuku permission prompt.
     private val shizukuPermissionListener =
         Shizuku.OnRequestPermissionResultListener { _, _ -> viewModel.refreshPermissions() }
@@ -39,13 +45,14 @@ class MainActivity : ComponentActivity() {
         // Android 15+ enforces edge-to-edge for targetSdk 35+; keep transparent bars + insets.
         enableEdgeToEdge()
         handleMigrationIntent(intent)
+        // Upgrade path for installs that predate the flag (not package import).
+        // Import path forces acknowledged=false inside handleMigrationIntent.
+        settingsStore.migrateOssNoticeAckIfNeeded()
+        ossAcknowledged = settingsStore.ossNoticeAcknowledged
         ShizukuManager.addPermissionResultListener(shizukuPermissionListener)
         ShizukuManager.addStateListener(shizukuStateListener)
         setContent {
             SyncClipboardTheme {
-                var ossAcknowledged by rememberSaveable {
-                    mutableStateOf(settingsStore.ossNoticeAcknowledged)
-                }
                 var showOssBrowse by rememberSaveable { mutableStateOf(false) }
 
                 when {
@@ -62,7 +69,6 @@ class MainActivity : ComponentActivity() {
                     showOssBrowse -> {
                         OpenSourceNoticeScreen(
                             mode = OpenSourceNoticeMode.Browse,
-                            onContinue = { showOssBrowse = false },
                             onClose = { showOssBrowse = false },
                         )
                     }
@@ -92,8 +98,7 @@ class MainActivity : ComponentActivity() {
             if (SettingsMigrator.isModernPackage(this)) {
                 val imported = SettingsMigrator.importIntoIfNeeded(this, store)
                 if (imported) {
-                    viewModel.reloadFromSettings()
-                    maybeStartServiceAfterImport(store)
+                    onSettingsImported(store)
                 } else if (!store.load().isConfigured() &&
                     SettingsMigrator.isPackageInstalled(this, SettingsMigrator.LEGACY_PACKAGE)
                 ) {
@@ -125,14 +130,24 @@ class MainActivity : ComponentActivity() {
                 if (SettingsMigrator.isModernPackage(this)) {
                     val imported = SettingsMigrator.importIntoIfNeeded(this, store)
                     if (imported) {
-                        viewModel.reloadFromSettings()
-                        maybeStartServiceAfterImport(store)
+                        onSettingsImported(store)
                     }
                 } else {
                     SettingsMigrator.exportSnapshot(this, store)
                 }
             }
         }
+    }
+
+    /**
+     * After cross-package settings import: reload UI, maybe start service, and force the
+     * OSS disclosure once even though baseUrl is now configured (PRD migration note).
+     */
+    private fun onSettingsImported(store: SettingsStore) {
+        store.ossNoticeAcknowledged = false
+        ossAcknowledged = false
+        viewModel.reloadFromSettings()
+        maybeStartServiceAfterImport(store)
     }
 
     private fun maybeStartServiceAfterImport(store: SettingsStore) {

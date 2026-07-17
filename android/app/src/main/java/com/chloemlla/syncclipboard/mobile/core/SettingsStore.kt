@@ -74,24 +74,36 @@ class SettingsStore(context: Context) {
 
     /**
      * Whether the first-run open-source / free / credits notice has been acknowledged.
-     *
-     * Not part of the legacy migration snapshot. When the key is missing (upgrade from
-     * a version that never wrote it), existing configured installs are treated as already
-     * acknowledged so only true first installs are gated.
+     * Missing key is treated as false until [migrateOssNoticeAckIfNeeded] or an explicit write.
      */
     var ossNoticeAcknowledged: Boolean
-        get() {
-            if (prefs.contains(KEY_OSS_NOTICE_ACK)) {
-                return prefs.getBoolean(KEY_OSS_NOTICE_ACK, false)
-            }
-            val inferred = hasPriorUseEvidence()
-            // Persist the one-shot migration decision so later reads are stable.
-            prefs.edit().putBoolean(KEY_OSS_NOTICE_ACK, inferred).apply()
-            return inferred
-        }
+        get() = prefs.getBoolean(KEY_OSS_NOTICE_ACK, false)
         set(value) {
             prefs.edit().putBoolean(KEY_OSS_NOTICE_ACK, value).apply()
         }
+
+
+    /**
+     * One-shot upgrade migration for installs that predate the OSS notice flag.
+     *
+     * - Missing key + prior server/service use → mark acknowledged (skip gate for upgrades).
+     * - Missing key + no prior use → leave unacknowledged (true first install).
+     * - Existing key → no-op.
+     *
+     * Does **not** special-case package migration by itself: callers that import settings from
+     * another package should force [ossNoticeAcknowledged] = false after import so migrated
+     * users still see the disclosure once.
+     *
+     * @return the effective acknowledged value after migration.
+     */
+    fun migrateOssNoticeAckIfNeeded(): Boolean {
+        if (prefs.contains(KEY_OSS_NOTICE_ACK)) {
+            return prefs.getBoolean(KEY_OSS_NOTICE_ACK, false)
+        }
+        val inferred = hasPriorUseEvidence()
+        prefs.edit().putBoolean(KEY_OSS_NOTICE_ACK, inferred).apply()
+        return inferred
+    }
 
     /**
      * Evidence the app was already used before the OSS notice feature existed:
