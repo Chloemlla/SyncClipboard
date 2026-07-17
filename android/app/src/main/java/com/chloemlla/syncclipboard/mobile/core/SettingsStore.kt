@@ -72,6 +72,16 @@ class SettingsStore(context: Context) {
             SettingsMigrator.exportSnapshot(appContext, this)
         }
 
+    /**
+     * Whether the first-run open-source / free / credits notice has been acknowledged.
+     * Not part of legacy migration snapshot so imported installs still see the page once.
+     */
+    var ossNoticeAcknowledged: Boolean
+        get() = prefs.getBoolean(KEY_OSS_NOTICE_ACK, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_OSS_NOTICE_ACK, value).apply()
+        }
+
     companion object {
         private const val STORE_NAME = "syncclipboard_settings"
         private const val KEY_BASE_URL = "base_url"
@@ -89,5 +99,6 @@ class SettingsStore(context: Context) {
         private const val KEY_EASY_COPY_IMAGE = "easy_copy_image"
         private const val KEY_DOWNLOAD_WEB_IMAGE = "download_web_image"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
+        private const val KEY_OSS_NOTICE_ACK = "oss_notice_acknowledged"
     }
 }

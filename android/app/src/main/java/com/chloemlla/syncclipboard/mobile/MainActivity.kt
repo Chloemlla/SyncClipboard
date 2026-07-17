@@ -6,18 +6,25 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import com.chloemlla.syncclipboard.mobile.core.SettingsMigrator
 import com.chloemlla.syncclipboard.mobile.core.SettingsStore
 import com.chloemlla.syncclipboard.mobile.shizuku.ShizukuManager
 import com.chloemlla.syncclipboard.mobile.sync.SyncForegroundService
 import com.chloemlla.syncclipboard.mobile.ui.MainScreen
 import com.chloemlla.syncclipboard.mobile.ui.MainViewModel
+import com.chloemlla.syncclipboard.mobile.ui.OpenSourceNoticeMode
+import com.chloemlla.syncclipboard.mobile.ui.OpenSourceNoticeScreen
 import com.chloemlla.syncclipboard.mobile.ui.SyncClipboardTheme
 import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
+    private val settingsStore by lazy { SettingsStore(this) }
 
     // Refresh the UI once the user responds to the Shizuku permission prompt.
     private val shizukuPermissionListener =
@@ -36,7 +43,35 @@ class MainActivity : ComponentActivity() {
         ShizukuManager.addStateListener(shizukuStateListener)
         setContent {
             SyncClipboardTheme {
-                MainScreen(viewModel)
+                var ossAcknowledged by rememberSaveable {
+                    mutableStateOf(settingsStore.ossNoticeAcknowledged)
+                }
+                var showOssBrowse by rememberSaveable { mutableStateOf(false) }
+
+                when {
+                    !ossAcknowledged -> {
+                        OpenSourceNoticeScreen(
+                            mode = OpenSourceNoticeMode.FirstRun,
+                            onContinue = {
+                                settingsStore.ossNoticeAcknowledged = true
+                                ossAcknowledged = true
+                            },
+                        )
+                    }
+                    showOssBrowse -> {
+                        OpenSourceNoticeScreen(
+                            mode = OpenSourceNoticeMode.Browse,
+                            onContinue = { showOssBrowse = false },
+                            onClose = { showOssBrowse = false },
+                        )
+                    }
+                    else -> {
+                        MainScreen(
+                            viewModel = viewModel,
+                            onOpenOpenSourceNotice = { showOssBrowse = true },
+                        )
+                    }
+                }
             }
         }
     }
@@ -51,7 +86,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Re-export live prefs so the ContentProvider always serves fresh data.
         runCatching {
-            val store = SettingsStore(this)
+            val store = settingsStore
             SettingsMigrator.exportSnapshot(this, store)
             if (SettingsMigrator.isModernPackage(this)) {
                 val imported = SettingsMigrator.importIntoIfNeeded(this, store)
@@ -80,12 +115,12 @@ class MainActivity : ComponentActivity() {
         when (intent.action) {
             SettingsMigrator.ACTION_EXPORT -> {
                 // Legacy package path: re-export encrypted prefs into snapshot/provider.
-                val store = SettingsStore(this)
+                val store = settingsStore
                 SettingsMigrator.exportSnapshot(this, store)
                 // If modern package is present, it will pull via ContentProvider on next open.
             }
             else -> {
-                val store = SettingsStore(this)
+                val store = settingsStore
                 if (SettingsMigrator.isModernPackage(this)) {
                     val imported = SettingsMigrator.importIntoIfNeeded(this, store)
                     if (imported) {

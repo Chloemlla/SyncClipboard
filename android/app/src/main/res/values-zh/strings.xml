@@ -154,6 +154,39 @@
     <string name="image_download_confirm_accept">保存到相册</string>
     <string name="image_download_size_unknown">大小未知</string>
     <string name="dialog_cancel">取消</string>
+
+    <!-- 开源与鸣谢 -->
+    <string name="oss_title">开源与鸣谢</string>
+    <string name="oss_subtitle">开源 · 永久免费</string>
+    <string name="oss_intro">本页说明项目开源地址、永久免费与防骗提示、开源协议，以及 Android 客户端使用的第三方依赖。</string>
+    <string name="oss_free_title">永久免费 · 谨防受骗</string>
+    <string name="oss_free_body">SyncClipboard Android 客户端开源且永久免费。请仅通过官方 GitHub 仓库获取安装包。请勿付费下载、购买“激活码”，或安装未知来源的二次打包应用。谨防假冒渠道与诈骗信息。</string>
+    <string name="oss_source_title">开源地址</string>
+    <string name="oss_source_body">本 Android 客户端由 Chloemlla/SyncClipboard 分支维护，基于上游桌面项目 Jeric-X/SyncClipboard。</string>
+    <string name="oss_link_fork">打开本分支 GitHub</string>
+    <string name="oss_link_upstream">打开上游项目</string>
+    <string name="oss_license_title">本项目开源协议</string>
+    <string name="oss_license_body">本项目采用 %1$s 开源。\n%2$s</string>
+    <string name="oss_view_full_license">查看完整协议文本</string>
+    <string name="oss_credits_title">第三方依赖鸣谢</string>
+    <string name="oss_credits_subtitle">以下为 Android 客户端的直接运行时依赖。感谢所有作者与维护者。</string>
+    <string name="oss_dep_author_fmt">作者：%1$s</string>
+    <string name="oss_dep_license_fmt">协议：%1$s</string>
+    <string name="oss_open_link">打开主页</string>
+    <string name="oss_cta_continue">我知道了，继续</string>
+    <string name="oss_cta_close">关闭</string>
+    <string name="oss_cd_close">关闭</string>
+    <string name="section_about">关于</string>
+    <string name="section_about_subtitle">开源地址、免费声明、协议与依赖鸣谢。</string>
+    <string name="action_open_oss_notice">开源与鸣谢</string>
+    <string name="oss_dep_compose">声明式 UI 工具包与 Material 3 组件，用于 Android 界面。</string>
+    <string name="oss_dep_activity_compose">将 Jetpack Compose 与 Android Activity 集成。</string>
+    <string name="oss_dep_core_ktx">Android 核心平台 API 的 Kotlin 扩展。</string>
+    <string name="oss_dep_lifecycle">生命周期感知组件、ViewModel 与前台服务支持。</string>
+    <string name="oss_dep_security_crypto">EncryptedSharedPreferences，用于保护本地凭据。</string>
+    <string name="oss_dep_material_icons">设置与状态界面使用的 Material 图标集。</string>
+    <string name="oss_dep_okhttp">用于连接 SyncClipboard 服务器的 HTTP 客户端。</string>
+    <string name="oss_dep_coroutines">结构化并发，支撑后台同步任务。</string>
+    <string name="oss_dep_signalr">实时客户端，接入与桌面端兼容的 SyncClipboardHub。</string>
+    <string name="oss_dep_shizuku">可选特权保活与后台文本剪贴板读取能力。</string>
 </resources>
-
-

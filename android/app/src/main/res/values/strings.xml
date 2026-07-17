@@ -154,6 +154,39 @@
     <string name="image_download_confirm_accept">Save to gallery</string>
     <string name="image_download_size_unknown">size unknown</string>
     <string name="dialog_cancel">Cancel</string>
+
+    <!-- Open source notice / credits -->
+    <string name="oss_title">Open source &amp; credits</string>
+    <string name="oss_subtitle">Open source · free forever</string>
+    <string name="oss_intro">This page lists the project source, free policy, license, and third-party dependencies used by the Android client.</string>
+    <string name="oss_free_title">Free forever — stay safe</string>
+    <string name="oss_free_body">SyncClipboard Android is open source and permanently free. Get installs only from the official GitHub repositories. Do not pay for downloads, “activation codes”, or unknown repackaged APKs. Be careful of scam or counterfeit channels.</string>
+    <string name="oss_source_title">Source code</string>
+    <string name="oss_source_body">This Android client is maintained in the Chloemlla/SyncClipboard fork, based on the upstream desktop project Jeric-X/SyncClipboard.</string>
+    <string name="oss_link_fork">Open this fork on GitHub</string>
+    <string name="oss_link_upstream">Open upstream project</string>
+    <string name="oss_license_title">Project license</string>
+    <string name="oss_license_body">This project is released under %1$s.\n%2$s</string>
+    <string name="oss_view_full_license">View full license text</string>
+    <string name="oss_credits_title">Third-party credits</string>
+    <string name="oss_credits_subtitle">Direct runtime dependencies of the Android client. Thank you to every author and maintainer.</string>
+    <string name="oss_dep_author_fmt">Author: %1$s</string>
+    <string name="oss_dep_license_fmt">License: %1$s</string>
+    <string name="oss_open_link">Open homepage</string>
+    <string name="oss_cta_continue">I understand, continue</string>
+    <string name="oss_cta_close">Close</string>
+    <string name="oss_cd_close">Close</string>
+    <string name="section_about">About</string>
+    <string name="section_about_subtitle">Source, free policy, license, and dependency credits.</string>
+    <string name="action_open_oss_notice">Open source &amp; credits</string>
+    <string name="oss_dep_compose">Declarative UI toolkit and Material 3 components used for the Android interface.</string>
+    <string name="oss_dep_activity_compose">Integrates Jetpack Compose with Android activities.</string>
+    <string name="oss_dep_core_ktx">Kotlin extensions for Android core platform APIs.</string>
+    <string name="oss_dep_lifecycle">Lifecycle-aware components, ViewModel, and foreground service support.</string>
+    <string name="oss_dep_security_crypto">EncryptedSharedPreferences for protecting credentials at rest.</string>
+    <string name="oss_dep_material_icons">Material icon set used across settings and status UI.</string>
+    <string name="oss_dep_okhttp">HTTP client for talking to the SyncClipboard server.</string>
+    <string name="oss_dep_coroutines">Structured concurrency for background sync work.</string>
+    <string name="oss_dep_signalr">Realtime client for the desktop-compatible SyncClipboardHub feed.</string>
+    <string name="oss_dep_shizuku">Optional privileged keep-alive and background text clipboard access.</string>
 </resources>
-
-
