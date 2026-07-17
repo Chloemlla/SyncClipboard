@@ -44,14 +44,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Android 15+ enforces edge-to-edge for targetSdk 35+; keep transparent bars + insets.
         enableEdgeToEdge()
-        // 1) package import (may populate baseUrl)
-        // 2) upgrade migration only when import did not already decide the OSS key
-        // 3) bind gate state
-        val importedOnCreate = tryImportSettings()
-        if (!importedOnCreate) {
-            settingsStore.migrateOssNoticeAckIfNeeded()
-        }
-        ossAcknowledged = settingsStore.ossNoticeAcknowledged
+        bootstrapSettings(intent)
         ShizukuManager.addPermissionResultListener(shizukuPermissionListener)
         ShizukuManager.addStateListener(shizukuStateListener)
         setContent {
@@ -89,7 +82,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleMigrationIntent(intent)
+        bootstrapSettings(intent)
     }
 
     override fun onResume() {
@@ -109,6 +102,8 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        // Keep Compose gate aligned if prefs changed outside composition.
+        ossAcknowledged = settingsStore.ossNoticeAcknowledged
         viewModel.refreshPermissions()
     }
 
@@ -118,20 +113,28 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    private fun handleMigrationIntent(intent: Intent?) {
-        if (intent == null) return
-        when (intent.action) {
-            SettingsMigrator.ACTION_EXPORT -> {
+    /**
+     * Launch / new-intent bootstrap:
+     * 1) legacy export action (MainActivity fallback intent-filter)
+     * 2) package import when modern
+     * 3) same-package upgrade migration when import did not run
+     * 4) bind OSS gate state
+     */
+    private fun bootstrapSettings(intent: Intent?) {
+        runCatching {
+            if (intent?.action == SettingsMigrator.ACTION_EXPORT) {
                 // Legacy package path: re-export encrypted prefs into snapshot/provider.
                 SettingsMigrator.exportSnapshot(this, settingsStore)
-                // If modern package is present, it will pull via ContentProvider on next open.
             }
-            else -> {
-                if (SettingsMigrator.isModernPackage(this)) {
-                    tryImportSettings()
-                } else {
-                    SettingsMigrator.exportSnapshot(this, settingsStore)
-                }
+            val imported = tryImportSettings()
+            if (!imported) {
+                settingsStore.migrateOssNoticeAckIfNeeded()
+            }
+            ossAcknowledged = settingsStore.ossNoticeAcknowledged
+        }.onFailure {
+            // Still attempt a best-effort gate binding if store is readable.
+            runCatching {
+                ossAcknowledged = settingsStore.ossNoticeAcknowledged
             }
         }
     }

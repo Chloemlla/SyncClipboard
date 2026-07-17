@@ -30,7 +30,6 @@ import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Policy
 import androidx.compose.material.icons.outlined.Refresh
@@ -361,7 +360,7 @@ fun MainScreen(
                     onClick = onOpenOpenSourceNotice,
                     shape = SyncPreferenceShape,
                     modifier = Modifier.fillMaxWidth(),
-                ) { ButtonLabel(Icons.Outlined.OpenInNew, context.getString(R.string.action_open_oss_notice)) }
+                ) { ButtonLabel(Icons.Outlined.Policy, context.getString(R.string.action_open_oss_notice)) }
 
                 Spacer(Modifier.height(12.dp))
             }

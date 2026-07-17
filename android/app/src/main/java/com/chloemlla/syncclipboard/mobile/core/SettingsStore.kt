@@ -86,12 +86,14 @@ class SettingsStore(context: Context) {
      * One-shot upgrade migration for installs that predate the OSS notice flag.
      *
      * - Missing key + prior server/service use → mark acknowledged (skip gate for upgrades).
-     * - Missing key + no prior use → leave unacknowledged (true first install).
+     * - Missing key + no prior use → write unacknowledged (true first install).
      * - Existing key → no-op.
      *
-     * Does **not** special-case package migration by itself: callers that import settings from
-     * another package should force [ossNoticeAcknowledged] = false after import so migrated
-     * users still see the disclosure once.
+     * Package import is handled by the caller:
+     * - if the user has not acknowledged yet, keep/write false so import-filled baseUrl cannot
+     *   be mistaken for a same-package upgrade;
+     * - if the user already acknowledged, leave true (late import must not reopen the gate).
+     * Skip calling this after a successful import when the caller already decided the key.
      *
      * @return the effective acknowledged value after migration.
      */
