@@ -25,6 +25,9 @@ permissions:
   contents: read
 
 jobs:
+  # Cheap quality gate: unit tests + lint + one debug compile.
+  # Do NOT assembleRelease here — release job owns the only production/legacy release build
+  # so R8/minify/signing work is not paid twice on master.
   verify:
     name: Android Gradle verification
     runs-on: ubuntu-latest
@@ -69,11 +72,13 @@ jobs:
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
         run: gradle lintProductionDebug --no-daemon --warning-mode all
 
-      - name: Build release APK for verification
+      # Compile-only smoke for PRs / non-release branches. Full R8 release packaging
+      # runs once in the signed release job when publishing from master.
+      - name: Build production debug APK (compile smoke)
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
-        run: gradle assembleProductionRelease assembleLegacyMigrateRelease --no-daemon --warning-mode all
+        run: gradle assembleProductionDebug --no-daemon --warning-mode all
 
       - name: Upload verification reports
         if: always()
@@ -157,6 +162,7 @@ jobs:
           fi
           echo "KEYSTORE_FILE=$keystore_file" >> "$GITHUB_ENV"
 
+      # Single release packaging pass (production + legacyMigrate), signed once.
       - name: Build signed release APK
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
