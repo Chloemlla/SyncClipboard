@@ -82,7 +82,6 @@ class SettingsStore(context: Context) {
             prefs.edit().putBoolean(KEY_OSS_NOTICE_ACK, value).apply()
         }
 
-
     /**
      * One-shot upgrade migration for installs that predate the OSS notice flag.
      *
@@ -135,3 +134,4 @@ class SettingsStore(context: Context) {
         private const val KEY_OSS_NOTICE_ACK = "oss_notice_acknowledged"
     }
 }
+

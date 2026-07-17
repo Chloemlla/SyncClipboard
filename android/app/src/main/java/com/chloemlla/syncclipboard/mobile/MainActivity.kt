@@ -44,10 +44,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Android 15+ enforces edge-to-edge for targetSdk 35+; keep transparent bars + insets.
         enableEdgeToEdge()
-        handleMigrationIntent(intent)
-        // Upgrade path for installs that predate the flag (not package import).
-        // Import path forces acknowledged=false inside handleMigrationIntent.
-        settingsStore.migrateOssNoticeAckIfNeeded()
+        // 1) package import (may populate baseUrl)
+        // 2) upgrade migration only when import did not already decide the OSS key
+        // 3) bind gate state
+        val importedOnCreate = tryImportSettings()
+        if (!importedOnCreate) {
+            settingsStore.migrateOssNoticeAckIfNeeded()
+        }
         ossAcknowledged = settingsStore.ossNoticeAcknowledged
         ShizukuManager.addPermissionResultListener(shizukuPermissionListener)
         ShizukuManager.addStateListener(shizukuStateListener)
@@ -96,10 +99,9 @@ class MainActivity : ComponentActivity() {
             val store = settingsStore
             SettingsMigrator.exportSnapshot(this, store)
             if (SettingsMigrator.isModernPackage(this)) {
-                val imported = SettingsMigrator.importIntoIfNeeded(this, store)
-                if (imported) {
-                    onSettingsImported(store)
-                } else if (!store.load().isConfigured() &&
+                val imported = tryImportSettings()
+                if (!imported &&
+                    !store.load().isConfigured() &&
                     SettingsMigrator.isPackageInstalled(this, SettingsMigrator.LEGACY_PACKAGE)
                 ) {
                     // Ask a migrate-capable legacy install to re-export once.
@@ -121,31 +123,49 @@ class MainActivity : ComponentActivity() {
         when (intent.action) {
             SettingsMigrator.ACTION_EXPORT -> {
                 // Legacy package path: re-export encrypted prefs into snapshot/provider.
-                val store = settingsStore
-                SettingsMigrator.exportSnapshot(this, store)
+                SettingsMigrator.exportSnapshot(this, settingsStore)
                 // If modern package is present, it will pull via ContentProvider on next open.
             }
             else -> {
-                val store = settingsStore
                 if (SettingsMigrator.isModernPackage(this)) {
-                    val imported = SettingsMigrator.importIntoIfNeeded(this, store)
-                    if (imported) {
-                        onSettingsImported(store)
-                    }
+                    tryImportSettings()
                 } else {
-                    SettingsMigrator.exportSnapshot(this, store)
+                    SettingsMigrator.exportSnapshot(this, settingsStore)
                 }
             }
         }
     }
 
     /**
-     * After cross-package settings import: reload UI, maybe start service, and force the
-     * OSS disclosure once even though baseUrl is now configured (PRD migration note).
+     * @return true when a legacy/modern snapshot was applied into [settingsStore].
+     */
+    private fun tryImportSettings(): Boolean {
+        if (!SettingsMigrator.isModernPackage(this)) return false
+        val imported = SettingsMigrator.importIntoIfNeeded(this, settingsStore)
+        if (imported) {
+            onSettingsImported(settingsStore)
+        }
+        return imported
+    }
+
+    /**
+     * After cross-package settings import: reload UI and maybe start service.
+     *
+     * OSS disclosure rules:
+     * - If the user has **not** acknowledged yet, keep/force unacknowledged so migrated
+     *   installs still see the free/source page once (and upgrade inference cannot mark
+     *   them acknowledged merely because import filled baseUrl).
+     * - If the user **already** acknowledged (e.g. continued on a blank first-run page
+     *   before a late import), do **not** reopen the gate.
      */
     private fun onSettingsImported(store: SettingsStore) {
-        store.ossNoticeAcknowledged = false
-        ossAcknowledged = false
+        if (!store.ossNoticeAcknowledged) {
+            // Persist explicit false so a later migrateOssNoticeAckIfNeeded cannot infer true.
+            store.ossNoticeAcknowledged = false
+            ossAcknowledged = false
+        } else {
+            ossAcknowledged = true
+        }
         viewModel.reloadFromSettings()
         maybeStartServiceAfterImport(store)
     }
