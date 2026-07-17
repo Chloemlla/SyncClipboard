@@ -74,13 +74,34 @@ class SettingsStore(context: Context) {
 
     /**
      * Whether the first-run open-source / free / credits notice has been acknowledged.
-     * Not part of legacy migration snapshot so imported installs still see the page once.
+     *
+     * Not part of the legacy migration snapshot. When the key is missing (upgrade from
+     * a version that never wrote it), existing configured installs are treated as already
+     * acknowledged so only true first installs are gated.
      */
     var ossNoticeAcknowledged: Boolean
-        get() = prefs.getBoolean(KEY_OSS_NOTICE_ACK, false)
+        get() {
+            if (prefs.contains(KEY_OSS_NOTICE_ACK)) {
+                return prefs.getBoolean(KEY_OSS_NOTICE_ACK, false)
+            }
+            val inferred = hasPriorUseEvidence()
+            // Persist the one-shot migration decision so later reads are stable.
+            prefs.edit().putBoolean(KEY_OSS_NOTICE_ACK, inferred).apply()
+            return inferred
+        }
         set(value) {
             prefs.edit().putBoolean(KEY_OSS_NOTICE_ACK, value).apply()
         }
+
+    /**
+     * Evidence the app was already used before the OSS notice feature existed:
+     * a configured server URL or a previously enabled sync service.
+     */
+    private fun hasPriorUseEvidence(): Boolean {
+        val baseUrl = prefs.getString(KEY_BASE_URL, "").orEmpty().trim()
+        if (baseUrl.isNotEmpty()) return true
+        return prefs.getBoolean(KEY_SERVICE_ENABLED, false)
+    }
 
     companion object {
         private const val STORE_NAME = "syncclipboard_settings"

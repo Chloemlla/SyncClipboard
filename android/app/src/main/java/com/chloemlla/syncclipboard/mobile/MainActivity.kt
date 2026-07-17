@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
                                 settingsStore.ossNoticeAcknowledged = true
                                 ossAcknowledged = true
                             },
+                            onExitApp = { finish() },
                         )
                     }
                     showOssBrowse -> {

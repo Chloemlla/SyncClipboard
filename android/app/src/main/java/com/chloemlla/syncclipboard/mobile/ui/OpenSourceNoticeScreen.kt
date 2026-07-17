@@ -11,14 +11,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -69,16 +72,17 @@ fun OpenSourceNoticeScreen(
     mode: OpenSourceNoticeMode,
     onContinue: () -> Unit,
     onClose: (() -> Unit)? = null,
+    onExitApp: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var showLicenseDialog by rememberSaveable { mutableStateOf(false) }
     val isFirstRun = mode == OpenSourceNoticeMode.FirstRun
 
-    // First-run: system back exits the app path (finish), never skips into MainScreen.
+    // First-run: system back exits the app, never skips into MainScreen.
     // Browse: back closes the notice.
     BackHandler {
         if (isFirstRun) {
-            (context as? android.app.Activity)?.finish()
+            onExitApp?.invoke()
         } else {
             onClose?.invoke()
         }
@@ -113,6 +117,7 @@ fun OpenSourceNoticeScreen(
             )
         },
         bottomBar = {
+            // Edge-to-edge: keep CTA above system nav / cutout safe sides.
             Surface(
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 0.dp,
@@ -121,6 +126,11 @@ fun OpenSourceNoticeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .windowInsetsPadding(
+                            WindowInsets.safeDrawing.only(
+                                WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
+                            ),
+                        )
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     Button(
@@ -455,7 +465,11 @@ private fun LinkButton(label: String, url: String) {
 }
 
 private fun openUrl(context: android.content.Context, url: String) {
-    runCatching {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    val view = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+    val launch = Intent.createChooser(view, null)
+    // Activity context does not need NEW_TASK; application context does.
+    if (context !is android.app.Activity) {
+        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
+    runCatching { context.startActivity(launch) }
 }
