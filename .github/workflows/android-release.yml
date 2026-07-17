@@ -41,7 +41,7 @@ jobs:
           echo "SYNCCLIPBOARD_ANDROID_VERSION_CODE=${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
           echo "SYNCCLIPBOARD_SHORT_HASH=${GITHUB_SHA::8}" >> "$GITHUB_ENV"
 
-      - name: Resolve latest lumen-crash
+      - name: Resolve and sync latest lumen-crash release Maven assets
         env:
           GH_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
@@ -50,7 +50,9 @@ jobs:
           sudo apt-get install -y jq
           VERSION="$(bash ./scripts/resolve-lumen-crash-latest.sh)"
           echo "LUMEN_CRASH_VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "LUMEN_CRASH_MAVEN_DIR=${PWD}/.m2-lumen-crash" >> "$GITHUB_ENV"
           echo "Resolved lumen-crash version: ${VERSION}"
+          bash ./scripts/sync-lumen-crash-release-maven.sh "${VERSION}" .m2-lumen-crash
 
       - name: Prepare release signing
         id: signing
@@ -76,9 +78,7 @@ jobs:
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
           SYNCCLIPBOARD_SHORT_HASH: ${{ env.SYNCCLIPBOARD_SHORT_HASH }}
           LUMEN_CRASH_VERSION: ${{ env.LUMEN_CRASH_VERSION }}
-          GITHUB_ACTOR: ${{ secrets.LUMEN_CRASH_GITHUB_ACTOR || github.actor }}
-          GITHUB_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          LUMEN_CRASH_MAVEN_DIR: ${{ env.LUMEN_CRASH_MAVEN_DIR }}
           KEYSTORE_FILE: ${{ env.KEYSTORE_FILE }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}

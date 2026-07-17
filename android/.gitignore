@@ -10,3 +10,4 @@
 *.apk
 *.jks
 *.keystore
+.m2-lumen-crash/

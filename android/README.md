@@ -180,47 +180,32 @@ breadcrumb trails, and a cold-start crash report UI (`LumenCrashGate`).
 
 ### Dependency resolution
 
-Version is **not** hardcoded. Resolve the latest main auto-release (`lumen-crash-v*`):
+Version is **not** hardcoded. CI and local builds resolve the latest main auto-release
+(`lumen-crash-v*`), then sync GitHub **Release assets** into a local Maven tree
+(`.m2-lumen-crash`). That is the default path and avoids cross-repo GitHub Packages
+auth failures.
 
 ```bash
 # Linux / macOS / Git Bash
-export LUMEN_CRASH_VERSION="$(bash android/scripts/resolve-lumen-crash-latest.sh)"
-
-# PowerShell
-$env:LUMEN_CRASH_VERSION = pwsh -File android/scripts/Resolve-LumenCrashLatest.ps1
-```
-
-Consume via GitHub Packages:
-
-```text
-https://maven.pkg.github.com/Chloemlla/Project-Lumen
-coordinate: com.chloemlla.lumen:lumen-crash:<resolved-version>
-```
-
-Local Gradle credentials (do **not** commit tokens):
-
-```properties
-# ~/.gradle/gradle.properties
-gpr.user=<github-username>
-gpr.key=<token-with-read:packages>
-```
-
-Or environment variables: `GITHUB_ACTOR` / `GITHUB_TOKEN` (or `GH_USER` / `GH_TOKEN`).
-
-Optional CI secrets for cross-repo Packages access:
-
-- `LUMEN_CRASH_GITHUB_TOKEN` (preferred; `read:packages`)
-- `LUMEN_CRASH_GITHUB_ACTOR` (optional username override)
-- fallback: `GH_TOKEN` / job `GITHUB_TOKEN`
-
-Then build with the resolved version in the environment:
-
-```bash
 cd android
-export LUMEN_CRASH_VERSION=...
+export LUMEN_CRASH_VERSION="$(bash ./scripts/resolve-lumen-crash-latest.sh)"
+bash ./scripts/sync-lumen-crash-release-maven.sh "$LUMEN_CRASH_VERSION" .m2-lumen-crash
+export LUMEN_CRASH_MAVEN_DIR="$PWD/.m2-lumen-crash"
 ./gradlew :app:testProductionDebugUnitTest
-./gradlew :app:assembleProductionDebug
 ```
+
+```powershell
+# PowerShell
+cd android
+$env:LUMEN_CRASH_VERSION = pwsh -File ./scripts/Resolve-LumenCrashLatest.ps1
+pwsh -File ./scripts/Sync-LumenCrashReleaseMaven.ps1 -Version $env:LUMEN_CRASH_VERSION -OutDir .m2-lumen-crash
+$env:LUMEN_CRASH_MAVEN_DIR = (Resolve-Path .\.m2-lumen-crash).Path
+```
+
+Gradle still accepts GitHub Packages as a fallback when credentials exist
+(`gpr.user` / `gpr.key` or `GITHUB_ACTOR` / `GITHUB_TOKEN`). Optional secret:
+`LUMEN_CRASH_GITHUB_TOKEN` (may help rate limits / private assets; not required for
+public release consumption).
 ## Project layout
 
 ```
