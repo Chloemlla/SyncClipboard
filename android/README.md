@@ -167,11 +167,65 @@ Release signing reads `KEYSTORE_FILE` / `KEYSTORE_PASSWORD` / `KEY_ALIAS` /
 `KEY_PASSWORD` from env or Gradle properties; without them a debug/unsigned
 build is produced.
 
+
+## Crash reporting (Lumen Crash SDK)
+
+Android uses Project Lumen's `lumen-crash` bundle for uncaught-exception capture,
+breadcrumb trails, and a cold-start crash report UI (`LumenCrashGate`).
+
+- Install happens in `SyncClipboardApp.attachBaseContext` via `LumenCrash.installSafely`.
+- Pending reports block the normal UI before the OSS first-run gate / main screen.
+- Paste upload remains available from the crash page (user-initiated only).
+- Author attribution from the SDK is non-removable.
+
+### Dependency resolution
+
+Version is **not** hardcoded. Resolve the latest main auto-release (`lumen-crash-v*`):
+
+```bash
+# Linux / macOS / Git Bash
+export LUMEN_CRASH_VERSION="$(bash android/scripts/resolve-lumen-crash-latest.sh)"
+
+# PowerShell
+$env:LUMEN_CRASH_VERSION = pwsh -File android/scripts/Resolve-LumenCrashLatest.ps1
+```
+
+Consume via GitHub Packages:
+
+```text
+https://maven.pkg.github.com/Chloemlla/Project-Lumen
+coordinate: com.chloemlla.lumen:lumen-crash:<resolved-version>
+```
+
+Local Gradle credentials (do **not** commit tokens):
+
+```properties
+# ~/.gradle/gradle.properties
+gpr.user=<github-username>
+gpr.key=<token-with-read:packages>
+```
+
+Or environment variables: `GITHUB_ACTOR` / `GITHUB_TOKEN` (or `GH_USER` / `GH_TOKEN`).
+
+Optional CI secrets for cross-repo Packages access:
+
+- `LUMEN_CRASH_GITHUB_TOKEN` (preferred; `read:packages`)
+- `LUMEN_CRASH_GITHUB_ACTOR` (optional username override)
+- fallback: `GH_TOKEN` / job `GITHUB_TOKEN`
+
+Then build with the resolved version in the environment:
+
+```bash
+cd android
+export LUMEN_CRASH_VERSION=...
+./gradlew :app:testProductionDebugUnitTest
+./gradlew :app:assembleProductionDebug
+```
 ## Project layout
 
 ```
 android/
-  app/src/main/java/com/syncclipboard/mobile/
+  app/src/main/java/com/chloemlla/syncclipboard/mobile/
     core/          # Protocol: ProfileDto, SyncClient, Image/File/Group helpers, WebImageAssist
     sync/          # SyncEngine, ClipboardBridge, foreground + accessibility services
     shizuku/       # Optional privileged keep-alive / text clipboard read

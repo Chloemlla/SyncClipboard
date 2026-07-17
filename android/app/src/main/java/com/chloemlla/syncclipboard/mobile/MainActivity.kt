@@ -10,6 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.chloemlla.lumen.crash.CrashBreadcrumbs
+import com.chloemlla.lumen.crash.LumenCrash
+import com.chloemlla.lumen.crash.ui.LumenCrashGate
 import com.chloemlla.syncclipboard.mobile.core.SettingsMigrator
 import com.chloemlla.syncclipboard.mobile.core.SettingsStore
 import com.chloemlla.syncclipboard.mobile.shizuku.ShizukuManager
@@ -54,32 +57,45 @@ class MainActivity : ComponentActivity() {
         bootstrapSettings(intent)
         ShizukuManager.addPermissionResultListener(shizukuPermissionListener)
         ShizukuManager.addStateListener(shizukuStateListener)
+        recordBreadcrumb("MainActivity.onCreate")
         setContent {
             SyncClipboardTheme {
-                var showOssBrowse by rememberSaveable { mutableStateOf(false) }
+                LumenCrashGate(
+                    initialReport = LumenCrash.loadPendingReportSafely(),
+                    onContinue = {
+                        runCatching { LumenCrash.clearStartupCrashReport() }
+                        recordBreadcrumb("LumenCrashGate continued")
+                    },
+                    clearStoredReportOnContinue = true,
+                    onClearStoredReport = {
+                        runCatching { LumenCrash.clearPendingReport() }
+                    },
+                ) {
+                    var showOssBrowse by rememberSaveable { mutableStateOf(false) }
 
-                when {
-                    !ossAcknowledged -> {
-                        OpenSourceNoticeScreen(
-                            mode = OpenSourceNoticeMode.FirstRun,
-                            onContinue = {
-                                settingsStore.ossNoticeAcknowledged = true
-                                ossAcknowledged = true
-                            },
-                            onExitApp = { finish() },
-                        )
-                    }
-                    showOssBrowse -> {
-                        OpenSourceNoticeScreen(
-                            mode = OpenSourceNoticeMode.Browse,
-                            onClose = { showOssBrowse = false },
-                        )
-                    }
-                    else -> {
-                        MainScreen(
-                            viewModel = viewModel,
-                            onOpenOpenSourceNotice = { showOssBrowse = true },
-                        )
+                    when {
+                        !ossAcknowledged -> {
+                            OpenSourceNoticeScreen(
+                                mode = OpenSourceNoticeMode.FirstRun,
+                                onContinue = {
+                                    settingsStore.ossNoticeAcknowledged = true
+                                    ossAcknowledged = true
+                                },
+                                onExitApp = { finish() },
+                            )
+                        }
+                        showOssBrowse -> {
+                            OpenSourceNoticeScreen(
+                                mode = OpenSourceNoticeMode.Browse,
+                                onClose = { showOssBrowse = false },
+                            )
+                        }
+                        else -> {
+                            MainScreen(
+                                viewModel = viewModel,
+                                onOpenOpenSourceNotice = { showOssBrowse = true },
+                            )
+                        }
                     }
                 }
             }
@@ -99,6 +115,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        recordBreadcrumb("MainActivity.onResume")
         // Re-export live prefs so the ContentProvider always serves fresh data.
         runCatching {
             val store = settingsStore
@@ -184,5 +201,9 @@ class MainActivity : ComponentActivity() {
         if (store.serviceEnabled && store.load().isConfigured()) {
             SyncForegroundService.start(this)
         }
+    }
+
+    private fun recordBreadcrumb(event: String) {
+        runCatching { CrashBreadcrumbs.record(event) }
     }
 }

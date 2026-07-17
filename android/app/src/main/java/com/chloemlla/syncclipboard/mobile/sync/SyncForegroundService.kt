@@ -15,6 +15,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.chloemlla.lumen.crash.CrashBreadcrumbs
 import com.chloemlla.syncclipboard.mobile.MainActivity
 import com.chloemlla.syncclipboard.mobile.R
 import com.chloemlla.syncclipboard.mobile.core.SettingsStore
@@ -64,6 +65,7 @@ class SyncForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        recordBreadcrumb("SyncForegroundService.onCreate")
         settings = SettingsStore(this)
         clipboard = ClipboardBridge(this)
         createChannel()
@@ -128,6 +130,7 @@ class SyncForegroundService : Service() {
     }
 
     private fun startEngine() {
+        recordBreadcrumb("SyncForegroundService.startEngine")
         val config = settings.load()
         if (!config.isConfigured()) {
             SyncState.setStatus(SyncStatus.ERROR, getString(R.string.status_not_configured))
@@ -178,6 +181,7 @@ class SyncForegroundService : Service() {
     }
 
     private fun stopEngineAndSelf() {
+        recordBreadcrumb("SyncForegroundService.stopEngineAndSelf")
         liveUpdateDemoteJob?.cancel()
         liveUpdateDemoteJob = null
         settings.serviceEnabled = false
@@ -426,6 +430,10 @@ class SyncForegroundService : Service() {
             setShowBadge(false)
         }
         getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
+    }
+
+    private fun recordBreadcrumb(event: String) {
+        runCatching { CrashBreadcrumbs.record(event) }
     }
 
     companion object {

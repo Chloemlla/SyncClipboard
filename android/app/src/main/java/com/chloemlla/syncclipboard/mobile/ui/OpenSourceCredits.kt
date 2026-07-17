@@ -92,5 +92,12 @@ object OpenSourceCredits {
             license = "Apache-2.0",
             url = "https://github.com/RikkaApps/Shizuku",
         ),
+        DependencyCredit(
+            name = "Lumen Crash SDK",
+            author = "Chloemlla",
+            descriptionRes = R.string.oss_dep_lumen_crash,
+            license = "Repository license",
+            url = "https://github.com/Chloemlla/Project-Lumen",
+        ),
     )
 }

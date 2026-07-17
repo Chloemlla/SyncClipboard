@@ -60,16 +60,39 @@ jobs:
           echo "SYNCCLIPBOARD_SHORT_HASH=${SHORT_HASH}" >> "$GITHUB_ENV"
           echo "SYNCCLIPBOARD_ANDROID_RELEASE_VERSION=${VERSION_NAME}-${SHORT_HASH}" >> "$GITHUB_ENV"
 
+      - name: Resolve latest lumen-crash
+        env:
+          # Cross-repo GitHub Packages usually needs a PAT with read:packages.
+          # Prefer LUMEN_CRASH_GITHUB_TOKEN, then GH_TOKEN, then the job token.
+          GH_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          VERSION="$(bash ./scripts/resolve-lumen-crash-latest.sh)"
+          echo "LUMEN_CRASH_VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "Resolved lumen-crash version: ${VERSION}"
+
       - name: Run unit tests
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
+          SYNCCLIPBOARD_SHORT_HASH: ${{ env.SYNCCLIPBOARD_SHORT_HASH }}
+          LUMEN_CRASH_VERSION: ${{ env.LUMEN_CRASH_VERSION }}
+          GITHUB_ACTOR: ${{ secrets.LUMEN_CRASH_GITHUB_ACTOR || github.actor }}
+          GITHUB_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
         run: gradle testProductionDebugUnitTest --no-daemon --warning-mode all
 
       - name: Run Android lint
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
+          SYNCCLIPBOARD_SHORT_HASH: ${{ env.SYNCCLIPBOARD_SHORT_HASH }}
+          LUMEN_CRASH_VERSION: ${{ env.LUMEN_CRASH_VERSION }}
+          GITHUB_ACTOR: ${{ secrets.LUMEN_CRASH_GITHUB_ACTOR || github.actor }}
+          GITHUB_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
         run: gradle lintProductionDebug --no-daemon --warning-mode all
 
       - name: Upload verification reports
@@ -122,6 +145,17 @@ jobs:
           echo "SYNCCLIPBOARD_SHORT_HASH=${SHORT_HASH}" >> "$GITHUB_ENV"
           echo "SYNCCLIPBOARD_ANDROID_RELEASE_VERSION=${VERSION_NAME}-${SHORT_HASH}" >> "$GITHUB_ENV"
 
+      - name: Resolve latest lumen-crash
+        env:
+          GH_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          VERSION="$(bash ./scripts/resolve-lumen-crash-latest.sh)"
+          echo "LUMEN_CRASH_VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "Resolved lumen-crash version: ${VERSION}"
+
       - name: Validate release secrets
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -159,6 +193,11 @@ jobs:
         env:
           SYNCCLIPBOARD_ANDROID_VERSION_NAME: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_NAME }}
           SYNCCLIPBOARD_ANDROID_VERSION_CODE: ${{ env.SYNCCLIPBOARD_ANDROID_VERSION_CODE }}
+          SYNCCLIPBOARD_SHORT_HASH: ${{ env.SYNCCLIPBOARD_SHORT_HASH }}
+          LUMEN_CRASH_VERSION: ${{ env.LUMEN_CRASH_VERSION }}
+          GITHUB_ACTOR: ${{ secrets.LUMEN_CRASH_GITHUB_ACTOR || github.actor }}
+          GITHUB_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.LUMEN_CRASH_GITHUB_TOKEN || secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
           KEYSTORE_FILE: ${{ env.KEYSTORE_FILE }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -208,4 +247,3 @@ jobs:
           prerelease: false
           name: "SyncClipboard Android ${{ env.SYNCCLIPBOARD_ANDROID_RELEASE_VERSION }}"
           files: release-assets/*
-

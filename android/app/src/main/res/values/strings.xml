@@ -190,4 +190,8 @@
     <string name="oss_dep_signalr">Realtime client for the desktop-compatible SyncClipboardHub feed.</string>
     <string name="oss_dep_shizuku">Optional privileged keep-alive and background text clipboard access.</string>
     <string name="oss_open_link_failed">Couldn\'t open the link. Install a browser and try again.</string>
+    <string name="crash_report_title">Something went wrong</string>
+    <string name="crash_report_message">SyncClipboard hit an unexpected error. You can copy or share the report, optionally upload a paste link, then continue.</string>
+    <string name="crash_report_share_subject">SyncClipboard crash report</string>
+    <string name="oss_dep_lumen_crash">Crash capture, breadcrumb trail, and adaptive crash report UI used after unexpected failures.</string>
 </resources>

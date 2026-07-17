@@ -22,6 +22,25 @@ val hasReleaseSigningConfig = listOf(
     releaseKeyPassword,
 ).all { it.isNotBlank() }
 
+// Prefer CI-injected latest main auto-release. Do not hardcode a permanent pin.
+val lumenCrashVersion: String =
+    providers.gradleProperty("lumenCrashVersion")
+        .orElse(providers.environmentVariable("LUMEN_CRASH_VERSION"))
+        .orNull
+        ?.takeIf { it.isNotBlank() }
+        ?: error(
+            "Missing lumen-crash version. Resolve the latest lumen-crash-v* release and set " +
+                "LUMEN_CRASH_VERSION or gradle property lumenCrashVersion " +
+                "(see android/README.md / scripts/resolve-lumen-crash-latest.sh).",
+        )
+
+val syncClipboardShortHash: String =
+    providers.environmentVariable("SYNCCLIPBOARD_SHORT_HASH")
+        .orElse(providers.gradleProperty("syncClipboardShortHash"))
+        .orNull
+        ?.takeIf { it.isNotBlank() }
+        ?: "unknown"
+
 android {
     namespace = "com.chloemlla.syncclipboard.mobile"
     // androidx.core 1.17.0+ requires compileSdk 36+ (AAR metadata check).
@@ -39,6 +58,9 @@ android {
             .orNull
             ?.takeIf { it.isNotBlank() }
             ?: "1.0.0"
+
+        buildConfigField("String", "SHORT_HASH", "\"$syncClipboardShortHash\"")
+        buildConfigField("String", "LUMEN_CRASH_VERSION", "\"$lumenCrashVersion\"")
     }
 
     // dual applicationId strategy for settings migration:
@@ -140,9 +162,10 @@ dependencies {
     // clipboard reads) via a UserService bound at the shell (adb) UID.
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
+    // Crash capture + adaptive Compose crash report UI from Project Lumen.
+    implementation("com.chloemlla.lumen:lumen-crash:$lumenCrashVersion")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
-
