@@ -473,8 +473,10 @@ private fun LinkButton(label: String, url: String) {
 }
 
 private fun openUrl(context: android.content.Context, url: String) {
-    val view = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-    val launch = Intent.createChooser(view, null)
+    val view = Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)
+    // Prefer a direct VIEW when something can handle it; otherwise still try a chooser.
+    val canDirect = view.resolveActivity(context.packageManager) != null
+    val launch = if (canDirect) view else Intent.createChooser(view, null)
     // Activity context does not need NEW_TASK; application context does.
     if (context !is android.app.Activity) {
         launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -488,3 +490,4 @@ private fun openUrl(context: android.content.Context, url: String) {
         ).show()
     }
 }
+

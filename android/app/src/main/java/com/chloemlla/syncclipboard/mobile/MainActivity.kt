@@ -42,6 +42,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Fallback export entry (manifest): match ExportSettingsActivity — no UI, just dump prefs.
+        if (intent?.action == SettingsMigrator.ACTION_EXPORT) {
+            runCatching { SettingsMigrator.exportSnapshot(this, settingsStore) }
+            finish()
+            return
+        }
+
         // Android 15+ enforces edge-to-edge for targetSdk 35+; keep transparent bars + insets.
         enableEdgeToEdge()
         bootstrapSettings(intent)
@@ -82,6 +89,11 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        if (intent.action == SettingsMigrator.ACTION_EXPORT) {
+            // Already showing UI: re-export only, do not tear down the activity.
+            runCatching { SettingsMigrator.exportSnapshot(this, settingsStore) }
+            return
+        }
         bootstrapSettings(intent)
     }
 
@@ -114,18 +126,13 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Launch / new-intent bootstrap:
-     * 1) legacy export action (MainActivity fallback intent-filter)
-     * 2) package import when modern
-     * 3) same-package upgrade migration when import did not run
-     * 4) bind OSS gate state
+     * Normal launch / new-intent bootstrap (not used for cold-start ACTION_EXPORT):
+     * 1) package import when modern
+     * 2) same-package upgrade migration when import did not run
+     * 3) bind OSS gate state
      */
     private fun bootstrapSettings(intent: Intent?) {
         runCatching {
-            if (intent?.action == SettingsMigrator.ACTION_EXPORT) {
-                // Legacy package path: re-export encrypted prefs into snapshot/provider.
-                SettingsMigrator.exportSnapshot(this, settingsStore)
-            }
             val imported = tryImportSettings()
             if (!imported) {
                 settingsStore.migrateOssNoticeAckIfNeeded()
