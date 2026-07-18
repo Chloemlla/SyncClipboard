@@ -1130,4 +1130,43 @@ Esc：关闭面板</value>
   <data name="ConfirmDownloadImageMessage" xml:space="preserve">
     <value>收到远程图片“{0}”，是否下载并保存到“图片/SyncClipboard”相册与本地剪贴板？</value>
   </data>
+  <data name="OpenSourceNotice" xml:space="preserve">
+    <value>开源声明</value>
+  </data>
+  <data name="OssNoticeTitle" xml:space="preserve">
+    <value>开源 · 永久免费</value>
+  </data>
+  <data name="OssNoticeSubtitle" xml:space="preserve">
+    <value>首次使用前请阅读以下说明。</value>
+  </data>
+  <data name="OssFreeStatement" xml:space="preserve">
+    <value>SyncClipboard 开源且永久免费。请通过官方 GitHub 仓库获取安装包，谨防付费镜像、假冒授权或诈骗信息。</value>
+  </data>
+  <data name="OssAntiScamStatement" xml:space="preserve">
+    <value>请勿购买非官方安装包、激活码或“破解版”。官方发布渠道为 GitHub，且免费提供。</value>
+  </data>
+  <data name="OssProjectLicense" xml:space="preserve">
+    <value>本项目采用 MIT License 开源。</value>
+  </data>
+  <data name="OssIUnderstandContinue" xml:space="preserve">
+    <value>我知道了，继续</value>
+  </data>
+  <data name="OssViewFullLicense" xml:space="preserve">
+    <value>查看完整协议</value>
+  </data>
+  <data name="OssDependencies" xml:space="preserve">
+    <value>第三方依赖鸣谢</value>
+  </data>
+  <data name="ForkRepository" xml:space="preserve">
+    <value>本分支仓库</value>
+  </data>
+  <data name="UpstreamRepository" xml:space="preserve">
+    <value>上游仓库</value>
+  </data>
+  <data name="OssOpenSourceNoticeEntry" xml:space="preserve">
+    <value>开源与鸣谢</value>
+  </data>
+  <data name="OssClose" xml:space="preserve">
+    <value>关闭</value>
+  </data>
 </root>

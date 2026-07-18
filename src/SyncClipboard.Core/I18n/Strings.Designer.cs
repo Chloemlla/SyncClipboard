@@ -568,6 +568,123 @@ namespace SyncClipboard.Core.I18n {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Open Source Notice.
+        /// </summary>
+        public static string OpenSourceNotice {
+            get {
+                return ResourceManager.GetString("OpenSourceNotice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open Source · Free Forever.
+        /// </summary>
+        public static string OssNoticeTitle {
+            get {
+                return ResourceManager.GetString("OssNoticeTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please read this once before using SyncClipboard.
+        /// </summary>
+        public static string OssNoticeSubtitle {
+            get {
+                return ResourceManager.GetString("OssNoticeSubtitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SyncClipboard is open source and permanently free....
+        /// </summary>
+        public static string OssFreeStatement {
+            get {
+                return ResourceManager.GetString("OssFreeStatement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Do not pay for unofficial installers....
+        /// </summary>
+        public static string OssAntiScamStatement {
+            get {
+                return ResourceManager.GetString("OssAntiScamStatement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This project is released under the MIT License.
+        /// </summary>
+        public static string OssProjectLicense {
+            get {
+                return ResourceManager.GetString("OssProjectLicense", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to I understand, continue.
+        /// </summary>
+        public static string OssIUnderstandContinue {
+            get {
+                return ResourceManager.GetString("OssIUnderstandContinue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to View full license.
+        /// </summary>
+        public static string OssViewFullLicense {
+            get {
+                return ResourceManager.GetString("OssViewFullLicense", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Third-party credits.
+        /// </summary>
+        public static string OssDependencies {
+            get {
+                return ResourceManager.GetString("OssDependencies", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Fork repository.
+        /// </summary>
+        public static string ForkRepository {
+            get {
+                return ResourceManager.GetString("ForkRepository", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Upstream repository.
+        /// </summary>
+        public static string UpstreamRepository {
+            get {
+                return ResourceManager.GetString("UpstreamRepository", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open source &amp; credits.
+        /// </summary>
+        public static string OssOpenSourceNoticeEntry {
+            get {
+                return ResourceManager.GetString("OssOpenSourceNoticeEntry", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Close.
+        /// </summary>
+        public static string OssClose {
+            get {
+                return ResourceManager.GetString("OssClose", resourceCulture);
+            }
+        }
+        
         
         /// <summary>
         ///   查找类似 Connection Details 的本地化字符串。

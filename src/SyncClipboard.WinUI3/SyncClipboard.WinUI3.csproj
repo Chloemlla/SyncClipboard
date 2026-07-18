@@ -163,6 +163,7 @@
 
   <ItemGroup>
     <Content Include="..\..\LICENSES\**" LinkBase="LICENSES" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\LICENSE" Link="LICENSES\PROJECT_LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

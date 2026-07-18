@@ -68,8 +68,13 @@ public partial class MainWindow : Window, IMainWindow
             var index = _viewModel.MainWindowPage.IndexOf(page);
             if (index != -1)
             {
-                _MainView._MenuList.SelectedIndex = _viewModel.MainWindowPage.IndexOf(page);
+                _MainView._MenuList.SelectedIndex = index;
+                return;
             }
+
+            NavigateTo(page, SlideNavigationTransitionEffect.FromBottom, para);
+            _viewModel.BreadcrumbList.Clear();
+            _viewModel.BreadcrumbList.Add(page);
         }
         RunOnMainThread(action);
     }

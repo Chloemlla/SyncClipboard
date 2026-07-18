@@ -4,6 +4,7 @@ using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Media.Animation;
 using Microsoft.Extensions.DependencyInjection;
 using SyncClipboard.Core.Commons;
+using SyncClipboard.Core.Utilities;
 using SyncClipboard.Core.Models.UserConfigs;
 using SyncClipboard.Core.ViewModels;
 using System;
@@ -64,6 +65,15 @@ public partial class MainView : UserControl
     {
         var selectedItem = ((ListBox)sender).SelectedItem;
         var page = (PageDefinition)selectedItem!;
+
+        var configManager = App.Current.Services.GetRequiredService<ConfigManager>();
+        if (!OssNoticeHelper.IsAcknowledged(configManager) && !page.Equals(PageDefinition.OpenSourceNotice))
+        {
+            NavigateTo(PageDefinition.OpenSourceNotice, parameter: true);
+            _viewModel.BreadcrumbList.Clear();
+            _viewModel.BreadcrumbList.Add(PageDefinition.OpenSourceNotice);
+            return;
+        }
 
         NavigateTo(page);
 

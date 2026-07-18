@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0-macos</TargetFramework>
@@ -29,6 +29,13 @@
     <Copy
       SourceFiles="@(LicenseFiles)"
       DestinationFolder="$(OutDir)\SyncClipboard.Desktop.MacOS.app\Contents\MonoBundle\LICENSES\%(RecursiveDir)"
+      SkipUnchangedFiles="true"
+      OverwriteReadOnlyFiles="true"
+      Retries="3"
+      RetryDelayMilliseconds="300"/>
+    <Copy
+      SourceFiles="$(ProjectDir)\..\..\LICENSE"
+      DestinationFiles="$(OutDir)\SyncClipboard.Desktop.MacOS.app\Contents\MonoBundle\LICENSES\PROJECT_LICENSE.txt"
       SkipUnchangedFiles="true"
       OverwriteReadOnlyFiles="true"
       Retries="3"

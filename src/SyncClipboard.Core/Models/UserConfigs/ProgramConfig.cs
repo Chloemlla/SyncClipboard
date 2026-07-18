@@ -1,4 +1,4 @@
-﻿namespace SyncClipboard.Core.Models.UserConfigs;
+namespace SyncClipboard.Core.Models.UserConfigs;
 
 public record ProgramConfig
 {
@@ -14,4 +14,9 @@ public record ProgramConfig
     public bool DiagnoseMode { get; set; } = false;
     public bool DiagnosePageAutoRefresh { get; set; } = false;
     public string Theme { get; set; } = "";
+    /// <summary>
+    /// Whether the first-run open-source / free / credits notice has been acknowledged.
+    /// Missing key is treated as false until upgrade migration runs.
+    /// </summary>
+    public bool OssNoticeAcknowledged { get; set; } = false;
 }

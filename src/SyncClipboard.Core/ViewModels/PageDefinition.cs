@@ -15,6 +15,7 @@ public class PageDefinition(string name, string title, string? fontIcon = null)
     public static readonly PageDefinition About = new("About", I18n.Strings.About, "\uE946");
     public static readonly PageDefinition Diagnose = new("Diagnose", I18n.Strings.Diagnose, "\uE9D9");
     public static readonly PageDefinition License = new("License", I18n.Strings.License);
+    public static readonly PageDefinition OpenSourceNotice = new("OpenSourceNotice", I18n.Strings.OpenSourceNotice, "\uE946");
     public static readonly PageDefinition NextCloudLogIn = new("NextCloudLogIn", I18n.Strings.UseNextcloud);
     public static readonly PageDefinition AddAccount = new("AddAccount", I18n.Strings.AddAccount);
     public static readonly PageDefinition DefaultAddAccount = new("AccountConfigEdit", I18n.Strings.EditAccountConfig);

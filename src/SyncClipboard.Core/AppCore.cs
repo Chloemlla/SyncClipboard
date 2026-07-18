@@ -117,7 +117,14 @@ namespace SyncClipboard.Core
             InitTrayIcon();
             Services.GetRequiredService<AppInstance>().WaitForOtherInstanceToActiveAsync();
             contextMenu.AddMenuItemGroup([new(Strings.RestartApp, RestartApp), new(Strings.Exit, mainWindow.ExitApp)]);
+            OssNoticeHelper.MigrateIfNeeded(configManager);
             ShowMainWindow(configManager, mainWindow);
+            if (!OssNoticeHelper.IsAcknowledged(configManager))
+            {
+                // First-run gate must surface even when HideWindowOnStartup is enabled.
+                mainWindow.Show();
+                mainWindow.OpenPage(PageDefinition.OpenSourceNotice, true);
+            }
             RunStartUpCommands();
             Job.SetUpSchedulerJobs(Services);
         }
@@ -302,6 +309,7 @@ namespace SyncClipboard.Core
             services.AddTransient<ServerConfigViewModel>();
             services.AddTransient<SystemSettingViewModel>();
             services.AddTransient<AboutViewModel>();
+            services.AddTransient<OpenSourceNoticeViewModel>();
             services.AddTransient<CliboardAssistantViewModel>();
             services.AddTransient<NextCloudLogInViewModel>();
             services.AddTransient<AddAccountViewModel>();

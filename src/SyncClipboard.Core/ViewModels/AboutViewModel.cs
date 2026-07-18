@@ -6,6 +6,10 @@ using SyncClipboard.Core.Models;
 using SyncClipboard.Core.Models.UserConfigs;
 using SyncClipboard.Core.Utilities;
 using SyncClipboard.Core.Utilities.Updater;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SyncClipboard.Core.ViewModels;
 
@@ -60,23 +64,112 @@ public partial class AboutViewModel : ObservableObject
         UpdateStateChanged(_updateChecker.CurrentState);
     }
 
+    public string ForkRepositoryUrl => OssNoticeHelper.ForkRepositoryUrl;
+    public string UpstreamRepositoryUrl => OssNoticeHelper.UpstreamRepositoryUrl;
+    public string ProjectLicenseName => OssNoticeHelper.ProjectLicenseName;
+    public string ProjectCopyright => OssNoticeHelper.ProjectCopyright;
+
     public List<OpenSourceSoftware> Dependencies { get; } =
     [
-        new OpenSourceSoftware("NativeNotification", "https://github.com/Jeric-X/NativeNotification", "NativeNotification/LICENSE.txt"),
-        new OpenSourceSoftware("Magick.NET", "https://github.com/dlemstra/Magick.NET", "Magick.NET/License.txt"),
-        new OpenSourceSoftware(".NET Community Toolkit", "https://github.com/CommunityToolkit/dotnet", "NETCommunityToolkit/License.md"),
-        new OpenSourceSoftware("H.NotifyIcon", "https://github.com/HavenDV/H.NotifyIcon", "H.NotifyIcon/LICENSE.md"),
-        new OpenSourceSoftware("WinUIEx", "https://github.com/dotMorten/WinUIEx", "WinUIEx/LICENSE.txt"),
-        new OpenSourceSoftware("moq", "https://github.com/moq/moq", "moq/License.txt"),
-        new OpenSourceSoftware("Avalonia", "https://avaloniaui.net/", "Avalonia/licence.md"),
-        new OpenSourceSoftware("FluentAvalonia", "https://github.com/amwx/FluentAvalonia/", "FluentAvalonia/LICENSE.txt"),
-        new OpenSourceSoftware("FluentAvalonia.BreadcrumbBar", "https://github.com/indigo-san/FluentAvalonia.BreadcrumbBar", "FluentAvalonia.BreadcrumbBar/LICENSE.txt"),
-        new OpenSourceSoftware("AsyncImageLoader.Avalonia", "https://github.com/AvaloniaUtils/AsyncImageLoader.Avalonia", "AsyncImageLoader.Avalonia/LICENSE.txt"),
-        new OpenSourceSoftware("Vanara", "https://github.com/dahall/Vanara", "Vanara/LICENSE.txt"),
-        new OpenSourceSoftware("SharpHook", "https://github.com/TolikPylypchuk/SharpHook", "SharpHook/LICENSE.txt"),
-        new OpenSourceSoftware("Quartz.NET", "https://www.quartz-scheduler.net/", "quartznet/license.txt"),
+        new OpenSourceSoftware(
+            "NativeNotification",
+            "https://github.com/Jeric-X/NativeNotification",
+            "NativeNotification/LICENSE.txt",
+            "Jeric-X",
+            "Cross-platform desktop notification abstraction used by the tray and toast UI.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "Magick.NET",
+            "https://github.com/dlemstra/Magick.NET",
+            "Magick.NET/License.txt",
+            "Dirk Lemstra",
+            "ImageMagick binding used for image conversion and clipboard image assist.",
+            "Apache-2.0"),
+        new OpenSourceSoftware(
+            ".NET Community Toolkit",
+            "https://github.com/CommunityToolkit/dotnet",
+            "NETCommunityToolkit/License.md",
+            ".NET Foundation",
+            "MVVM source generators, messaging, and helper utilities.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "H.NotifyIcon",
+            "https://github.com/HavenDV/H.NotifyIcon",
+            "H.NotifyIcon/LICENSE.md",
+            "HavenDV",
+            "Tray icon implementation for desktop shells.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "WinUIEx",
+            "https://github.com/dotMorten/WinUIEx",
+            "WinUIEx/LICENSE.txt",
+            "Morten Nielsen",
+            "WinUI window helpers and desktop UX extensions.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "moq",
+            "https://github.com/moq/moq",
+            "moq/License.txt",
+            "Moq contributors",
+            "Mocking library used by unit tests.",
+            "BSD-3-Clause"),
+        new OpenSourceSoftware(
+            "Avalonia",
+            "https://avaloniaui.net/",
+            "Avalonia/licence.md",
+            "AvaloniaUI",
+            "Cross-platform desktop UI framework for Linux/macOS/Windows clients.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "FluentAvalonia",
+            "https://github.com/amwx/FluentAvalonia/",
+            "FluentAvalonia/LICENSE.txt",
+            "amwx",
+            "Fluent Design controls for Avalonia.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "FluentAvalonia.BreadcrumbBar",
+            "https://github.com/indigo-san/FluentAvalonia.BreadcrumbBar",
+            "FluentAvalonia.BreadcrumbBar/LICENSE.txt",
+            "indigo-san",
+            "Breadcrumb navigation control for Avalonia settings pages.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "AsyncImageLoader.Avalonia",
+            "https://github.com/AvaloniaUtils/AsyncImageLoader.Avalonia",
+            "AsyncImageLoader.Avalonia/LICENSE.txt",
+            "AvaloniaUtils",
+            "Asynchronous image loading helpers for Avalonia UI.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "Vanara",
+            "https://github.com/dahall/Vanara",
+            "Vanara/LICENSE.txt",
+            "David Hall",
+            "Windows P/Invoke helpers used by native integrations.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "SharpHook",
+            "https://github.com/TolikPylypchuk/SharpHook",
+            "SharpHook/LICENSE.txt",
+            "Tolik Pylypchuk",
+            "Global keyboard/mouse hook abstraction for hotkeys and paste simulation.",
+            "MIT"),
+        new OpenSourceSoftware(
+            "Quartz.NET",
+            "https://www.quartz-scheduler.net/",
+            "quartznet/license.txt",
+            "Quartz.NET contributors",
+            "Scheduler used for maintenance and update jobs.",
+            "Apache-2.0"),
 #if LINUX
-        new OpenSourceSoftware("MiSans Font", "https://hyperos.mi.com/font", string.Empty),
+        new OpenSourceSoftware(
+            "MiSans Font",
+            "https://hyperos.mi.com/font",
+            string.Empty,
+            "Xiaomi",
+            "Linux packaging font resource.",
+            "OFL"),
 #endif
     ];
 
@@ -84,6 +177,18 @@ public partial class AboutViewModel : ObservableObject
     public static void OpenHomePage()
     {
         Sys.OpenWithDefaultApp(Env.HomePage);
+    }
+
+    [RelayCommand]
+    public static void OpenForkRepository()
+    {
+        Sys.OpenWithDefaultApp(OssNoticeHelper.ForkRepositoryUrl);
+    }
+
+    [RelayCommand]
+    public static void OpenUpstreamRepository()
+    {
+        Sys.OpenWithDefaultApp(OssNoticeHelper.UpstreamRepositoryUrl);
     }
 
     [RelayCommand]

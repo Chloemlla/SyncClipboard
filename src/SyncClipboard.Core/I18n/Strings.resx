@@ -1132,4 +1132,43 @@ This operation cannot be undone.</value>
   <data name="ConfirmDownloadImageMessage" xml:space="preserve">
     <value>Received a remote image "{0}". Download and save it to Pictures/SyncClipboard and the local clipboard?</value>
   </data>
+  <data name="OpenSourceNotice" xml:space="preserve">
+    <value>Open Source Notice</value>
+  </data>
+  <data name="OssNoticeTitle" xml:space="preserve">
+    <value>Open Source · Free Forever</value>
+  </data>
+  <data name="OssNoticeSubtitle" xml:space="preserve">
+    <value>Please read this once before using SyncClipboard.</value>
+  </data>
+  <data name="OssFreeStatement" xml:space="preserve">
+    <value>SyncClipboard is open source and permanently free. Please obtain builds from the official GitHub repositories. Beware of paid mirrors, fake licenses, or scam sites.</value>
+  </data>
+  <data name="OssAntiScamStatement" xml:space="preserve">
+    <value>Do not pay for unofficial installers, activation codes, or "cracked" packages. Official distribution is free through GitHub.</value>
+  </data>
+  <data name="OssProjectLicense" xml:space="preserve">
+    <value>This project is released under the MIT License.</value>
+  </data>
+  <data name="OssIUnderstandContinue" xml:space="preserve">
+    <value>I understand, continue</value>
+  </data>
+  <data name="OssViewFullLicense" xml:space="preserve">
+    <value>View full license</value>
+  </data>
+  <data name="OssDependencies" xml:space="preserve">
+    <value>Third-party credits</value>
+  </data>
+  <data name="ForkRepository" xml:space="preserve">
+    <value>Fork repository</value>
+  </data>
+  <data name="UpstreamRepository" xml:space="preserve">
+    <value>Upstream repository</value>
+  </data>
+  <data name="OssOpenSourceNoticeEntry" xml:space="preserve">
+    <value>Open source & credits</value>
+  </data>
+  <data name="OssClose" xml:space="preserve">
+    <value>Close</value>
+  </data>
 </root>

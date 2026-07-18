@@ -39,4 +39,9 @@ public partial class AboutPage : UserControl
         var path = software.LicensePath;
         App.Current.MainWindow.NavigateToNextLevel(PageDefinition.License, path);
     }
+
+    private void OpenSourceNotice_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        App.Current.MainWindow.NavigateToNextLevel(PageDefinition.OpenSourceNotice, false);
+    }
 }

@@ -13,11 +13,21 @@
       BorderBrush="Transparent"
       mc:Ignorable="d">
     <StackPanel Spacing="10">
+        <ui:SettingsCard Header="{x:Bind i18n:Strings.OssOpenSourceNoticeEntry}"
+                         Description="{x:Bind i18n:Strings.OssNoticeSubtitle}"
+                         IsClickEnabled="True"
+                         Click="OpenSourceNotice_Click">
+            <ui:SettingsCard.HeaderIcon>
+                <FontIcon Glyph="&#xE946;" />
+            </ui:SettingsCard.HeaderIcon>
+        </ui:SettingsCard>
         <ui:SettingsExpander Header="SyncClipboard" IsExpanded="True" Description="{x:Bind _aboutViewModel.Version}">
             <ui:SettingsExpander.HeaderIcon>
                 <ImageIcon Source="{ThemeResource AppLogo}" />
             </ui:SettingsExpander.HeaderIcon>
             <StackPanel Orientation="Horizontal" Spacing="10">
+                <HyperlinkButton FontWeight="SemiBold" Padding="0" Content="{x:Bind i18n:Strings.ForkRepository}" Command="{x:Bind _aboutViewModel.OpenForkRepositoryCommand}" />
+                <HyperlinkButton FontWeight="SemiBold" Padding="0" Content="{x:Bind i18n:Strings.UpstreamRepository}" Command="{x:Bind _aboutViewModel.OpenUpstreamRepositoryCommand}" />
                 <HyperlinkButton FontWeight="SemiBold" Padding="0" Content="{x:Bind i18n:Strings.HomePage}" Command="{x:Bind _aboutViewModel.OpenHomePageCommand}" />
                 <HyperlinkButton FontWeight="SemiBold" Padding="0" Content="{x:Bind i18n:Strings.DownloadPage}" Command="{x:Bind _aboutViewModel.OpenReleasePageCommand}" />
                 <Button Content="{x:Bind i18n:Strings.CheckUpdate}" Command="{x:Bind _aboutViewModel.CheckForUpdateCommand}" />
@@ -65,7 +75,12 @@
                                      Click="DependencyItem_Click"
                                      Tag="{x:Bind LicensePath}">
                         <ui:SettingsCard.Description>
-                            <HyperlinkButton Content="{x:Bind HomePage}" Click="HyperlinkButton_Click" />
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="{x:Bind Author}" Opacity="0.8" />
+                                <TextBlock Text="{x:Bind Description}" TextWrapping="WrapWholeWords" Opacity="0.85" />
+                                <TextBlock Text="{x:Bind LicenseName}" Opacity="0.8" />
+                                <HyperlinkButton Content="{x:Bind HomePage}" Click="HyperlinkButton_Click" Padding="0" />
+                            </StackPanel>
                         </ui:SettingsCard.Description>
                     </ui:SettingsCard>
                 </DataTemplate>

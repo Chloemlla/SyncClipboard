@@ -37,5 +37,11 @@ namespace SyncClipboard.WinUI3.Views
 
             window.NavigateToNextLevel(PageDefinition.License, path);
         }
+
+        private void OpenSourceNotice_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs _)
+        {
+            var window = App.Current.Services.GetRequiredService<IMainWindow>();
+            window.NavigateToNextLevel(PageDefinition.OpenSourceNotice, false);
+        }
     }
 }

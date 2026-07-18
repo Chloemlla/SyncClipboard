@@ -112,8 +112,14 @@ namespace SyncClipboard.WinUI3.Views
                 var index = _viewModel.MainWindowPage.IndexOf(page);
                 if (index != -1)
                 {
-                    _MenuList.SelectedIndex = _viewModel.MainWindowPage.IndexOf(page);
+                    _MenuList.SelectedIndex = index;
+                    return;
                 }
+
+                // Pages outside the sidebar (e.g. first-run open-source notice).
+                NavigateTo(page, SlideNavigationTransitionEffect.FromBottom, para);
+                _viewModel.BreadcrumbList.Clear();
+                _viewModel.BreadcrumbList.Add(page);
             }
             RunOnMainThread(action);
         }
@@ -150,6 +156,15 @@ namespace SyncClipboard.WinUI3.Views
         {
             var selectedItem = ((ListView)sender).SelectedItem;
             var page = (PageDefinition)selectedItem;
+
+            if (!OssNoticeHelper.IsAcknowledged(App.Current.Services.GetRequiredService<ConfigManager>())
+                && !page.Equals(PageDefinition.OpenSourceNotice))
+            {
+                NavigateTo(PageDefinition.OpenSourceNotice, SlideNavigationTransitionEffect.FromBottom, true);
+                _viewModel.BreadcrumbList.Clear();
+                _viewModel.BreadcrumbList.Add(PageDefinition.OpenSourceNotice);
+                return;
+            }
 
             NavigateTo(page);
 

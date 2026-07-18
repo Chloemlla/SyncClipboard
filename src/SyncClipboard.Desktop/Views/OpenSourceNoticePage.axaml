@@ -1,0 +1,81 @@
+<UserControl x:Class="SyncClipboard.Desktop.Views.OpenSourceNoticePage"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ui="using:FluentAvalonia.UI.Controls"
+             xmlns:m="using:SyncClipboard.Core.Models"
+             xmlns:vm="using:SyncClipboard.Core.ViewModels"
+             xmlns:i18n="using:SyncClipboard.Core.I18n"
+             x:DataType="vm:OpenSourceNoticeViewModel"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <DataTemplate x:Key="DependencyTemplate" x:DataType="m:OpenSourceSoftware">
+            <StackPanel Spacing="2">
+                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding Author}" Opacity="0.8" />
+                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Opacity="0.85" />
+                <TextBlock Text="{Binding LicenseName}" Opacity="0.8" />
+                <HyperlinkButton Content="{Binding HomePage}" Click="DependencyHome_Click" />
+            </StackPanel>
+        </DataTemplate>
+        <ui:SymbolIconSource x:Key="GoIcon" Symbol="ChevronRight" />
+    </UserControl.Resources>
+    <StackPanel Spacing="12">
+        <StackPanel Spacing="4">
+            <TextBlock Text="{x:Static i18n:Strings.OssNoticeTitle}" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Text="{x:Static i18n:Strings.OssNoticeSubtitle}" Opacity="0.8" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ui:SettingsExpander Header="{x:Static i18n:Strings.OssNoticeTitle}" IsExpanded="True">
+            <ui:SettingsExpander.Items>
+                <ui:SettingsExpanderItem Content="{x:Static i18n:Strings.OssFreeStatement}" />
+                <ui:SettingsExpanderItem Content="{x:Static i18n:Strings.OssAntiScamStatement}" />
+            </ui:SettingsExpander.Items>
+        </ui:SettingsExpander>
+
+        <ui:SettingsExpander Header="{x:Static i18n:Strings.OpenSourceNotice}" IsExpanded="True">
+            <ui:SettingsExpander.Items>
+                <ui:SettingsExpanderItem Content="{x:Static i18n:Strings.ForkRepository}">
+                    <ui:SettingsExpanderItem.Footer>
+                        <HyperlinkButton Content="{Binding ForkRepositoryUrl}" Click="ForkButton_Click" />
+                    </ui:SettingsExpanderItem.Footer>
+                </ui:SettingsExpanderItem>
+                <ui:SettingsExpanderItem Content="{x:Static i18n:Strings.UpstreamRepository}">
+                    <ui:SettingsExpanderItem.Footer>
+                        <HyperlinkButton Content="{Binding UpstreamRepositoryUrl}" Click="UpstreamButton_Click" />
+                    </ui:SettingsExpanderItem.Footer>
+                </ui:SettingsExpanderItem>
+                <ui:SettingsExpanderItem Content="{x:Static i18n:Strings.License}"
+                                         Description="{Binding ProjectCopyright}">
+                    <ui:SettingsExpanderItem.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock VerticalAlignment="Center" Text="{Binding ProjectLicenseName}" />
+                            <Button Content="{x:Static i18n:Strings.OssViewFullLicense}" Click="ViewLicense_Click" />
+                        </StackPanel>
+                    </ui:SettingsExpanderItem.Footer>
+                </ui:SettingsExpanderItem>
+            </ui:SettingsExpander.Items>
+        </ui:SettingsExpander>
+
+        <ui:SettingsExpander Header="{x:Static i18n:Strings.OssDependencies}"
+                             IsExpanded="True"
+                             ItemsSource="{Binding Dependencies}">
+            <ui:SettingsExpander.ItemTemplate>
+                <DataTemplate x:DataType="m:OpenSourceSoftware">
+                    <ui:SettingsExpanderItem ActionIconSource="{StaticResource GoIcon}"
+                                             IsClickEnabled="{Binding IsValidLicensePath}"
+                                             Click="DependencyLicense_Click"
+                                             Content="{Binding}"
+                                             ContentTemplate="{StaticResource DependencyTemplate}" />
+                </DataTemplate>
+            </ui:SettingsExpander.ItemTemplate>
+        </ui:SettingsExpander>
+
+        <Button x:Name="_PrimaryAction"
+                HorizontalAlignment="Stretch"
+                Classes="accent"
+                Click="PrimaryAction_Click"
+                Content="{x:Static i18n:Strings.OssIUnderstandContinue}" />
+    </StackPanel>
+</UserControl>
