@@ -116,6 +116,37 @@ class SettingsStore(context: Context) {
         return prefs.getBoolean(KEY_SERVICE_ENABLED, false)
     }
 
+    /**
+     * Package names that should not trigger clipboard push when they are in the
+     * foreground (Android analog of desktop HotkeyBlacklist).
+     */
+    fun loadIgnorePackages(): List<String> {
+        val raw = prefs.getString(KEY_IGNORE_PACKAGES, "") ?: ""
+        if (raw.isBlank()) return emptyList()
+        return raw.split('\n', ',', ';')
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+    }
+
+    fun saveIgnorePackages(packages: Collection<String>) {
+        val normalized = packages
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .sorted()
+        prefs.edit()
+            .putString(KEY_IGNORE_PACKAGES, normalized.joinToString("\n"))
+            .apply()
+        SettingsMigrator.exportSnapshot(appContext, this)
+    }
+
+    fun isPackageIgnored(packageName: String?): Boolean {
+        if (packageName.isNullOrBlank()) return false
+        val target = packageName.trim()
+        return loadIgnorePackages().any { it.equals(target, ignoreCase = true) }
+    }
+
     companion object {
         private const val STORE_NAME = "syncclipboard_settings"
         private const val KEY_BASE_URL = "base_url"
@@ -134,6 +165,7 @@ class SettingsStore(context: Context) {
         private const val KEY_DOWNLOAD_WEB_IMAGE = "download_web_image"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
         private const val KEY_OSS_NOTICE_ACK = "oss_notice_acknowledged"
+        private const val KEY_IGNORE_PACKAGES = "ignore_packages"
     }
 }
 

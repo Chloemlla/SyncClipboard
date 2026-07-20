@@ -24,11 +24,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Block
+import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.CloudSync
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Dns
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.FilterAlt
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Policy
@@ -36,6 +41,7 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material.icons.outlined.SwapVert
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -85,6 +91,8 @@ import com.chloemlla.syncclipboard.mobile.sync.SyncStatus
 fun MainScreen(
     viewModel: MainViewModel,
     onOpenOpenSourceNotice: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
+    onOpenTools: () -> Unit = {},
 ) {
     val ui by viewModel.ui.collectAsStateWithLifecycle()
     val sync by viewModel.syncState.collectAsStateWithLifecycle()
@@ -125,6 +133,20 @@ fun MainScreen(
                         Text(
                             text = context.getString(R.string.app_name),
                             fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onOpenHistory) {
+                        Icon(
+                            imageVector = Icons.Outlined.History,
+                            contentDescription = context.getString(R.string.action_open_history),
+                        )
+                    }
+                    IconButton(onClick = onOpenTools) {
+                        Icon(
+                            imageVector = Icons.Outlined.Build,
+                            contentDescription = context.getString(R.string.action_open_tools),
                         )
                     }
                 },
@@ -250,6 +272,54 @@ fun MainScreen(
                 )
 
                 SectionTitle(
+                    text = context.getString(R.string.section_content),
+                    subtitle = context.getString(R.string.section_content_subtitle),
+                    icon = Icons.Outlined.Tune,
+                )
+                ToggleCard(
+                    icon = Icons.Outlined.Upload,
+                    label = context.getString(R.string.toggle_push_text),
+                    checked = ui.enablePushText,
+                    onChange = viewModel::onEnablePushTextChange,
+                )
+                ToggleCard(
+                    icon = Icons.Outlined.Upload,
+                    label = context.getString(R.string.toggle_push_image),
+                    checked = ui.enablePushImage,
+                    onChange = viewModel::onEnablePushImageChange,
+                )
+                ToggleCard(
+                    icon = Icons.Outlined.Upload,
+                    label = context.getString(R.string.toggle_push_file),
+                    checked = ui.enablePushFile,
+                    onChange = viewModel::onEnablePushFileChange,
+                )
+                ToggleCard(
+                    icon = Icons.Outlined.Download,
+                    label = context.getString(R.string.toggle_pull_image),
+                    checked = ui.enablePullImage,
+                    onChange = viewModel::onEnablePullImageChange,
+                )
+                ToggleCard(
+                    icon = Icons.Outlined.Download,
+                    label = context.getString(R.string.toggle_pull_file),
+                    checked = ui.enablePullFile,
+                    onChange = viewModel::onEnablePullFileChange,
+                )
+                OutlinedTextField(
+                    value = ui.maxFileMb.toString(),
+                    onValueChange = { v ->
+                        viewModel.onMaxFileMbChange(v.toIntOrNull() ?: ui.maxFileMb)
+                    },
+                    label = { Text(context.getString(R.string.label_max_file_mb)) },
+                    supportingText = { Text(context.getString(R.string.max_file_mb_hint)) },
+                    singleLine = true,
+                    shape = SyncPreferenceShape,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                SectionTitle(
                     text = context.getString(R.string.section_assist),
                     subtitle = context.getString(R.string.section_assist_subtitle),
                     icon = Icons.Outlined.Info,
@@ -320,6 +390,104 @@ fun MainScreen(
                         lines = listOf(context.getString(R.string.hint_push_requires_accessibility)),
                     )
                 }
+
+                SectionTitle(
+                    text = context.getString(R.string.section_ignore),
+                    subtitle = context.getString(R.string.section_ignore_subtitle),
+                    icon = Icons.Outlined.FilterAlt,
+                )
+                SoftSurface {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(
+                            text = if (ui.foregroundPackage.isBlank()) {
+                                context.getString(R.string.ignore_foreground_unknown)
+                            } else {
+                                context.getString(R.string.ignore_foreground_current, ui.foregroundPackage)
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        OutlinedTextField(
+                            value = ui.ignoreDraft,
+                            onValueChange = viewModel::onIgnoreDraftChange,
+                            label = { Text(context.getString(R.string.label_ignore_package)) },
+                            placeholder = { Text(context.getString(R.string.ignore_package_placeholder)) },
+                            singleLine = true,
+                            shape = SyncPreferenceShape,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { viewModel.addIgnorePackage() },
+                                shape = SyncPreferenceShape,
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(context.getString(R.string.action_add_ignore))
+                            }
+                            OutlinedButton(
+                                onClick = viewModel::addCurrentForegroundPackage,
+                                shape = SyncPreferenceShape,
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                Text(context.getString(R.string.action_add_current_app))
+                            }
+                        }
+                        if (ui.ignorePackages.isEmpty()) {
+                            Text(
+                                text = context.getString(R.string.ignore_empty),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else {
+                            ui.ignorePackages.forEach { pkg ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Block,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                    Text(
+                                        text = pkg,
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    IconButton(onClick = { viewModel.removeIgnorePackage(pkg) }) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Delete,
+                                            contentDescription = context.getString(R.string.action_remove_ignore),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                SectionTitle(
+                    text = context.getString(R.string.section_more),
+                    subtitle = context.getString(R.string.section_more_subtitle),
+                    icon = Icons.Outlined.History,
+                )
+                OutlinedButton(
+                    onClick = onOpenHistory,
+                    shape = SyncPreferenceShape,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { ButtonLabel(Icons.Outlined.History, context.getString(R.string.action_open_history)) }
+                OutlinedButton(
+                    onClick = onOpenTools,
+                    shape = SyncPreferenceShape,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { ButtonLabel(Icons.Outlined.Build, context.getString(R.string.action_open_tools)) }
 
                 SectionTitle(
                     text = context.getString(R.string.section_control),

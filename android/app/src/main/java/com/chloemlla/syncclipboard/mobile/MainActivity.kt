@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chloemlla.lumen.crash.CrashBreadcrumbs
 import com.chloemlla.lumen.crash.LumenCrash
 import com.chloemlla.lumen.crash.ui.LumenCrashGate
@@ -17,11 +18,15 @@ import com.chloemlla.syncclipboard.mobile.core.SettingsMigrator
 import com.chloemlla.syncclipboard.mobile.core.SettingsStore
 import com.chloemlla.syncclipboard.mobile.shizuku.ShizukuManager
 import com.chloemlla.syncclipboard.mobile.sync.SyncForegroundService
+import com.chloemlla.syncclipboard.mobile.ui.HistoryScreen
+import com.chloemlla.syncclipboard.mobile.ui.HistoryViewModel
 import com.chloemlla.syncclipboard.mobile.ui.MainScreen
 import com.chloemlla.syncclipboard.mobile.ui.MainViewModel
 import com.chloemlla.syncclipboard.mobile.ui.OpenSourceNoticeMode
 import com.chloemlla.syncclipboard.mobile.ui.OpenSourceNoticeScreen
 import com.chloemlla.syncclipboard.mobile.ui.SyncClipboardTheme
+import com.chloemlla.syncclipboard.mobile.ui.ToolsScreen
+import com.chloemlla.syncclipboard.mobile.ui.ToolsViewModel
 import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
@@ -72,6 +77,10 @@ class MainActivity : ComponentActivity() {
                     },
                 ) {
                     var showOssBrowse by rememberSaveable { mutableStateOf(false) }
+                    var showHistory by rememberSaveable { mutableStateOf(false) }
+                    var showTools by rememberSaveable { mutableStateOf(false) }
+                    val historyViewModel: HistoryViewModel = viewModel()
+                    val toolsViewModel: ToolsViewModel = viewModel()
 
                     when {
                         !ossAcknowledged -> {
@@ -90,10 +99,24 @@ class MainActivity : ComponentActivity() {
                                 onClose = { showOssBrowse = false },
                             )
                         }
+                        showHistory -> {
+                            HistoryScreen(
+                                viewModel = historyViewModel,
+                                onBack = { showHistory = false },
+                            )
+                        }
+                        showTools -> {
+                            ToolsScreen(
+                                viewModel = toolsViewModel,
+                                onBack = { showTools = false },
+                            )
+                        }
                         else -> {
                             MainScreen(
                                 viewModel = viewModel,
                                 onOpenOpenSourceNotice = { showOssBrowse = true },
+                                onOpenHistory = { showHistory = true },
+                                onOpenTools = { showTools = true },
                             )
                         }
                     }

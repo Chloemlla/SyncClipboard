@@ -194,4 +194,88 @@
     <string name="crash_report_message">SyncClipboard 发生了未预期错误。你可以复制或分享报告，也可选择上传粘贴链接，然后继续。</string>
     <string name="crash_report_share_subject">SyncClipboard 崩溃报告</string>
     <string name="oss_dep_lumen_crash">崩溃采集、面包屑轨迹，以及异常后的自适应崩溃报告界面。</string>
+
+    <!-- 内容控制 -->
+    <string name="section_content">内容控制</string>
+    <string name="section_content_subtitle">选择要推送/拉取的类型，以及最大文件大小。</string>
+    <string name="toggle_push_text">推送文本</string>
+    <string name="toggle_push_image">推送图片</string>
+    <string name="toggle_push_file">推送文件 / 分组</string>
+    <string name="toggle_pull_image">拉取图片</string>
+    <string name="toggle_pull_file">拉取文件 / 分组</string>
+    <string name="label_max_file_mb">最大文件大小（MB）</string>
+    <string name="max_file_mb_hint">默认 20 MB。超出限制的推送/拉取会被跳过并提示错误。</string>
+    <string name="err_size_limit">文件超过大小限制（%1$d MB）</string>
+
+    <!-- 忽略应用（桌面 HotkeyBlacklist 的替代） -->
+    <string name="section_ignore">忽略应用（推送）</string>
+    <string name="section_ignore_subtitle">列表中的应用处于前台时跳过剪贴板推送。检测前台包名需要无障碍服务。</string>
+    <string name="label_ignore_package">包名</string>
+    <string name="ignore_package_placeholder">com.example.app</string>
+    <string name="action_add_ignore">添加</string>
+    <string name="action_add_current_app">添加当前</string>
+    <string name="action_remove_ignore">移除</string>
+    <string name="ignore_empty">尚未忽略任何应用。</string>
+    <string name="ignore_foreground_unknown">启用无障碍并切换应用后，才能显示当前前台包名。</string>
+    <string name="ignore_foreground_current">当前前台：%1$s</string>
+
+    <!-- 历史 / 工具导航 -->
+    <string name="section_more">历史与工具</string>
+    <string name="section_more_subtitle">本地剪贴板历史与网络工具。</string>
+    <string name="action_open_history">剪贴板历史</string>
+    <string name="action_open_tools">工具</string>
+    <string name="action_back">返回</string>
+
+    <!-- 历史 -->
+    <string name="history_title">剪贴板历史</string>
+    <string name="history_empty">暂无历史。成功推送/拉取的文本及其他类型会出现在这里。</string>
+    <string name="history_clear">清除未收藏</string>
+    <string name="history_copy">再次复制</string>
+    <string name="history_delete">删除</string>
+    <string name="history_favorite">收藏</string>
+    <string name="history_type_text">文本</string>
+    <string name="history_type_image">图片</string>
+    <string name="history_type_file">文件</string>
+    <string name="history_type_group">分组</string>
+    <string name="history_source_push">推送</string>
+    <string name="history_source_pull">拉取</string>
+    <string name="history_source_manual">手动</string>
+
+    <!-- 工具 -->
+    <string name="tools_title">工具</string>
+    <string name="tools_section_config">设置</string>
+    <string name="tools_section_short">短链接</string>
+    <string name="tools_section_artifact">Artifact</string>
+    <string name="tools_section_image">文生图</string>
+    <string name="tools_section_media">媒体（ffmpeg）</string>
+    <string name="tools_label_artifact_base">Artifact 服务地址</string>
+    <string name="tools_label_artifact_token">Artifact 访问令牌</string>
+    <string name="tools_label_image_base">文生图 API 地址</string>
+    <string name="tools_label_image_key">文生图 API 密钥</string>
+    <string name="tools_label_image_model">文生图模型</string>
+    <string name="tools_label_ffmpeg_path">ffmpeg 路径（可选）</string>
+    <string name="tools_label_long_url">长链接</string>
+    <string name="tools_label_artifact_title">标题</string>
+    <string name="tools_label_artifact_content">内容</string>
+    <string name="tools_label_image_prompt">提示词</string>
+    <string name="tools_action_save_config">保存工具设置</string>
+    <string name="tools_action_shorten">生成短链</string>
+    <string name="tools_action_create_artifact">创建 Artifact</string>
+    <string name="tools_action_generate_image">生成图片</string>
+    <string name="tools_action_copy">复制结果</string>
+    <string name="tools_ffmpeg_found">已检测到 ffmpeg</string>
+    <string name="tools_ffmpeg_missing">本机未找到 ffmpeg</string>
+    <string name="tools_media_disabled">媒体工具需要设备上的 ffmpeg。请安装 ffmpeg（或在上方配置路径）后再压缩视频/抽取音频。应用不会捆绑 ffmpeg 二进制。</string>
+    <string name="tools_media_ready">已检测到 ffmpeg。完整媒体工作流建议使用桌面端，或通过自定义路径调用本机 ffmpeg。</string>
+    <string name="tools_msg_config_saved">工具设置已保存</string>
+    <string name="tools_msg_short_ok">短链已生成</string>
+    <string name="tools_msg_artifact_ok">Artifact 已创建</string>
+    <string name="tools_msg_image_ok">图片已生成</string>
+    <string name="tools_msg_copied">已复制到剪贴板</string>
+    <string name="tools_err_url_required">请输入有效的 http(s) 链接</string>
+    <string name="tools_err_artifact_config">请先配置 Artifact 服务地址与令牌</string>
+    <string name="tools_err_artifact_content">请输入 Artifact 内容</string>
+    <string name="tools_err_image_config">请先配置文生图 API 地址</string>
+    <string name="tools_err_image_prompt">请输入提示词</string>
+    <string name="tools_err_generic">工具请求失败</string>
 </resources>

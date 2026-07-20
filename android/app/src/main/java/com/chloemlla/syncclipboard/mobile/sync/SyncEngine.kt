@@ -4,16 +4,21 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.chloemlla.syncclipboard.mobile.ImageDownloadConfirmActivity
+import com.chloemlla.syncclipboard.mobile.R
+import com.chloemlla.syncclipboard.mobile.core.ClipboardHistoryStore
 import com.chloemlla.syncclipboard.mobile.core.FileProfileSync
 import com.chloemlla.syncclipboard.mobile.core.GallerySaver
 import com.chloemlla.syncclipboard.mobile.core.FileSync
 import com.chloemlla.syncclipboard.mobile.core.GroupFilePart
 import com.chloemlla.syncclipboard.mobile.core.GroupSync
 import com.chloemlla.syncclipboard.mobile.core.HashUtil
+import com.chloemlla.syncclipboard.mobile.core.HistorySource
+import com.chloemlla.syncclipboard.mobile.core.HistoryType
 import com.chloemlla.syncclipboard.mobile.core.ImageSync
 import com.chloemlla.syncclipboard.mobile.core.ProfileDto
 import com.chloemlla.syncclipboard.mobile.core.RealtimeChannel
 import com.chloemlla.syncclipboard.mobile.core.ServerConfig
+import com.chloemlla.syncclipboard.mobile.core.SettingsStore
 import com.chloemlla.syncclipboard.mobile.core.SyncClient
 import com.chloemlla.syncclipboard.mobile.core.WebImageAssist
 import com.chloemlla.syncclipboard.mobile.shizuku.ShizukuManager
@@ -44,11 +49,16 @@ import kotlin.math.min
  * Change detection mirrors the desktop client: a profile differs when its (type, hash)
  * pair differs from the last one seen. Image/File also track content hash so a
  * re-generated dataName does not cause echo loops.
+ *
+ * Content-type flags ([ServerConfig.enablePushText] etc.), max size, and the
+ * foreground package ignore list are enforced on every push/pull path.
  */
 class SyncEngine(
     private val appContext: Context,
     private val config: ServerConfig,
     private val clipboard: ClipboardBridge,
+    private val history: ClipboardHistoryStore = ClipboardHistoryStore(appContext),
+    private val settings: SettingsStore = SettingsStore(appContext),
 ) {
     private val client = SyncClient(config)
 
@@ -183,6 +193,7 @@ class SyncEngine(
         lastSyncedIdentity = identity.key
         lastBinaryContentHash = ""
         withContext(Dispatchers.Main) { clipboard.write(text) }
+        recordHistory(HistoryType.TEXT, text, text, HistorySource.PULL)
         return text
     }
 
@@ -209,6 +220,7 @@ class SyncEngine(
         if (bytes.isEmpty()) return null
         if (bytes.size.toLong() > config.maxFileBytes) {
             Log.w(TAG, "skip oversized image pull ${bytes.size}")
+            SyncState.setStatus(SyncStatus.ERROR, sizeLimitMessage())
             return null
         }
 
@@ -222,7 +234,9 @@ class SyncEngine(
         } else {
             Log.i(TAG, "saved image to gallery: $galleryUri")
         }
-        return "[Image] $fileName (${bytes.size} B)"
+        val summary = "[Image] $fileName (${bytes.size} B)"
+        recordHistory(HistoryType.IMAGE, summary, null, HistorySource.PULL)
+        return summary
     }
 
     private suspend fun applyFileProfile(profile: ProfileDto, identity: ProfileIdentity): String? {
@@ -249,6 +263,7 @@ class SyncEngine(
         if (bytes.isEmpty()) return null
         if (bytes.size.toLong() > config.maxFileBytes) {
             Log.w(TAG, "skip oversized file pull ${bytes.size}")
+            SyncState.setStatus(SyncStatus.ERROR, sizeLimitMessage())
             return null
         }
 
@@ -269,7 +284,14 @@ class SyncEngine(
                 Log.i(TAG, "saved image-named file to gallery: $galleryUri")
             }
         }
-        return "[File] $fileName (${bytes.size} B)"
+        val summary = "[File] $fileName (${bytes.size} B)"
+        recordHistory(
+            if (isImageName) HistoryType.IMAGE else HistoryType.FILE,
+            summary,
+            null,
+            HistorySource.PULL,
+        )
+        return summary
     }
 
     private suspend fun applyGroupProfile(profile: ProfileDto, identity: ProfileIdentity): String? {
@@ -281,6 +303,7 @@ class SyncEngine(
         if (zipBytes.isEmpty()) return null
         if (zipBytes.size.toLong() > config.maxFileBytes) {
             Log.w(TAG, "skip oversized group pull ${zipBytes.size}")
+            SyncState.setStatus(SyncStatus.ERROR, sizeLimitMessage())
             return null
         }
         val outDir = clipboard.prepareGroupDir()
@@ -294,11 +317,14 @@ class SyncEngine(
         val ok = withContext(Dispatchers.Main) { clipboard.writeFiles(files) }
         if (!ok) Log.w(TAG, "failed to write group files to clipboard")
         val preview = profile.text.ifBlank { files.joinToString("\n") { it.name } }
-        return "[Group] ${preview.take(120)} (${zipBytes.size} B)"
+        val summary = "[Group] ${preview.take(120)} (${zipBytes.size} B)"
+        recordHistory(HistoryType.GROUP, summary, null, HistorySource.PULL)
+        return summary
     }
 
     suspend fun pushText(text: String) {
         if (!config.pushEnabled || !config.enablePushText || text.isEmpty()) return
+        if (shouldSkipPushForForeground()) return
         val hash = HashUtil.sha256UpperHex(text)
         val identity = ProfileIdentity(ProfileDto.TYPE_TEXT, hash)
         try {
@@ -316,13 +342,15 @@ class SyncEngine(
             return
         }
         SyncState.recordText(text)
+        recordHistory(HistoryType.TEXT, text, text, HistorySource.PUSH)
     }
 
     suspend fun pushImage(bytes: ByteArray, extension: String) {
         if (!config.pushEnabled || !config.enablePushImage || bytes.isEmpty()) return
+        if (shouldSkipPushForForeground()) return
         if (bytes.size.toLong() > config.maxFileBytes) {
             Log.w(TAG, "skip oversized image push ${bytes.size}")
-            SyncState.setStatus(SyncStatus.ERROR, "image exceeds size limit")
+            SyncState.setStatus(SyncStatus.ERROR, sizeLimitMessage())
             return
         }
         val ext = extension.lowercase().removePrefix(".").ifBlank { "png" }
@@ -346,14 +374,17 @@ class SyncEngine(
             SyncState.setStatus(SyncStatus.ERROR, t.message ?: "push image failed")
             return
         }
-        SyncState.recordText("[Image] $fileName (${bytes.size} B)")
+        val summary = "[Image] $fileName (${bytes.size} B)"
+        SyncState.recordText(summary)
+        recordHistory(HistoryType.IMAGE, summary, null, HistorySource.PUSH)
     }
 
     suspend fun pushFile(fileName: String, bytes: ByteArray) {
         if (!config.pushEnabled || !config.enablePushFile || bytes.isEmpty()) return
+        if (shouldSkipPushForForeground()) return
         if (bytes.size.toLong() > config.maxFileBytes) {
             Log.w(TAG, "skip oversized file push ${bytes.size}")
-            SyncState.setStatus(SyncStatus.ERROR, "file exceeds size limit")
+            SyncState.setStatus(SyncStatus.ERROR, sizeLimitMessage())
             return
         }
         // Single image-named file should travel as Image for desktop parity.
@@ -381,15 +412,18 @@ class SyncEngine(
             SyncState.setStatus(SyncStatus.ERROR, t.message ?: "push file failed")
             return
         }
-        SyncState.recordText("[File] $transferName (${bytes.size} B)")
+        val summary = "[File] $transferName (${bytes.size} B)"
+        SyncState.recordText(summary)
+        recordHistory(HistoryType.FILE, summary, null, HistorySource.PUSH)
     }
 
     suspend fun pushGroup(parts: List<GroupFilePart>) {
         if (!config.pushEnabled || !config.enablePushFile || parts.isEmpty()) return
+        if (shouldSkipPushForForeground()) return
         val total = parts.sumOf { it.bytes.size.toLong() }
         if (total > config.maxFileBytes) {
             Log.w(TAG, "skip oversized group push $total")
-            SyncState.setStatus(SyncStatus.ERROR, "files exceed size limit")
+            SyncState.setStatus(SyncStatus.ERROR, sizeLimitMessage())
             return
         }
         // Single-part group collapses to file/image.
@@ -420,10 +454,13 @@ class SyncEngine(
             SyncState.setStatus(SyncStatus.ERROR, t.message ?: "push group failed")
             return
         }
-        SyncState.recordText("[Group] ${GroupSync.displayText(parts).take(120)}")
+        val summary = "[Group] ${GroupSync.displayText(parts).take(120)}"
+        SyncState.recordText(summary)
+        recordHistory(HistoryType.GROUP, summary, null, HistorySource.PUSH)
     }
 
     suspend fun pushContent(content: ClipboardContent) {
+        if (shouldSkipPushForForeground()) return
         val assisted = maybeAssist(content)
         when (assisted) {
             is ClipboardContent.Text -> pushText(assisted.value)
@@ -431,6 +468,36 @@ class SyncEngine(
             is ClipboardContent.FileItem -> pushFile(assisted.fileName, assisted.bytes)
             is ClipboardContent.Files -> pushGroup(assisted.parts)
         }
+    }
+
+    /**
+     * Desktop HotkeyBlacklist analog: skip push when the current foreground app
+     * package is on the user ignore list.
+     */
+    private fun shouldSkipPushForForeground(): Boolean {
+        val pkg = ForegroundAppTracker.packageName
+        if (pkg.isNullOrBlank()) return false
+        // Never ignore our own package — that would break tests / self-copy.
+        if (pkg == appContext.packageName) return false
+        if (!settings.isPackageIgnored(pkg)) return false
+        Log.i(TAG, "skip push: foreground package ignored ($pkg)")
+        return true
+    }
+
+    private fun recordHistory(
+        type: HistoryType,
+        preview: String,
+        content: String?,
+        source: HistorySource,
+    ) {
+        runCatching {
+            history.record(type = type, preview = preview, content = content, source = source)
+        }.onFailure { Log.w(TAG, "history record failed", it) }
+    }
+
+    private fun sizeLimitMessage(): String {
+        val mb = config.maxFileBytes / (1024L * 1024L)
+        return appContext.getString(R.string.err_size_limit, mb.coerceAtLeast(1L))
     }
 
     /**

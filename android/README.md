@@ -17,6 +17,21 @@ Supports the **same clipboard profile types** the desktop client syncs over LAN:
 | **File** | Yes (single file URI) | Yes (Accessibility) |
 | **Group** | Yes (zip extract → multi-URI) | Yes (zip + multi-file clip) |
 
+### Content control & desktop parity (Android)
+
+| Capability | Android support |
+|---|---|
+| **Push / Pull direction** | Yes (main toggles) |
+| **Per-type content control** | Yes — push text/image/file, pull image/file, max size (MB) in UI + engine |
+| **Clipboard assist** | Easy copy image + download web image |
+| **Image download confirm** | Yes (save to gallery + clipboard after confirm) |
+| **Local clipboard history** | Yes — recent text (and metadata for other types), copy again / delete / favorite |
+| **Ignore foreground apps** | Yes — package ignore list skips push (HotkeyBlacklist analog; needs Accessibility) |
+| **Tools** | Short URL (mmp.cc), Artifact (Bearer API), OpenAI-compatible image gen; media/ffmpeg optional with explicit disabled message (no bundled binary) |
+| **OSS first-run / About** | Yes |
+| **lumen-crash** | Yes |
+| **Global hotkeys / desktop history window** | Not applicable on Android |
+
 ### Sync engine
 
 - **Pull:** a resident `dataSync` foreground service applies changed profiles.

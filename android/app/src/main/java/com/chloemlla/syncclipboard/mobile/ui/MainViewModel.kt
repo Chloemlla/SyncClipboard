@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.chloemlla.syncclipboard.mobile.R
+import com.chloemlla.syncclipboard.mobile.core.FileProfileSync
 import com.chloemlla.syncclipboard.mobile.core.ServerConfig
 import com.chloemlla.syncclipboard.mobile.core.SettingsStore
 import com.chloemlla.syncclipboard.mobile.core.SyncClient
@@ -13,6 +14,7 @@ import com.chloemlla.syncclipboard.mobile.core.SyncErrorKind
 import com.chloemlla.syncclipboard.mobile.core.asSyncException
 import com.chloemlla.syncclipboard.mobile.shizuku.ShizukuAvailability
 import com.chloemlla.syncclipboard.mobile.shizuku.ShizukuManager
+import com.chloemlla.syncclipboard.mobile.sync.ForegroundAppTracker
 import com.chloemlla.syncclipboard.mobile.sync.PermissionHelper
 import com.chloemlla.syncclipboard.mobile.sync.SyncForegroundService
 import com.chloemlla.syncclipboard.mobile.sync.SyncState
@@ -31,8 +33,18 @@ data class UiState(
     val pollSeconds: Int = ServerConfig.DEFAULT_POLL_SECONDS,
     val pullEnabled: Boolean = true,
     val pushEnabled: Boolean = true,
+    val enablePushText: Boolean = true,
+    val enablePushImage: Boolean = true,
+    val enablePushFile: Boolean = true,
+    val enablePullImage: Boolean = true,
+    val enablePullFile: Boolean = true,
+    /** Max file size in whole mebibytes for the form field. */
+    val maxFileMb: Int = (FileProfileSync.DEFAULT_MAX_FILE_BYTES / (1024L * 1024L)).toInt(),
     val easyCopyImage: Boolean = true,
     val downloadWebImage: Boolean = true,
+    val ignorePackages: List<String> = emptyList(),
+    val foregroundPackage: String = "",
+    val ignoreDraft: String = "",
     val serviceRunning: Boolean = false,
     val batteryOptExempt: Boolean = false,
     val accessibilityEnabled: Boolean = false,
@@ -66,8 +78,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             pollSeconds = config.pollSeconds,
             pullEnabled = config.pullEnabled,
             pushEnabled = config.pushEnabled,
+            enablePushText = config.enablePushText,
+            enablePushImage = config.enablePushImage,
+            enablePushFile = config.enablePushFile,
+            enablePullImage = config.enablePullImage,
+            enablePullFile = config.enablePullFile,
+            maxFileMb = bytesToMb(config.maxFileBytes),
             easyCopyImage = config.easyCopyImage,
             downloadWebImage = config.downloadWebImage,
+            ignorePackages = settings.loadIgnorePackages(),
+            foregroundPackage = ForegroundAppTracker.packageName.orEmpty(),
             serviceRunning = settings.serviceEnabled,
         )
     }
@@ -78,8 +98,38 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun onPollChange(value: Int) = _ui.update { it.copy(pollSeconds = value.coerceAtLeast(ServerConfig.MIN_POLL_SECONDS)) }
     fun onPullChange(value: Boolean) = _ui.update { it.copy(pullEnabled = value) }
     fun onPushChange(value: Boolean) = _ui.update { it.copy(pushEnabled = value) }
+    fun onEnablePushTextChange(value: Boolean) = _ui.update { it.copy(enablePushText = value) }
+    fun onEnablePushImageChange(value: Boolean) = _ui.update { it.copy(enablePushImage = value) }
+    fun onEnablePushFileChange(value: Boolean) = _ui.update { it.copy(enablePushFile = value) }
+    fun onEnablePullImageChange(value: Boolean) = _ui.update { it.copy(enablePullImage = value) }
+    fun onEnablePullFileChange(value: Boolean) = _ui.update { it.copy(enablePullFile = value) }
+    fun onMaxFileMbChange(value: Int) = _ui.update {
+        it.copy(maxFileMb = value.coerceIn(1, MAX_FILE_MB_CAP))
+    }
     fun onEasyCopyImageChange(value: Boolean) = _ui.update { it.copy(easyCopyImage = value) }
     fun onDownloadWebImageChange(value: Boolean) = _ui.update { it.copy(downloadWebImage = value) }
+    fun onIgnoreDraftChange(value: String) = _ui.update { it.copy(ignoreDraft = value) }
+
+    fun addIgnorePackage(raw: String = _ui.value.ignoreDraft) {
+        val pkg = raw.trim()
+        if (pkg.isEmpty()) return
+        val next = (_ui.value.ignorePackages + pkg).map { it.trim() }.filter { it.isNotEmpty() }.distinct()
+        settings.saveIgnorePackages(next)
+        _ui.update { it.copy(ignorePackages = next, ignoreDraft = "") }
+    }
+
+    fun addCurrentForegroundPackage() {
+        val pkg = ForegroundAppTracker.packageName?.trim().orEmpty()
+            .ifBlank { getApplication<Application>().packageName }
+        if (pkg.isBlank()) return
+        addIgnorePackage(pkg)
+    }
+
+    fun removeIgnorePackage(packageName: String) {
+        val next = _ui.value.ignorePackages.filterNot { it.equals(packageName, ignoreCase = true) }
+        settings.saveIgnorePackages(next)
+        _ui.update { it.copy(ignorePackages = next) }
+    }
 
     /** Refresh permission state; call from onResume so returning from Settings updates the UI. */
     fun refreshPermissions() {
@@ -92,14 +142,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 shizukuPermanentlyDenied = ShizukuManager.isPermanentlyDenied(),
                 shizukuKeepAliveOk = ShizukuManager.lastKeepAliveOk,
                 serviceRunning = settings.serviceEnabled,
+                ignorePackages = settings.loadIgnorePackages(),
+                foregroundPackage = ForegroundAppTracker.packageName.orEmpty(),
             )
         }
     }
 
     private fun currentConfig(): ServerConfig {
         val ui = _ui.value
-        // Preserve advanced type toggles / size limit from disk (defaults match Linux desktop).
-        val stored = settings.load()
         return ServerConfig(
             baseUrl = ui.baseUrl.trim(),
             username = ui.username,
@@ -107,12 +157,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             pollSeconds = ui.pollSeconds,
             pullEnabled = ui.pullEnabled,
             pushEnabled = ui.pushEnabled,
-            enablePushText = stored.enablePushText,
-            enablePushImage = stored.enablePushImage,
-            enablePushFile = stored.enablePushFile,
-            enablePullImage = stored.enablePullImage,
-            enablePullFile = stored.enablePullFile,
-            maxFileBytes = stored.maxFileBytes,
+            enablePushText = ui.enablePushText,
+            enablePushImage = ui.enablePushImage,
+            enablePushFile = ui.enablePushFile,
+            enablePullImage = ui.enablePullImage,
+            enablePullFile = ui.enablePullFile,
+            maxFileBytes = mbToBytes(ui.maxFileMb),
             easyCopyImage = ui.easyCopyImage,
             downloadWebImage = ui.downloadWebImage,
         )
@@ -131,8 +181,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 pollSeconds = config.pollSeconds,
                 pullEnabled = config.pullEnabled,
                 pushEnabled = config.pushEnabled,
+                enablePushText = config.enablePushText,
+                enablePushImage = config.enablePushImage,
+                enablePushFile = config.enablePushFile,
+                enablePullImage = config.enablePullImage,
+                enablePullFile = config.enablePullFile,
+                maxFileMb = bytesToMb(config.maxFileBytes),
                 easyCopyImage = config.easyCopyImage,
                 downloadWebImage = config.downloadWebImage,
+                ignorePackages = settings.loadIgnorePackages(),
+                foregroundPackage = ForegroundAppTracker.packageName.orEmpty(),
                 serviceRunning = settings.serviceEnabled,
                 testOk = null,
                 testMessage = "",
@@ -182,12 +240,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun startService() {
         settings.save(currentConfig())
+        settings.saveIgnorePackages(_ui.value.ignorePackages)
         SyncForegroundService.start(getApplication())
         _ui.update { it.copy(serviceRunning = true) }
     }
 
     fun applyAndRestart() {
         settings.save(currentConfig())
+        settings.saveIgnorePackages(_ui.value.ignorePackages)
         SyncForegroundService.restart(getApplication())
     }
 
@@ -223,5 +283,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private inline fun MutableStateFlow<UiState>.update(block: (UiState) -> UiState) {
         value = block(value)
+    }
+
+    companion object {
+        private const val MAX_FILE_MB_CAP = 512
+
+        fun bytesToMb(bytes: Long): Int =
+            ((bytes.coerceAtLeast(1024L * 1024L)) / (1024L * 1024L)).toInt().coerceAtLeast(1)
+
+        fun mbToBytes(mb: Int): Long =
+            mb.coerceIn(1, MAX_FILE_MB_CAP).toLong() * 1024L * 1024L
     }
 }

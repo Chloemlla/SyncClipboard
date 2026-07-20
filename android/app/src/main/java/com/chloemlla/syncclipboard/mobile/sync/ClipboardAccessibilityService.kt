@@ -15,6 +15,9 @@ import android.view.accessibility.AccessibilityEvent
  * We read clipboard TEXT and IMAGE only and forward them to the user's configured
  * LAN server via [SyncForegroundService]. No accessibility node content is inspected
  * or stored.
+ *
+ * Window-state events update [ForegroundAppTracker] so the engine can honor the
+ * user ignore-package list (HotkeyBlacklist analog).
  */
 class ClipboardAccessibilityService : AccessibilityService() {
 
@@ -31,14 +34,24 @@ class ClipboardAccessibilityService : AccessibilityService() {
         bridge.addPrimaryClipChangedListener(clipListener)
     }
 
-    // Clipboard capture is driven by the clip-changed listener, not UI events.
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event == null) return
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED,
+            -> {
+                val pkg = event.packageName?.toString()
+                if (!pkg.isNullOrBlank()) ForegroundAppTracker.update(pkg)
+            }
+        }
+    }
 
     override fun onInterrupt() = Unit
 
     override fun onUnbind(intent: android.content.Intent?): Boolean {
         clipboard?.removePrimaryClipChangedListener(clipListener)
         clipboard = null
+        ForegroundAppTracker.clear()
         return super.onUnbind(intent)
     }
 }

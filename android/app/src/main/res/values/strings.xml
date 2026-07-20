@@ -194,4 +194,88 @@
     <string name="crash_report_message">SyncClipboard hit an unexpected error. You can copy or share the report, optionally upload a paste link, then continue.</string>
     <string name="crash_report_share_subject">SyncClipboard crash report</string>
     <string name="oss_dep_lumen_crash">Crash capture, breadcrumb trail, and adaptive crash report UI used after unexpected failures.</string>
+
+    <!-- Content control -->
+    <string name="section_content">Content control</string>
+    <string name="section_content_subtitle">Choose which profile types to push or pull, and the max file size.</string>
+    <string name="toggle_push_text">Push text</string>
+    <string name="toggle_push_image">Push images</string>
+    <string name="toggle_push_file">Push files / groups</string>
+    <string name="toggle_pull_image">Pull images</string>
+    <string name="toggle_pull_file">Pull files / groups</string>
+    <string name="label_max_file_mb">Max file size (MB)</string>
+    <string name="max_file_mb_hint">Default 20 MB. Oversized push/pull is skipped with an error.</string>
+    <string name="err_size_limit">File exceeds the size limit (%1$d MB)</string>
+
+    <!-- Ignore packages (HotkeyBlacklist analog) -->
+    <string name="section_ignore">Ignore apps (push)</string>
+    <string name="section_ignore_subtitle">When a listed app is in the foreground, clipboard push is skipped. Requires Accessibility for foreground detection.</string>
+    <string name="label_ignore_package">Package name</string>
+    <string name="ignore_package_placeholder">com.example.app</string>
+    <string name="action_add_ignore">Add</string>
+    <string name="action_add_current_app">Add current</string>
+    <string name="action_remove_ignore">Remove</string>
+    <string name="ignore_empty">No packages ignored yet.</string>
+    <string name="ignore_foreground_unknown">Foreground package unknown until Accessibility is enabled and you switch apps.</string>
+    <string name="ignore_foreground_current">Current foreground: %1$s</string>
+
+    <!-- History / Tools navigation -->
+    <string name="section_more">History &amp; tools</string>
+    <string name="section_more_subtitle">Local clipboard history and network tools.</string>
+    <string name="action_open_history">Clipboard history</string>
+    <string name="action_open_tools">Tools</string>
+    <string name="action_back">Back</string>
+
+    <!-- History -->
+    <string name="history_title">Clipboard history</string>
+    <string name="history_empty">No history yet. Successful push/pull of text and other profiles will appear here.</string>
+    <string name="history_clear">Clear non-favorites</string>
+    <string name="history_copy">Copy again</string>
+    <string name="history_delete">Delete</string>
+    <string name="history_favorite">Favorite</string>
+    <string name="history_type_text">Text</string>
+    <string name="history_type_image">Image</string>
+    <string name="history_type_file">File</string>
+    <string name="history_type_group">Group</string>
+    <string name="history_source_push">Push</string>
+    <string name="history_source_pull">Pull</string>
+    <string name="history_source_manual">Manual</string>
+
+    <!-- Tools -->
+    <string name="tools_title">Tools</string>
+    <string name="tools_section_config">Settings</string>
+    <string name="tools_section_short">Short URL</string>
+    <string name="tools_section_artifact">Artifact</string>
+    <string name="tools_section_image">Image generation</string>
+    <string name="tools_section_media">Media (ffmpeg)</string>
+    <string name="tools_label_artifact_base">Artifact base URL</string>
+    <string name="tools_label_artifact_token">Artifact access token</string>
+    <string name="tools_label_image_base">Image API base URL</string>
+    <string name="tools_label_image_key">Image API key</string>
+    <string name="tools_label_image_model">Image model</string>
+    <string name="tools_label_ffmpeg_path">ffmpeg path (optional)</string>
+    <string name="tools_label_long_url">Long URL</string>
+    <string name="tools_label_artifact_title">Title</string>
+    <string name="tools_label_artifact_content">Content</string>
+    <string name="tools_label_image_prompt">Prompt</string>
+    <string name="tools_action_save_config">Save tools settings</string>
+    <string name="tools_action_shorten">Create short URL</string>
+    <string name="tools_action_create_artifact">Create artifact</string>
+    <string name="tools_action_generate_image">Generate image</string>
+    <string name="tools_action_copy">Copy result</string>
+    <string name="tools_ffmpeg_found">ffmpeg detected</string>
+    <string name="tools_ffmpeg_missing">ffmpeg not found on this device</string>
+    <string name="tools_media_disabled">Media tools need ffmpeg on the device. Install ffmpeg (or set a path above) to compress video / extract audio. The app does not bundle ffmpeg.</string>
+    <string name="tools_media_ready">ffmpeg is available. Use a desktop client for full media workflows, or call ffmpeg via shell if you have a custom path.</string>
+    <string name="tools_msg_config_saved">Tools settings saved</string>
+    <string name="tools_msg_short_ok">Short URL created</string>
+    <string name="tools_msg_artifact_ok">Artifact created</string>
+    <string name="tools_msg_image_ok">Image generated</string>
+    <string name="tools_msg_copied">Copied to clipboard</string>
+    <string name="tools_err_url_required">Enter a valid http(s) URL</string>
+    <string name="tools_err_artifact_config">Configure artifact base URL and token first</string>
+    <string name="tools_err_artifact_content">Artifact content is required</string>
+    <string name="tools_err_image_config">Configure image API base URL first</string>
+    <string name="tools_err_image_prompt">Prompt is required</string>
+    <string name="tools_err_generic">Tool request failed</string>
 </resources>
