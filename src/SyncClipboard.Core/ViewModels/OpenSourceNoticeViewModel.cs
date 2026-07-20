@@ -35,10 +35,10 @@ public partial class OpenSourceNoticeViewModel : ObservableObject
     private bool isFirstRun = true;
 
     [RelayCommand]
-    private static void OpenForkRepository() => Sys.OpenWithDefaultApp(ForkRepositoryUrl);
+    private static void OpenForkRepository() => Sys.OpenWithDefaultApp(OssNoticeHelper.ForkRepositoryUrl);
 
     [RelayCommand]
-    private static void OpenUpstreamRepository() => Sys.OpenWithDefaultApp(UpstreamRepositoryUrl);
+    private static void OpenUpstreamRepository() => Sys.OpenWithDefaultApp(OssNoticeHelper.UpstreamRepositoryUrl);
 
     [RelayCommand]
     private static void OpenUrl(string? url)
