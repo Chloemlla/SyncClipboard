@@ -7,7 +7,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URI
-import java.util.Base64
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
@@ -75,7 +74,8 @@ class NetworkToolClients(
             put("content_type", contentType.ifBlank { "text" })
             put(
                 "content",
-                Base64.getEncoder().encodeToString(content.toByteArray(Charsets.UTF_8)),
+                // Keep pure-JVM (unit tests) and Android compatible without android.util.Base64.
+                encodeBase64(content.toByteArray(Charsets.UTF_8)),
             )
             put("visibility", "public")
             if (!language.isNullOrBlank()) put("language", language)
@@ -244,6 +244,37 @@ class NetworkToolClients(
             .readTimeout(120, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
             .build()
+
+        /** RFC 4648 base64 without line breaks (same as java.util.Base64.getEncoder()). */
+        internal fun encodeBase64(bytes: ByteArray): String {
+            val table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+            val out = StringBuilder((bytes.size + 2) / 3 * 4)
+            var i = 0
+            while (i + 2 < bytes.size) {
+                val n = ((bytes[i].toInt() and 0xFF) shl 16) or
+                    ((bytes[i + 1].toInt() and 0xFF) shl 8) or
+                    (bytes[i + 2].toInt() and 0xFF)
+                out.append(table[(n shr 18) and 63])
+                out.append(table[(n shr 12) and 63])
+                out.append(table[(n shr 6) and 63])
+                out.append(table[n and 63])
+                i += 3
+            }
+            val rem = bytes.size - i
+            if (rem == 1) {
+                val n = (bytes[i].toInt() and 0xFF) shl 16
+                out.append(table[(n shr 18) and 63])
+                out.append(table[(n shr 12) and 63])
+                out.append("==")
+            } else if (rem == 2) {
+                val n = ((bytes[i].toInt() and 0xFF) shl 16) or ((bytes[i + 1].toInt() and 0xFF) shl 8)
+                out.append(table[(n shr 18) and 63])
+                out.append(table[(n shr 12) and 63])
+                out.append(table[(n shr 6) and 63])
+                out.append('=')
+            }
+            return out.toString()
+        }
     }
 }
 

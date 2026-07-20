@@ -173,11 +173,12 @@ class ClipboardHistoryStore(context: Context) {
     }
 
     private fun parse(o: JSONObject): HistoryEntry? = runCatching {
+        val contentRaw = if (o.isNull("content")) null else o.optString("content")
         HistoryEntry(
             id = o.getString("id"),
             type = HistoryType.fromWire(o.optString("type")),
             preview = o.optString("preview"),
-            content = o.optString("content", null)?.takeIf { it.isNotEmpty() && it != "null" },
+            content = contentRaw?.takeIf { it.isNotEmpty() },
             timestampMs = o.optLong("timestampMs", System.currentTimeMillis()),
             favorite = o.optBoolean("favorite", false),
             source = HistorySource.fromWire(o.optString("source")),

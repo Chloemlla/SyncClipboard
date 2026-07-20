@@ -298,8 +298,9 @@ private fun ToolsSection(
             Column(
                 modifier = Modifier.padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                content = { content() },
-            )
+            ) {
+                content()
+            }
         }
     }
 }

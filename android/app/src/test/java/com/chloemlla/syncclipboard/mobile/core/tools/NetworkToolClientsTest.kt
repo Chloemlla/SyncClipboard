@@ -66,4 +66,12 @@ class NetworkToolClientsTest {
         assertFalse(FfmpegMediaSupport.isAvailable(null))
         assertEquals(null, FfmpegMediaSupport.resolveFfmpegPath(""))
     }
+
+    @Test
+    fun encodeBase64_matches_expected() {
+        assertEquals("YQ==", NetworkToolClients.encodeBase64("a".toByteArray()))
+        assertEquals("YWI=", NetworkToolClients.encodeBase64("ab".toByteArray()))
+        assertEquals("YWJj", NetworkToolClients.encodeBase64("abc".toByteArray()))
+        assertEquals("", NetworkToolClients.encodeBase64(ByteArray(0)))
+    }
 }
