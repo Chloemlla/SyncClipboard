@@ -21,10 +21,13 @@ public partial class OpenSourceNoticeViewModel : ObservableObject
         ProjectLicenseText = OssNoticeHelper.TryReadProjectLicenseText() ?? string.Empty;
     }
 
-    public static string ForkRepositoryUrl => OssNoticeHelper.ForkRepositoryUrl;
-    public static string UpstreamRepositoryUrl => OssNoticeHelper.UpstreamRepositoryUrl;
-    public static string ProjectLicenseName => OssNoticeHelper.ProjectLicenseName;
-    public static string ProjectCopyright => OssNoticeHelper.ProjectCopyright;
+    // Instance members: WinUI x:Bind compiles `_viewModel.X` as instance access (CS0176 if static).
+#pragma warning disable CA1822
+    public string ForkRepositoryUrl => OssNoticeHelper.ForkRepositoryUrl;
+    public string UpstreamRepositoryUrl => OssNoticeHelper.UpstreamRepositoryUrl;
+    public string ProjectLicenseName => OssNoticeHelper.ProjectLicenseName;
+    public string ProjectCopyright => OssNoticeHelper.ProjectCopyright;
+#pragma warning restore CA1822
     public ObservableCollection<OpenSourceSoftware> Dependencies { get; }
     public string ProjectLicenseText { get; }
 
