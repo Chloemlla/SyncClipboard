@@ -54,7 +54,7 @@ namespace SyncClipboard.WinUI3.Views
 
         private void OnAcknowledged()
         {
-            _mainWindow.OpenPage(PageDefinition.SyncSetting);
+            _mainWindow.OpenPage(PageDefinition.SyncSetting, null);
         }
 
         private void ForkButton_Click(object _, RoutedEventArgs _1)

@@ -50,7 +50,7 @@ public partial class OpenSourceNoticePage : UserControl
     private void OnAcknowledgedOnce()
     {
         _viewModel.Acknowledged -= OnAcknowledgedOnce;
-        App.Current.MainWindow.OpenPage(PageDefinition.SyncSetting);
+        App.Current.MainWindow.OpenPage(PageDefinition.SyncSetting, null);
     }
 
     private void ForkButton_Click(object? sender, RoutedEventArgs e)
