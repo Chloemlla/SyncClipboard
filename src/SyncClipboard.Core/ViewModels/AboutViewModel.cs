@@ -64,10 +64,10 @@ public partial class AboutViewModel : ObservableObject
         UpdateStateChanged(_updateChecker.CurrentState);
     }
 
-    public string ForkRepositoryUrl => OssNoticeHelper.ForkRepositoryUrl;
-    public string UpstreamRepositoryUrl => OssNoticeHelper.UpstreamRepositoryUrl;
-    public string ProjectLicenseName => OssNoticeHelper.ProjectLicenseName;
-    public string ProjectCopyright => OssNoticeHelper.ProjectCopyright;
+    public static string ForkRepositoryUrl => OssNoticeHelper.ForkRepositoryUrl;
+    public static string UpstreamRepositoryUrl => OssNoticeHelper.UpstreamRepositoryUrl;
+    public static string ProjectLicenseName => OssNoticeHelper.ProjectLicenseName;
+    public static string ProjectCopyright => OssNoticeHelper.ProjectCopyright;
 
     public List<OpenSourceSoftware> Dependencies { get; } =
     [

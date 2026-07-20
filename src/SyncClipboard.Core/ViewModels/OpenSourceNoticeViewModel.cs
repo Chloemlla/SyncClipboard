@@ -21,10 +21,10 @@ public partial class OpenSourceNoticeViewModel : ObservableObject
         ProjectLicenseText = OssNoticeHelper.TryReadProjectLicenseText() ?? string.Empty;
     }
 
-    public string ForkRepositoryUrl => OssNoticeHelper.ForkRepositoryUrl;
-    public string UpstreamRepositoryUrl => OssNoticeHelper.UpstreamRepositoryUrl;
-    public string ProjectLicenseName => OssNoticeHelper.ProjectLicenseName;
-    public string ProjectCopyright => OssNoticeHelper.ProjectCopyright;
+    public static string ForkRepositoryUrl => OssNoticeHelper.ForkRepositoryUrl;
+    public static string UpstreamRepositoryUrl => OssNoticeHelper.UpstreamRepositoryUrl;
+    public static string ProjectLicenseName => OssNoticeHelper.ProjectLicenseName;
+    public static string ProjectCopyright => OssNoticeHelper.ProjectCopyright;
     public ObservableCollection<OpenSourceSoftware> Dependencies { get; }
     public string ProjectLicenseText { get; }
 
@@ -32,13 +32,13 @@ public partial class OpenSourceNoticeViewModel : ObservableObject
     private bool isFirstRun = true;
 
     [RelayCommand]
-    private void OpenForkRepository() => Sys.OpenWithDefaultApp(ForkRepositoryUrl);
+    private static void OpenForkRepository() => Sys.OpenWithDefaultApp(ForkRepositoryUrl);
 
     [RelayCommand]
-    private void OpenUpstreamRepository() => Sys.OpenWithDefaultApp(UpstreamRepositoryUrl);
+    private static void OpenUpstreamRepository() => Sys.OpenWithDefaultApp(UpstreamRepositoryUrl);
 
     [RelayCommand]
-    private void OpenUrl(string? url)
+    private static void OpenUrl(string? url)
     {
         if (!string.IsNullOrWhiteSpace(url))
         {

@@ -25,7 +25,7 @@ public partial class OpenSourceNoticePage : UserControl
 
     private void OnNavigatedTo(object? sender, NavigationEventArgs e)
     {
-        _viewModel.IsFirstRun = e.Parameter is bool isFirstRun ? isFirstRun : true;
+        _viewModel.IsFirstRun = e.Parameter is not false;
         UpdateActionUi();
     }
 

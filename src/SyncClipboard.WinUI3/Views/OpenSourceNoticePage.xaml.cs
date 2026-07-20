@@ -31,7 +31,7 @@ namespace SyncClipboard.WinUI3.Views
         {
             base.OnNavigatedTo(e);
             // Default is first-run; About can pass false for browse mode.
-            _viewModel.IsFirstRun = e.Parameter is bool isFirstRun ? isFirstRun : true;
+            _viewModel.IsFirstRun = e.Parameter is not false;
             UpdateActionUi();
         }
 
@@ -40,7 +40,7 @@ namespace SyncClipboard.WinUI3.Views
             _PrimaryAction.Content = _viewModel.IsFirstRun ? Strings.OssIUnderstandContinue : Strings.OssClose;
         }
 
-        private void PrimaryAction_Click(object sender, RoutedEventArgs e)
+        private void PrimaryAction_Click(object _, RoutedEventArgs _1)
         {
             if (_viewModel.IsFirstRun)
             {
@@ -57,17 +57,17 @@ namespace SyncClipboard.WinUI3.Views
             _mainWindow.OpenPage(PageDefinition.SyncSetting);
         }
 
-        private void ForkButton_Click(object sender, RoutedEventArgs e)
+        private void ForkButton_Click(object _, RoutedEventArgs _1)
         {
             _viewModel.OpenForkRepositoryCommand.Execute(null);
         }
 
-        private void UpstreamButton_Click(object sender, RoutedEventArgs e)
+        private void UpstreamButton_Click(object _, RoutedEventArgs _1)
         {
             _viewModel.OpenUpstreamRepositoryCommand.Execute(null);
         }
 
-        private async void ViewLicense_Click(object sender, RoutedEventArgs e)
+        private async void ViewLicense_Click(object _, RoutedEventArgs _1)
         {
             _licenseDialog ??= new ContentDialog
             {
@@ -90,7 +90,7 @@ namespace SyncClipboard.WinUI3.Views
             await _licenseDialog.ShowAsync();
         }
 
-        private void DependencyHome_Click(object sender, RoutedEventArgs e)
+        private void DependencyHome_Click(object sender, RoutedEventArgs _)
         {
             if (sender is HyperlinkButton button && button.Tag is string url)
             {
@@ -98,7 +98,7 @@ namespace SyncClipboard.WinUI3.Views
             }
         }
 
-        private void DependencyLicense_Click(object sender, RoutedEventArgs e)
+        private void DependencyLicense_Click(object sender, RoutedEventArgs _)
         {
             if (sender is FrameworkElement element && element.Tag is OpenSourceSoftware software && software.IsValidLicensePath)
             {

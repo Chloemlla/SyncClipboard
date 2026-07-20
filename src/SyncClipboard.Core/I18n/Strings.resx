@@ -1166,7 +1166,7 @@ This operation cannot be undone.</value>
     <value>Upstream repository</value>
   </data>
   <data name="OssOpenSourceNoticeEntry" xml:space="preserve">
-    <value>Open source & credits</value>
+    <value>Open source &amp; credits</value>
   </data>
   <data name="OssClose" xml:space="preserve">
     <value>Close</value>
