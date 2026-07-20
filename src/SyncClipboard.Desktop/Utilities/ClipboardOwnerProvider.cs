@@ -5,7 +5,6 @@ using System.Runtime.Versioning;
 
 namespace SyncClipboard.Desktop.Utilities;
 
-[SupportedOSPlatform("linux")]
 internal sealed class ClipboardOwnerProvider(
     ILogger logger,
     IForegroundWindowInfoProvider foregroundWindowInfoProvider) : IClipboardOwnerProvider
@@ -16,6 +15,11 @@ internal sealed class ClipboardOwnerProvider(
 
     public ForegroundWindowInfo? GetClipboardOwner()
     {
+        if (!OperatingSystem.IsLinux())
+        {
+            return _foregroundWindowInfoProvider.GetForegroundWindowInfo();
+        }
+
         try
         {
             var owner = GetX11ClipboardOwner();
@@ -34,6 +38,7 @@ internal sealed class ClipboardOwnerProvider(
         }
     }
 
+    [SupportedOSPlatform("linux")]
     private ForegroundWindowInfo? GetX11ClipboardOwner()
     {
         if (!X11Interop.IsAvailable)

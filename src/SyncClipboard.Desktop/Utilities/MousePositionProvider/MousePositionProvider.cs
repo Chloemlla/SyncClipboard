@@ -1,9 +1,10 @@
 using SyncClipboard.Core.Interfaces;
 using SyncClipboard.Core.Models;
+using SyncClipboard.Desktop.Utilities;
 using System;
 using System.Runtime.Versioning;
 
-namespace SyncClipboard.Desktop.Utilities;
+namespace SyncClipboard.Desktop.Utilities.MousePositionProvider;
 
 [SupportedOSPlatform("linux")]
 internal sealed class MousePositionProvider(ILogger logger) : IMousePositionProvider

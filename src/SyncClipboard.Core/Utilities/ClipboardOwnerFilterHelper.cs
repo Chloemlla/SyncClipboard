@@ -22,7 +22,7 @@ public static class ClipboardOwnerFilterHelper
             var ownerValue = owner.Value;
             foreach (var item in config.BlackList)
             {
-                if (Matches(item, ownerValue))
+                if (ForegroundWindowMatcher.Matches(item, ownerValue))
                 {
                     return true;
                 }
@@ -45,7 +45,7 @@ public static class ClipboardOwnerFilterHelper
             var ownerValue = owner.Value;
             foreach (var item in config.WhiteList)
             {
-                if (Matches(item, ownerValue))
+                if (ForegroundWindowMatcher.Matches(item, ownerValue))
                 {
                     return false;
                 }
@@ -56,28 +56,4 @@ public static class ClipboardOwnerFilterHelper
         return false;
     }
 
-    private static bool Matches(ForegroundWindowInfo filter, ForegroundWindowInfo target)
-    {
-        if (!string.IsNullOrEmpty(filter.ProcessName) && filter.ProcessName != target.ProcessName)
-        {
-            return false;
-        }
-
-        if (!string.IsNullOrEmpty(filter.WindowTitle) && filter.WindowTitle != target.WindowTitle)
-        {
-            return false;
-        }
-
-        if (!string.IsNullOrEmpty(filter.ExecutableName) && filter.ExecutableName != target.ExecutableName)
-        {
-            return false;
-        }
-
-        if (string.IsNullOrEmpty(filter.ProcessName) && string.IsNullOrEmpty(filter.WindowTitle) && string.IsNullOrEmpty(filter.ExecutableName))
-        {
-            return false;
-        }
-
-        return true;
-    }
 }

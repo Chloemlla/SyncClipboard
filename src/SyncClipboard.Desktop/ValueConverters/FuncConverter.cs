@@ -3,6 +3,7 @@ using Avalonia.Data.Converters;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using FluentAvalonia.UI.Controls;
+using SyncClipboard.Core.ViewModels.EmbeddedIcons;
 using SyncClipboard.Core.I18n;
 using SyncClipboard.Core.Models;
 using SyncClipboard.Core.ViewModels;
@@ -112,17 +113,20 @@ public static class FuncConverter
             return Converter.LimitHistoryListText(text, isCompactListMode);
         });
 
-    public static FuncValueConverter<ProfileType?, string> ProfileTypeToFontIcon { get; } =
-        new FuncValueConverter<ProfileType?, string>(input =>
+    public static IMultiValueConverter HistoryRecordToHugeiconsGeometry { get; } =
+        new FuncMultiValueConverter<object?, Geometry>(values =>
         {
-            return input switch
+            var valuesList = new List<object?>();
+            foreach (var value in values)
             {
-                ProfileType.Text => "\uE164",
-                ProfileType.File => "\uED43",
-                ProfileType.Group => "\uED43",
-                ProfileType.Image => char.ConvertFromUtf32((int)Convert.ToUInt32("F807F", 16)).ToString(),
-                _ => "\uE10A",
-            };
+                valuesList.Add(value);
+            }
+
+            var type = valuesList.Count > 0 && valuesList[0] is ProfileType profileType
+                ? profileType
+                : ProfileType.Text;
+            var filePaths = valuesList.Count > 1 ? valuesList[1] as string[] : null;
+            return Geometry.Parse(HugeiconsEmbeddedIconProvider.ResolvePathData(type, filePaths));
         });
 
     public static FuncValueConverter<string, Bitmap?> ToBitImage { get; } =

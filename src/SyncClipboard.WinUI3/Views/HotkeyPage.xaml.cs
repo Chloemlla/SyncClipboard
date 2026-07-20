@@ -41,5 +41,6 @@ namespace SyncClipboard.WinUI3.Views
         {
             _viewModel.SetToDefaultCommand.Execute((string)((Button)sender).DataContext);
         }
+
     }
 }

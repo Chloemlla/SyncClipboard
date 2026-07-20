@@ -23,6 +23,7 @@ public class PageDefinition(string name, string title, string? fontIcon = null)
     public static readonly PageDefinition ClipboardOwnerFilterSetting = new("ClipboardOwnerFilterSetting", I18n.Strings.ClipboardOwnerFilter);
     public static readonly PageDefinition SyncContentControl = new("SyncContentControl", I18n.Strings.SyncContentControl);
     public static readonly PageDefinition Hotkey = new("Hotkey", I18n.Strings.Hotkeys, "\uE144");
+    public static readonly PageDefinition HotkeyBlacklist = new("HotkeyBlacklist", "全局快捷键例外程序");
     public static readonly PageDefinition ClipboardAcquisitionRules = new("ClipboardAcquisitionRules", I18n.Strings.ClipboardAcquisitionRules);
 
     public override bool Equals(object? obj)

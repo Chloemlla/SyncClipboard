@@ -5,11 +5,17 @@ using NativeNotification;
 using NativeNotification.Interface;
 using Quartz;
 using SharpHook;
+using SyncClipboard.Core.Clipboard;
 using SyncClipboard.Core.Commons;
 using SyncClipboard.Core.I18n;
 using SyncClipboard.Core.Interfaces;
 using SyncClipboard.Core.Models;
 using SyncClipboard.Core.Models.UserConfigs;
+using SyncClipboard.Core.RemoteServer;
+using SyncClipboard.Core.RemoteServer.Adapter.OfficialServer;
+using SyncClipboard.Core.RemoteServer.Adapter.S3Server;
+using SyncClipboard.Core.RemoteServer.Adapter.WebDavServer;
+using SyncClipboard.Core.RemoteServer.LogInHelper;
 using SyncClipboard.Core.UserServices;
 using SyncClipboard.Core.UserServices.ClipboardService;
 using SyncClipboard.Core.UserServices.ServerService;
@@ -22,12 +28,6 @@ using SyncClipboard.Core.Utilities.Updater;
 using SyncClipboard.Core.Utilities.Web;
 using SyncClipboard.Core.ViewModels;
 using System.Diagnostics;
-using SyncClipboard.Core.RemoteServer;
-using SyncClipboard.Core.RemoteServer.Adapter.WebDavServer;
-using SyncClipboard.Core.RemoteServer.LogInHelper;
-using SyncClipboard.Core.RemoteServer.Adapter.OfficialServer;
-using SyncClipboard.Core.RemoteServer.Adapter.S3Server;
-using SyncClipboard.Core.Clipboard;
 
 namespace SyncClipboard.Core
 {
@@ -279,6 +279,7 @@ namespace SyncClipboard.Core
             services.AddSingleton<RemoteClipboardServerFactory>();
             services.AddSingleton<ServiceManager>();
             services.AddSingleton<HotkeyManager>();
+            services.AddTransient<ForegroundWindowCapture>();
             services.AddTransient<GithubUpdater>();
             services.AddQuartz();
             services.AddSingleton<IScheduler>(sp => sp.GetRequiredService<ISchedulerFactory>().GetScheduler().GetAwaiter().GetResult());
@@ -321,6 +322,7 @@ namespace SyncClipboard.Core
             services.AddSingleton<ServiceStatusViewModel>();
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<HotkeyViewModel>();
+            services.AddSingleton<HotkeyBlacklistViewModel>();
             services.AddTransient<HistoryViewModel>();
             services.AddTransient<HistorySettingViewModel>();
         }
@@ -336,6 +338,8 @@ namespace SyncClipboard.Core
             services.AddSingleton<IService, DownloadService>(sp => sp.GetRequiredService<DownloadService>());
             services.AddSingleton<HistoryService>();
             services.AddSingleton<IService, HistoryService>(sp => sp.GetRequiredService<HistoryService>());
+            services.AddSingleton<HotkeyBlacklistService>();
+            services.AddSingleton<IService>(sp => sp.GetRequiredService<HotkeyBlacklistService>());
         }
     }
 }

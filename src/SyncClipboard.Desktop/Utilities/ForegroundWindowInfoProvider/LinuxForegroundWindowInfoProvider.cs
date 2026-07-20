@@ -1,12 +1,13 @@
 using SyncClipboard.Core.Interfaces;
 using SyncClipboard.Core.Models;
+using SyncClipboard.Desktop.Utilities;
 using System;
 using System.Runtime.Versioning;
 
-namespace SyncClipboard.Desktop.Utilities;
+namespace SyncClipboard.Desktop.Utilities.ForegroundWindowInfoProvider;
 
 [SupportedOSPlatform("linux")]
-internal sealed class ForegroundWindowInfoProvider(ILogger logger) : IForegroundWindowInfoProvider
+internal sealed class LinuxForegroundWindowInfoProvider(ILogger logger) : IForegroundWindowInfoProvider
 {
     private readonly ILogger _logger = logger;
     private const string Tag = "ForegroundWindowInfo";

@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using SyncClipboard.Core.I18n;
 using SyncClipboard.Core.Models.Keyboard;
 using SyncClipboard.Core.ViewModels;
-using System;
 
 namespace SyncClipboard.Desktop.Views;
 

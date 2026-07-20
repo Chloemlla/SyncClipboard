@@ -57,8 +57,8 @@
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                     <Border Padding="12,8"
-                            Background="{DynamicResource SystemCardBackgroundFillColorSecondaryBrush}"
-                            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                            Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                             BorderThickness="1"
                             CornerRadius="8,8,0,0">
                         <Grid>
@@ -81,8 +81,8 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:EditableWindowInfo">
                                 <Border Padding="12,8"
-                                        Background="{DynamicResource SystemCardBackgroundFillColorDefaultBrush}"
-                                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                                         BorderThickness="1,0,1,1">
                                     <Grid>
                                         <Grid.ColumnDefinitions>

@@ -8,7 +8,9 @@ using SyncClipboard.Desktop.ClipboardAva;
 using SyncClipboard.Desktop.ClipboardAva.ClipboardReader;
 using SyncClipboard.Desktop.ClipboardAva.Fingerprint;
 using SyncClipboard.Desktop.Utilities;
-using SyncClipboard.Desktop.Utilities.Fake;
+using SyncClipboard.Desktop.Utilities.CaretPositionProvider;
+using SyncClipboard.Desktop.Utilities.ForegroundWindowInfoProvider;
+using SyncClipboard.Desktop.Utilities.MousePositionProvider;
 using SyncClipboard.Desktop.Views;
 
 namespace SyncClipboard.Desktop;
@@ -66,23 +68,23 @@ public class AppServices
             services.AddSingleton<IClipboardReader, XClipReader>();
             services.AddSingleton<IClipboardReader, WlClipboardReader>();
             services.AddSingleton<ICaretPositionProvider, CaretPositionProvider>();
-            services.AddSingleton<IForegroundWindowInfoProvider, ForegroundWindowInfoProvider>();
+            services.AddSingleton<IForegroundWindowInfoProvider, LinuxForegroundWindowInfoProvider>();
             services.AddSingleton<IMousePositionProvider, MousePositionProvider>();
-            services.AddSingleton<IClipboardOwnerProvider, ClipboardOwnerProvider>();
         }
 
         if (OperatingSystem.IsWindows())
         {
             services.AddSingleton<ICaretPositionProvider, FakeCaretPositionProvider>();
-            services.AddSingleton<IForegroundWindowInfoProvider, FakeForegroundWindowInfoProvider>();
+            services.AddSingleton<IForegroundWindowInfoProvider, WindowsForegroundWindowInfoProvider>();
             services.AddSingleton<IMousePositionProvider, FakeMousePositionProvider>();
-            services.AddSingleton<IClipboardOwnerProvider, FakeClipboardOwnerProvider>();
         }
 
         if (!OperatingSystem.IsMacOS())
         {
             services.AddSingleton<IMainWindow, MainWindow>();
             services.AddSingleton<INativeHotkeyRegistry, SharpHookHotkeyRegistry>();
+            services.AddSingleton<IForegroundWindowWatcher, PollingForegroundWindowWatcher>();
+            services.AddSingleton<IClipboardOwnerProvider, ClipboardOwnerProvider>();
             services.AddKeyedSingleton<IWindow, HistoryWindow>("HistoryWindow");
         }
     }

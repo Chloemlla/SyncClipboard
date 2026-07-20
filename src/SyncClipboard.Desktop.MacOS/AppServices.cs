@@ -15,7 +15,8 @@ public class AppServices
 
         services.AddSingleton<INativeHotkeyRegistry, CarbonHotkeyRegistry>();
         services.AddSingleton<ICaretPositionProvider, CaretPositionProvider>();
-        services.AddSingleton<IForegroundWindowInfoProvider, ForegroundWindowInfoProvider>();
+        services.AddSingleton<IForegroundWindowInfoProvider, MacForegroundWindowInfoProvider>();
+        services.AddSingleton<IForegroundWindowWatcher, MacForegroundWindowWatcher>();
         services.AddSingleton<IMousePositionProvider, MousePositionProvider>();
         services.AddSingleton<IClipboardOwnerProvider, ClipboardOwnerProvider>();
         services.AddSingleton<IMainWindow, MainWindow>();

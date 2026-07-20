@@ -3,7 +3,6 @@ using SyncClipboard.Core.Models;
 using SyncClipboard.Core.Models.Keyboard;
 using SyncClipboard.Core.Models.UserConfigs;
 using SyncClipboard.Core.Utilities;
-using SyncClipboard.Core.ViewModels;
 using System.Collections.ObjectModel;
 
 namespace SyncClipboard.Core.Commons;
@@ -14,11 +13,13 @@ public class HotkeyManager
     private readonly ConfigManager _configManager;
     private readonly List<UniqueCommandCollection> _commandCollections = [];
     private readonly Dictionary<string, HotkeyStatus> _hotkeyCommandMap = [];
+    private readonly object _registrationLock = new();
 
     private HotkeyConfig _hotkeyConfig = new();
 
     public ReadOnlyCollection<UniqueCommandCollection> CommandCollections { get; }
     public ReadOnlyDictionary<string, HotkeyStatus> HotkeyStatusMap { get; }
+    public bool IsSystemHotkeysSuspended { get; private set; }
     public event Action? HotkeyStatusChanged;
 
     public HotkeyManager(INativeHotkeyRegistry nativeHotkeyRegistry, ConfigManager configManager)
@@ -34,6 +35,11 @@ public class HotkeyManager
 
     private bool RegisterToNative(Hotkey hotkey, Action action)
     {
+        if (IsSystemHotkeysSuspended)
+        {
+            return false;
+        }
+
         if (hotkey.Keys.Length is 0)
         {
             return true;
@@ -215,5 +221,48 @@ public class HotkeyManager
         {
             status.Command.Command.InvokeNoExcept();
         }
+    }
+
+    public void SuspendSystemHotkeys()
+    {
+        lock (_registrationLock)
+        {
+            if (IsSystemHotkeysSuspended)
+            {
+                return;
+            }
+
+            IsSystemHotkeysSuspended = true;
+            foreach (var status in _hotkeyCommandMap.Values)
+            {
+                if (status.IsReady && status.Hotkey is not null)
+                {
+                    UnRegisterFromNative(status.Hotkey);
+                    status.IsReady = false;
+                }
+            }
+        }
+        HotkeyStatusChanged?.Invoke();
+    }
+
+    public void ResumeSystemHotkeys()
+    {
+        lock (_registrationLock)
+        {
+            if (!IsSystemHotkeysSuspended)
+            {
+                return;
+            }
+
+            IsSystemHotkeysSuspended = false;
+            foreach (var status in _hotkeyCommandMap.Values)
+            {
+                if (status.Command is not null && status.Hotkey is not null && !status.IsReady)
+                {
+                    status.IsReady = RegisterToNative(status.Hotkey, status.Command.Command);
+                }
+            }
+        }
+        HotkeyStatusChanged?.Invoke();
     }
 }

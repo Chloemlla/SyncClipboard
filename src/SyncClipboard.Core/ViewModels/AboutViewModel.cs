@@ -162,6 +162,13 @@ public partial class AboutViewModel : ObservableObject
             "Quartz.NET contributors",
             "Scheduler used for maintenance and update jobs.",
             "Apache-2.0"),
+        new OpenSourceSoftware(
+            "Hugeicons Free Stroke Rounded",
+            "https://hugeicons.com/",
+            "Hugeicons.Free.StrokeRounded.NOTICE.md",
+            "Hugeicons",
+            "Embedded content-type icons for history panel file/image indicators.",
+            "MIT"),
 #if LINUX
         new OpenSourceSoftware(
             "MiSans Font",

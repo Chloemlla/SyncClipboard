@@ -8,7 +8,7 @@ using SyncClipboard.Core.Models;
 namespace SyncClipboard.Desktop.MacOS.Utilities;
 
 [SupportedOSPlatform("macos")]
-internal sealed class ForegroundWindowInfoProvider(ILogger logger, IThreadDispatcher threadDispatcher) : IForegroundWindowInfoProvider
+internal sealed class MacForegroundWindowInfoProvider(ILogger logger, IThreadDispatcher threadDispatcher) : IForegroundWindowInfoProvider
 {
     private readonly ILogger _logger = logger;
     private readonly IThreadDispatcher _threadDispatcher = threadDispatcher;

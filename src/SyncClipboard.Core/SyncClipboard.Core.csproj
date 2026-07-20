@@ -82,4 +82,8 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\EmbeddedIcons\*.svg" />
+  </ItemGroup>
+
 </Project>

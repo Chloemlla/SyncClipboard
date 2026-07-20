@@ -1,0 +1,56 @@
+using SyncClipboard.Core.Interfaces;
+using SyncClipboard.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace SyncClipboard.Desktop.Utilities;
+
+internal sealed class PollingForegroundWindowWatcher(IForegroundWindowInfoProvider foregroundWindowInfoProvider) : IForegroundWindowWatcher
+{
+    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(1);
+
+    private readonly object _syncRoot = new();
+    private Timer? _timer;
+    private ForegroundWindowInfo? _lastWindow;
+    private bool _hasLastWindow;
+
+    public event Action? ForegroundWindowChanged;
+
+    public void Start()
+    {
+        lock (_syncRoot)
+        {
+            _timer ??= new Timer(OnTimer, null, TimeSpan.Zero, PollingInterval);
+        }
+    }
+
+    public void Stop()
+    {
+        lock (_syncRoot)
+        {
+            _timer?.Dispose();
+            _timer = null;
+            _hasLastWindow = false;
+            _lastWindow = null;
+        }
+    }
+
+    private void OnTimer(object? _)
+    {
+        var currentWindow = foregroundWindowInfoProvider.GetForegroundWindowInfo();
+        lock (_syncRoot)
+        {
+            if (_hasLastWindow && EqualityComparer<ForegroundWindowInfo?>.Default.Equals(_lastWindow, currentWindow))
+            {
+                return;
+            }
+
+            _hasLastWindow = true;
+            _lastWindow = currentWindow;
+        }
+        ForegroundWindowChanged?.Invoke();
+    }
+
+    public void Dispose() => Stop();
+}

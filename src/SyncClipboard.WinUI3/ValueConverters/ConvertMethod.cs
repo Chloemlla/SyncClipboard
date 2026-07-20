@@ -1,8 +1,10 @@
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Markup;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using SyncClipboard.Core.ViewModels.EmbeddedIcons;
 using SyncClipboard.Core.I18n;
 using SyncClipboard.Core.Models;
 using SyncClipboard.Core.ViewModels;
@@ -104,16 +106,10 @@ internal static class ConvertMethod
         return Converter.GetRecordSize(record);
     }
 
-    public static string ProfileTypeToFontIcon(ProfileType type)
+    public static Geometry HistoryRecordToHugeiconsGeometry(ProfileType type, string[]? filePaths)
     {
-        return type switch
-        {
-            ProfileType.Text => "\uE8C1",
-            ProfileType.File => "\uED43",
-            ProfileType.Group => "\uED43",
-            ProfileType.Image => "\uEB9F",
-            _ => "\uF87E",
-        };
+        var pathData = HugeiconsEmbeddedIconProvider.ResolvePathData(type, filePaths);
+        return (Geometry)XamlBindingHelper.ConvertValue(typeof(Geometry), pathData);
     }
 
     public static string ToStarIcon(bool input)

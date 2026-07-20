@@ -51,10 +51,15 @@ public partial class HotkeyViewModel : ObservableObject
     private void SetToDefault(string cmdId) => _hotkeyManager.SetHotKeyToDefault(cmdId);
 
     private readonly HotkeyManager _hotkeyManager;
+    private readonly MainViewModel _mainViewModel;
 
-    public HotkeyViewModel(HotkeyManager hotkeyManager)
+    [RelayCommand]
+    private void OpenBlacklist() => _mainViewModel.NavigateToNextLevel(PageDefinition.HotkeyBlacklist);
+
+    public HotkeyViewModel(HotkeyManager hotkeyManager, MainViewModel mainViewModel)
     {
         _hotkeyManager = hotkeyManager;
+        _mainViewModel = mainViewModel;
         hotkeyManager.HotkeyStatusChanged += HotkeyStatusChanged;
         HotkeyStatusChanged();
     }

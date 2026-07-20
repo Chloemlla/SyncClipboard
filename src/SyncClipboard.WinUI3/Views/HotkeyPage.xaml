@@ -18,8 +18,16 @@
             <Setter Property="FontFamily" Value="{ThemeResource SymbolThemeFontFamily}" />
         </Style>
     </Page.Resources>
-    <Grid>
-        <ItemsRepeater ItemsSource="{x:Bind _viewModel.CommandCollections, Mode=OneWay}">
+    <Grid RowDefinitions="Auto,*" RowSpacing="10">
+        <ui:SettingsCard Header="全局快捷键例外程序" IsClickEnabled="True" Command="{x:Bind _viewModel.OpenBlacklistCommand}">
+            <ui:SettingsCard.HeaderIcon>
+                <FontIcon Glyph="&#xE8A7;" />
+            </ui:SettingsCard.HeaderIcon>
+            <ui:SettingsCard.ActionIcon>
+                <FontIcon Glyph="&#xE76C;" />
+            </ui:SettingsCard.ActionIcon>
+        </ui:SettingsCard>
+        <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind _viewModel.CommandCollections, Mode=OneWay}">
             <ItemsRepeater.Layout>
                 <StackLayout Orientation="Vertical" Spacing="10" />
             </ItemsRepeater.Layout>
