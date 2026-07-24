@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -24,6 +25,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Sync
@@ -48,6 +50,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.chloemlla.syncclipboard.mobile.R
+import com.chloemlla.syncclipboard.mobile.ui.svg.DynamicColorImageVectors
+import com.chloemlla.syncclipboard.mobile.ui.svg.EmptyStateIllustration
+import com.chloemlla.syncclipboard.mobile.ui.svg.drawablevectors.coder
 
 /**
  * Build-scoped update guide shown after OSS first-run when
@@ -171,10 +176,17 @@ private fun WhatsNewWelcomeCard() {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            EmptyStateIllustration(
+                imageVector = DynamicColorImageVectors.coder(),
+                caption = null,
+                modifier = Modifier.heightIn(max = 140.dp),
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(
                     imageVector = Icons.Outlined.NewReleases,
@@ -191,6 +203,7 @@ private fun WhatsNewWelcomeCard() {
                 text = stringResource(R.string.whats_new_welcome_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
             )
             // Dynamic build identity — never hard-code hash / build time in strings.
             IdentityLine(
@@ -276,7 +289,8 @@ private fun WhatsNewTopicCard(
 }
 
 private fun topicIcon(index: Int): ImageVector = when (index) {
-    0 -> Icons.Outlined.Security
-    1 -> Icons.Outlined.Sync
+    0 -> Icons.Outlined.Image
+    1 -> Icons.Outlined.Security
+    2 -> Icons.Outlined.Sync
     else -> Icons.Outlined.TextFields
 }

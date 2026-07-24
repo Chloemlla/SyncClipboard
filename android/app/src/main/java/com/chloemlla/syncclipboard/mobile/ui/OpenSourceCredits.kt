@@ -99,5 +99,12 @@ object OpenSourceCredits {
             license = "Repository license",
             url = "https://github.com/Chloemlla/Project-Lumen",
         ),
+        DependencyCredit(
+            name = "unDraw",
+            author = "Katerina Limpitsouni",
+            descriptionRes = R.string.oss_dep_undraw,
+            license = "unDraw License",
+            url = "https://undraw.co/",
+        ),
     )
 }

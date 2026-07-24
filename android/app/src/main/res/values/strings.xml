@@ -194,6 +194,8 @@
     <string name="whats_new_topic_rearm_body">The idle wait after a missing Shizuku binder is cancelled on READY. Bind timeouts and richer logs make stuck privileged reads easier to diagnose.</string>
     <string name="whats_new_topic_scope_title">Text via Shizuku; images need accessibility</string>
     <string name="whats_new_topic_scope_body">With Shizuku ready, plain-text copies can reach the server without the accessibility service. Image and file push still require accessibility capture.</string>
+    <string name="whats_new_topic_illustrations_title">Theme-tinted empty states</string>
+    <string name="whats_new_topic_illustrations_body">Empty history, first-run server setup, and push guidance now use undraw-style illustrations that follow the Material color scheme.</string>
     <string name="oss_dep_compose">Declarative UI toolkit and Material 3 components used for the Android interface.</string>
     <string name="oss_dep_activity_compose">Integrates Jetpack Compose with Android activities.</string>
     <string name="oss_dep_core_ktx">Kotlin extensions for Android core platform APIs.</string>
@@ -209,6 +211,7 @@
     <string name="crash_report_message">SyncClipboard hit an unexpected error. You can copy or share the report, optionally upload a paste link, then continue.</string>
     <string name="crash_report_share_subject">SyncClipboard crash report</string>
     <string name="oss_dep_lumen_crash">Crash capture, breadcrumb trail, and adaptive crash report UI used after unexpected failures.</string>
+    <string name="oss_dep_undraw">Open illustration library used for decorative empty-state artwork (theme-tinted vectors).</string>
 
     <!-- Content control -->
     <string name="section_content">Content control</string>
