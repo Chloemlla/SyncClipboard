@@ -11,6 +11,7 @@ import android.os.Build
 import android.util.Log
 import com.chloemlla.syncclipboard.mobile.BuildConfig
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import rikka.shizuku.Shizuku
 import kotlin.coroutines.resume
 
@@ -33,6 +34,9 @@ enum class ShizukuAvailability { NOT_INSTALLED, NOT_RUNNING, NEEDS_PERMISSION, R
  *
  * All entry points degrade gracefully: if Shizuku isn't installed/running or permission
  * isn't granted, calls return null and callers fall back to their existing behavior.
+ *
+ * State listeners fire on binder up/down **and** permission grant/deny so the sync engine
+ * can re-arm push without an app restart.
  */
 object ShizukuManager {
 
@@ -40,30 +44,50 @@ object ShizukuManager {
     const val SHIZUKU_PACKAGE = "moe.shizuku.privileged.api"
     private const val TAG = "ShizukuManager"
     private const val SERVICE_VERSION = 1
+    /** Max wait for [Shizuku.bindUserService]; without this a stuck bind freezes the push loop. */
+    private const val BIND_TIMEOUT_MS = 4_000L
 
     @Volatile
     private var service: IShizukuUserService? = null
     private var binding = false
     private val waiters = mutableListOf<(IShizukuUserService?) -> Unit>()
 
-    /** Callbacks fired when the Shizuku binder comes up or goes down, so the UI can refresh live. */
+    /** Callbacks fired when the Shizuku binder / permission state changes, so UI + engine refresh. */
     private val stateListeners = mutableSetOf<() -> Unit>()
 
-    private val binderReceivedListener = Shizuku.OnBinderReceivedListener { notifyStateChanged() }
+    private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
+        Log.i(TAG, "binder received")
+        notifyStateChanged()
+    }
     private val binderDeadListener = Shizuku.OnBinderDeadListener {
+        Log.i(TAG, "binder dead")
         service = null
+        // Unblock any in-flight ensureService waiters so the push loop can retry later.
+        flushWaiters(null)
         notifyStateChanged()
     }
 
     /**
+     * Process-wide permission callback so grant/deny re-arms the push loop even when
+     * [com.chloemlla.syncclipboard.mobile.MainActivity] is not in the foreground.
+     */
+    private val permissionResultListener =
+        Shizuku.OnRequestPermissionResultListener { requestCode, _ ->
+            if (requestCode == PERMISSION_REQUEST_CODE) {
+                notifyPermissionChanged()
+            }
+        }
+
+    /**
      * Register for Shizuku start/stop events. Call once (e.g. from Application). Idempotent.
-     * Lets the permission UI update the instant the user starts or stops Shizuku, without
-     * requiring them to leave and re-enter the screen.
+     * Lets the permission UI and sync engine update the instant the user starts or stops
+     * Shizuku, without requiring them to leave and re-enter the screen.
      */
     fun registerLifecycle() {
         runCatching {
             Shizuku.addBinderReceivedListenerSticky(binderReceivedListener)
             Shizuku.addBinderDeadListener(binderDeadListener)
+            Shizuku.addRequestPermissionResultListener(permissionResultListener)
         }.onFailure { Log.w(TAG, "registerLifecycle failed", it) }
     }
 
@@ -73,6 +97,20 @@ object ShizukuManager {
 
     fun removeStateListener(listener: () -> Unit) {
         synchronized(stateListeners) { stateListeners.remove(listener) }
+    }
+
+    /**
+     * Call after a permission grant/deny result so listeners (UI + [SyncEngine] push loop)
+     * re-arm immediately instead of waiting for the next idle poll.
+     */
+    fun notifyPermissionChanged() {
+        Log.i(TAG, "permission changed: ready=${isReady()}")
+        // Drop any half-bound service after a grant flip; next call rebinds cleanly.
+        if (!isReady()) {
+            service = null
+            flushWaiters(null)
+        }
+        notifyStateChanged()
     }
 
     private fun notifyStateChanged() {
@@ -97,11 +135,14 @@ object ShizukuManager {
             } else {
                 null
             }
+            Log.i(TAG, "user service connected: bound=${service != null}")
             flushWaiters(service)
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
+            Log.i(TAG, "user service disconnected")
             service = null
+            flushWaiters(null)
         }
     }
 
@@ -213,17 +254,36 @@ object ShizukuManager {
         if (!isReady()) return null
         service?.let { existing ->
             if (runCatching { existing.asBinder().pingBinder() }.getOrDefault(false)) return existing
+            service = null
         }
-        return suspendCancellableCoroutine { cont ->
-            synchronized(waiters) { waiters.add { cont.resume(it) } }
-            if (!binding) {
-                binding = true
-                val ok = runCatching { Shizuku.bindUserService(userServiceArgs, connection) }
-                    .onFailure { Log.w(TAG, "bindUserService failed", it) }
-                    .isSuccess
-                if (!ok) flushWaiters(null)
+
+        val bound = withTimeoutOrNull(BIND_TIMEOUT_MS) {
+            suspendCancellableCoroutine { cont ->
+                val waiter: (IShizukuUserService?) -> Unit = { result ->
+                    if (cont.isActive) cont.resume(result)
+                }
+                cont.invokeOnCancellation {
+                    synchronized(waiters) { waiters.remove(waiter) }
+                }
+                synchronized(waiters) { waiters.add(waiter) }
+                if (!binding) {
+                    binding = true
+                    val ok = runCatching { Shizuku.bindUserService(userServiceArgs, connection) }
+                        .onFailure { Log.w(TAG, "bindUserService failed", it) }
+                        .isSuccess
+                    if (!ok) flushWaiters(null)
+                }
             }
         }
+
+        if (bound == null) {
+            Log.w(TAG, "bindUserService timed out after ${BIND_TIMEOUT_MS}ms")
+            // Allow a later retry: clear stuck binding if we still have no service.
+            synchronized(waiters) {
+                if (service == null) binding = false
+            }
+        }
+        return bound
     }
 
     private fun flushWaiters(result: IShizukuUserService?) {
@@ -233,6 +293,6 @@ object ShizukuManager {
             pending = waiters.toList()
             waiters.clear()
         }
-        pending.forEach { it(result) }
+        pending.forEach { runCatching { it(result) } }
     }
 }

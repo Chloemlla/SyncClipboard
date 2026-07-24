@@ -278,6 +278,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /**
+     * Shizuku is READY (permission just granted or binder came up). Tell the running
+     * sync service to re-apply keep-alive and interrupt the push idle sleep so clipboard
+     * text is uploaded without requiring Stop/Start.
+     */
+    fun onShizukuBecameReady() {
+        if (!ShizukuManager.isReady()) return
+        val app = getApplication<Application>()
+        if (!settings.serviceEnabled) return
+        SyncForegroundService.notifyShizukuReady(app)
+    }
+
     /** Fallback install target when the market intent can't be resolved on the device. */
     fun shizukuInstallFallbackIntent(): Intent = ShizukuManager.installShizukuFallbackIntent()
 

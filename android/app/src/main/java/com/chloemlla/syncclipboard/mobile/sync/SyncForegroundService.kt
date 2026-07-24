@@ -88,9 +88,31 @@ class SyncForegroundService : Service() {
                 return START_NOT_STICKY
             }
             ACTION_RESTART -> restartEngine()
+            ACTION_SHIZUKU_READY -> onShizukuReady()
             else -> if (engine == null) startEngine()
         }
         return START_STICKY
+    }
+
+    /**
+     * Shizuku was just authorized (or binder came back). Re-apply keep-alive and force the
+     * push loop out of idle sleep so the next clipboard read happens within ~1s — without
+     * requiring the user to stop/start the sync service.
+     *
+     * Visible to [notifyShizukuReady] for in-process re-arm without another FGS start.
+     */
+    internal fun onShizukuReady() {
+        recordBreadcrumb("SyncForegroundService.onShizukuReady")
+        Log.i(TAG, "Shizuku ready signal received")
+        if (engine == null) {
+            // Service was started for the signal but engine not yet up — start it.
+            if (settings.serviceEnabled || settings.load().isConfigured()) {
+                startEngine()
+            }
+            return
+        }
+        applyShizukuKeepAlive()
+        engine?.onShizukuReady()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -444,6 +466,8 @@ class SyncForegroundService : Service() {
         const val ACTION_STOP = "com.chloemlla.syncclipboard.mobile.STOP"
         const val ACTION_RESTART = "com.chloemlla.syncclipboard.mobile.RESTART"
         const val ACTION_TIMEOUT = "com.chloemlla.syncclipboard.mobile.TIMEOUT"
+        /** Permission/binder became READY — re-arm keep-alive + interrupt Shizuku idle poll. */
+        const val ACTION_SHIZUKU_READY = "com.chloemlla.syncclipboard.mobile.SHIZUKU_READY"
 
         /** Live instance so the accessibility service can hand off captured text. */
         @Volatile
@@ -463,6 +487,27 @@ class SyncForegroundService : Service() {
 
         fun restart(context: Context) {
             val intent = Intent(context, SyncForegroundService::class.java).setAction(ACTION_RESTART)
+            startSafely(context, intent)
+        }
+
+        /**
+         * Notify a running (or startable) FGS that Shizuku is now READY so push re-arms
+         * without a full engine restart. Prefer in-process wake when the service is already
+         * alive to avoid redundant startForegroundService calls (e.g. every onResume).
+         */
+        fun notifyShizukuReady(context: Context) {
+            val holder = activeEngineHolder
+            if (holder != null) {
+                holder.onShizukuReady()
+                return
+            }
+            val store = SettingsStore(context.applicationContext)
+            if (!store.serviceEnabled) {
+                Log.d(TAG, "notifyShizukuReady skipped: service not enabled")
+                return
+            }
+            val intent = Intent(context, SyncForegroundService::class.java)
+                .setAction(ACTION_SHIZUKU_READY)
             startSafely(context, intent)
         }
 
