@@ -42,13 +42,14 @@ val syncClipboardShortHash: String =
         ?: "unknown"
 
 // UTC build stamp for in-app “本次更新说明” identity (commit hash + build time).
-// CI should inject SYNCCLIPBOARD_BUILD_TIME (ISO-8601). Local default is configuration-time UTC.
+// CI injects SYNCCLIPBOARD_BUILD_TIME (ISO-8601). Local/default is "unknown" —
+// avoid java.time / java.util in this script (Gradle Kotlin DSL can shadow `java`).
 val syncClipboardBuildTime: String =
     providers.environmentVariable("SYNCCLIPBOARD_BUILD_TIME")
         .orElse(providers.gradleProperty("syncClipboardBuildTime"))
         .orNull
         ?.takeIf { it.isNotBlank() }
-        ?: java.time.Instant.now().toString()
+        ?: "unknown"
 
 android {
     namespace = "com.chloemlla.syncclipboard.mobile"
