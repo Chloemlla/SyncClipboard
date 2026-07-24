@@ -91,6 +91,7 @@ import com.chloemlla.syncclipboard.mobile.sync.SyncStatus
 fun MainScreen(
     viewModel: MainViewModel,
     onOpenOpenSourceNotice: () -> Unit = {},
+    onOpenWhatsNew: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
     onOpenTools: () -> Unit = {},
 ) {
@@ -381,14 +382,19 @@ fun MainScreen(
                         }
                     },
                 )
-                if (ui.shizuku != ShizukuAvailability.READY &&
-                    ui.pushEnabled && !ui.accessibilityEnabled
-                ) {
-                    InfoCard(
-                        title = context.getString(R.string.perm_accessibility),
-                        icon = Icons.Outlined.Info,
-                        lines = listOf(context.getString(R.string.hint_push_requires_accessibility)),
-                    )
+                if (ui.pushEnabled && !ui.accessibilityEnabled) {
+                    when (ui.shizuku) {
+                        ShizukuAvailability.READY -> InfoCard(
+                            title = context.getString(R.string.perm_shizuku),
+                            icon = Icons.Outlined.Info,
+                            lines = listOf(context.getString(R.string.hint_shizuku_active)),
+                        )
+                        else -> InfoCard(
+                            title = context.getString(R.string.perm_accessibility),
+                            icon = Icons.Outlined.Info,
+                            lines = listOf(context.getString(R.string.hint_push_requires_accessibility)),
+                        )
+                    }
                 }
 
                 SectionTitle(
@@ -524,6 +530,11 @@ fun MainScreen(
                     subtitle = context.getString(R.string.section_about_subtitle),
                     icon = Icons.Outlined.Policy,
                 )
+                OutlinedButton(
+                    onClick = onOpenWhatsNew,
+                    shape = SyncPreferenceShape,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { ButtonLabel(Icons.Outlined.Info, context.getString(R.string.action_open_whats_new)) }
                 OutlinedButton(
                     onClick = onOpenOpenSourceNotice,
                     shape = SyncPreferenceShape,

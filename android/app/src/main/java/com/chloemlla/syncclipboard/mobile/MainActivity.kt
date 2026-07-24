@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,6 +28,8 @@ import com.chloemlla.syncclipboard.mobile.ui.OpenSourceNoticeScreen
 import com.chloemlla.syncclipboard.mobile.ui.SyncClipboardTheme
 import com.chloemlla.syncclipboard.mobile.ui.ToolsScreen
 import com.chloemlla.syncclipboard.mobile.ui.ToolsViewModel
+import com.chloemlla.syncclipboard.mobile.ui.WhatsNewData
+import com.chloemlla.syncclipboard.mobile.ui.WhatsNewScreen
 import rikka.shizuku.Shizuku
 
 class MainActivity : ComponentActivity() {
@@ -40,13 +43,27 @@ class MainActivity : ComponentActivity() {
      */
     private var ossAcknowledged by mutableStateOf(false)
 
-    // Refresh the UI once the user responds to the Shizuku permission prompt.
+    // Refresh the UI once the user responds to the Shizuku permission prompt, and
+    // re-arm the foreground sync engine so push starts without a manual restart.
     private val shizukuPermissionListener =
-        Shizuku.OnRequestPermissionResultListener { _, _ -> viewModel.refreshPermissions() }
+        Shizuku.OnRequestPermissionResultListener { requestCode, grantResult ->
+            if (requestCode != ShizukuManager.PERMISSION_REQUEST_CODE) return@OnRequestPermissionResultListener
+            ShizukuManager.notifyPermissionChanged()
+            viewModel.refreshPermissions()
+            if (grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                viewModel.onShizukuBecameReady()
+            }
+        }
 
     // Refresh the moment Shizuku is started or stopped, so the card reacts without
-    // the user having to leave and re-enter the screen.
-    private val shizukuStateListener = { viewModel.refreshPermissions() }
+    // the user having to leave and re-enter the screen. When the binder becomes READY
+    // while sync is enabled, also re-arm keep-alive + push poll.
+    private val shizukuStateListener = {
+        viewModel.refreshPermissions()
+        if (ShizukuManager.isReady()) {
+            viewModel.onShizukuBecameReady()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,10 +94,24 @@ class MainActivity : ComponentActivity() {
                     },
                 ) {
                     var showOssBrowse by rememberSaveable { mutableStateOf(false) }
+                    var showWhatsNew by rememberSaveable { mutableStateOf(false) }
                     var showHistory by rememberSaveable { mutableStateOf(false) }
                     var showTools by rememberSaveable { mutableStateOf(false) }
                     val historyViewModel: HistoryViewModel = viewModel()
                     val toolsViewModel: ToolsViewModel = viewModel()
+
+                    // Auto-open build-scoped update notes after OSS when identity changed.
+                    LaunchedEffect(ossAcknowledged) {
+                        if (ossAcknowledged &&
+                            !showWhatsNew &&
+                            settingsStore.shouldShowWhatsNew(
+                                WhatsNewData.commitHash,
+                                WhatsNewData.buildTime,
+                            )
+                        ) {
+                            showWhatsNew = true
+                        }
+                    }
 
                     when {
                         !ossAcknowledged -> {
@@ -88,9 +119,26 @@ class MainActivity : ComponentActivity() {
                                 mode = OpenSourceNoticeMode.FirstRun,
                                 onContinue = {
                                     settingsStore.ossNoticeAcknowledged = true
+                                    // First install: ack current build so what's-new does not
+                                    // immediately re-open on the same cold start.
+                                    settingsStore.acknowledgeWhatsNew(
+                                        WhatsNewData.commitHash,
+                                        WhatsNewData.buildTime,
+                                    )
                                     ossAcknowledged = true
                                 },
                                 onExitApp = { finish() },
+                            )
+                        }
+                        showWhatsNew -> {
+                            WhatsNewScreen(
+                                onDismiss = {
+                                    settingsStore.acknowledgeWhatsNew(
+                                        WhatsNewData.commitHash,
+                                        WhatsNewData.buildTime,
+                                    )
+                                    showWhatsNew = false
+                                },
                             )
                         }
                         showOssBrowse -> {
@@ -115,6 +163,7 @@ class MainActivity : ComponentActivity() {
                             MainScreen(
                                 viewModel = viewModel,
                                 onOpenOpenSourceNotice = { showOssBrowse = true },
+                                onOpenWhatsNew = { showWhatsNew = true },
                                 onOpenHistory = { showHistory = true },
                                 onOpenTools = { showTools = true },
                             )
@@ -157,6 +206,11 @@ class MainActivity : ComponentActivity() {
         // Keep Compose gate aligned if prefs changed outside composition.
         ossAcknowledged = settingsStore.ossNoticeAcknowledged
         viewModel.refreshPermissions()
+        // Grant may have happened in the Shizuku app (no permission-result callback).
+        // Re-arm push when we return with READY + service enabled.
+        if (ShizukuManager.isReady()) {
+            viewModel.onShizukuBecameReady()
+        }
     }
 
     override fun onDestroy() {

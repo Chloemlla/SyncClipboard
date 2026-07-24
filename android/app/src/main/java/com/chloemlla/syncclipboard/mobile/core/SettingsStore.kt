@@ -107,6 +107,28 @@ class SettingsStore(context: Context) {
     }
 
     /**
+     * Whether the build-scoped “本次更新说明” should auto-show.
+     * Compares stored (commit hash, build time) to [commitHash]/[buildTime].
+     * Only after OSS notice is acknowledged. Call [acknowledgeWhatsNew] on dismiss
+     * and after first-run OSS so a fresh install does not immediately re-open this page.
+     */
+    fun shouldShowWhatsNew(commitHash: String, buildTime: String): Boolean {
+        if (!ossNoticeAcknowledged) return false
+        if (commitHash.isBlank() || buildTime.isBlank()) return false
+        val ackHash = prefs.getString(KEY_WHATS_NEW_ACK_HASH, null)
+        val ackTime = prefs.getString(KEY_WHATS_NEW_ACK_BUILD_TIME, null)
+        if (ackHash == null || ackTime == null) return true
+        return ackHash != commitHash || ackTime != buildTime
+    }
+
+    fun acknowledgeWhatsNew(commitHash: String, buildTime: String) {
+        prefs.edit()
+            .putString(KEY_WHATS_NEW_ACK_HASH, commitHash)
+            .putString(KEY_WHATS_NEW_ACK_BUILD_TIME, buildTime)
+            .apply()
+    }
+
+    /**
      * Evidence the app was already used before the OSS notice feature existed:
      * a configured server URL or a previously enabled sync service.
      */
@@ -165,6 +187,8 @@ class SettingsStore(context: Context) {
         private const val KEY_DOWNLOAD_WEB_IMAGE = "download_web_image"
         private const val KEY_SERVICE_ENABLED = "service_enabled"
         private const val KEY_OSS_NOTICE_ACK = "oss_notice_acknowledged"
+        private const val KEY_WHATS_NEW_ACK_HASH = "whats_new_ack_commit_hash"
+        private const val KEY_WHATS_NEW_ACK_BUILD_TIME = "whats_new_ack_build_time"
         private const val KEY_IGNORE_PACKAGES = "ignore_packages"
     }
 }

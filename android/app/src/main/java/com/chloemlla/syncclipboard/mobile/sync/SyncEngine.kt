@@ -27,7 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -76,15 +75,31 @@ class SyncEngine(
     @Volatile
     private var realtimeConnected: Boolean = false
     private val wake = Channel<Unit>(Channel.CONFLATED)
+    /** Wakes [shizukuPushLoop] out of idle sleep when Shizuku becomes READY. */
+    private val shizukuWake = Channel<Unit>(Channel.CONFLATED)
     private var lastRealtimeAttempt: Long = 0L
     private var shizukuPushJob: Job? = null
+    private var shizukuListenerRegistered = false
+
+    /**
+     * Fired when Shizuku binder/permission flips. Cancels the idle 10s sleep so a
+     * fresh grant re-arms clipboard push within [SHIZUKU_POLL_MS] without restarting FGS.
+     */
+    private val shizukuStateListener: () -> Unit = {
+        if (runCatching { ShizukuManager.isReady() }.getOrDefault(false)) {
+            Log.i(TAG, "Shizuku READY — waking push loop")
+            shizukuWake.trySend(Unit)
+        }
+    }
 
     fun start(scope: CoroutineScope) {
-        if (pullJob?.isActive == true) return
+        if (pullJob?.isActive == true || shizukuPushJob?.isActive == true) return
         if (config.pushEnabled) {
+            registerShizukuListener()
             shizukuPushJob = scope.launch(Dispatchers.IO) { shizukuPushLoop() }
         }
         if (!config.pullEnabled) {
+            // Push-only mode: still report CONNECTED so the UI/notification aren't stuck.
             SyncState.setStatus(SyncStatus.CONNECTED)
             return
         }
@@ -96,22 +111,51 @@ class SyncEngine(
         pullJob = null
         shizukuPushJob?.cancel()
         shizukuPushJob = null
+        unregisterShizukuListener()
         realtime?.disconnect()
         realtime = null
         realtimeConnected = false
     }
 
+    /**
+     * External re-arm hook (permission grant / ACTION_SHIZUKU_READY). Safe to call
+     * when the engine is stopped — the next start() will poll immediately via READY.
+     */
+    fun onShizukuReady() {
+        shizukuWake.trySend(Unit)
+    }
+
+    private fun registerShizukuListener() {
+        if (shizukuListenerRegistered) return
+        ShizukuManager.addStateListener(shizukuStateListener)
+        shizukuListenerRegistered = true
+    }
+
+    private fun unregisterShizukuListener() {
+        if (!shizukuListenerRegistered) return
+        ShizukuManager.removeStateListener(shizukuStateListener)
+        shizukuListenerRegistered = false
+    }
+
     private suspend fun shizukuPushLoop() {
+        // Immediate first attempt so a service start after grant does not wait a full idle cycle.
+        shizukuWake.trySend(Unit)
         while (currentCoroutineContext().isActive) {
             val ready = runCatching { ShizukuManager.isReady() }.getOrDefault(false)
             if (ready) {
-                val text = runCatching { ShizukuManager.readClipboardText() }.getOrNull()
+                val text = runCatching { ShizukuManager.readClipboardText() }
+                    .onFailure { Log.w(TAG, "shizuku read failed", it) }
+                    .getOrNull()
                 if (!text.isNullOrEmpty()) {
                     runCatching { pushText(text) }
                         .onFailure { Log.w(TAG, "shizuku push failed", it) }
                 }
+                // Short poll while ready; also interruptible via shizukuWake (re-grant / binder up).
+                withTimeoutOrNull(SHIZUKU_POLL_MS) { shizukuWake.receive() }
+            } else {
+                // Long idle while not ready — broken as soon as state listener fires READY.
+                withTimeoutOrNull(SHIZUKU_IDLE_MS) { shizukuWake.receive() }
             }
-            delay(if (ready) SHIZUKU_POLL_MS else SHIZUKU_IDLE_MS)
         }
     }
 
@@ -583,7 +627,9 @@ class SyncEngine(
         private const val REALTIME_RETRY_MS = 15_000L
         private const val MAX_BACKOFF_MS = 60_000L
         private const val MAX_BACKOFF_SHIFT = 5
-        private const val SHIZUKU_POLL_MS = 1_500L
+        /** Active poll interval while Shizuku is READY (acceptance: push ≤2s after copy). */
+        private const val SHIZUKU_POLL_MS = 1_000L
+        /** Idle backoff while Shizuku is not ready; cancelled immediately on READY. */
         private const val SHIZUKU_IDLE_MS = 10_000L
     }
 }

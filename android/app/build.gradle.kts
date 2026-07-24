@@ -41,6 +41,15 @@ val syncClipboardShortHash: String =
         ?.takeIf { it.isNotBlank() }
         ?: "unknown"
 
+// UTC build stamp for in-app “本次更新说明” identity (commit hash + build time).
+// CI should inject SYNCCLIPBOARD_BUILD_TIME (ISO-8601). Local default is configuration-time UTC.
+val syncClipboardBuildTime: String =
+    providers.environmentVariable("SYNCCLIPBOARD_BUILD_TIME")
+        .orElse(providers.gradleProperty("syncClipboardBuildTime"))
+        .orNull
+        ?.takeIf { it.isNotBlank() }
+        ?: java.time.Instant.now().toString()
+
 android {
     namespace = "com.chloemlla.syncclipboard.mobile"
     // androidx.core 1.17.0+ requires compileSdk 36+ (AAR metadata check).
@@ -60,6 +69,7 @@ android {
             ?: "1.0.0"
 
         buildConfigField("String", "SHORT_HASH", "\"$syncClipboardShortHash\"")
+        buildConfigField("String", "BUILD_TIME", "\"$syncClipboardBuildTime\"")
         buildConfigField("String", "LUMEN_CRASH_VERSION", "\"$lumenCrashVersion\"")
     }
 
