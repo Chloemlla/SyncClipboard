@@ -46,6 +46,9 @@ import com.chloemlla.syncclipboard.mobile.R
 import com.chloemlla.syncclipboard.mobile.core.HistoryEntry
 import com.chloemlla.syncclipboard.mobile.core.HistorySource
 import com.chloemlla.syncclipboard.mobile.core.HistoryType
+import com.chloemlla.syncclipboard.mobile.ui.svg.DynamicColorImageVectors
+import com.chloemlla.syncclipboard.mobile.ui.svg.EmptyStateIllustration
+import com.chloemlla.syncclipboard.mobile.ui.svg.drawablevectors.videoFiles
 import java.text.DateFormat
 import java.util.Date
 
@@ -106,10 +109,9 @@ fun HistoryScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = context.getString(R.string.history_empty),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                EmptyStateIllustration(
+                    imageVector = DynamicColorImageVectors.videoFiles(),
+                    caption = context.getString(R.string.history_empty),
                 )
             }
         } else {

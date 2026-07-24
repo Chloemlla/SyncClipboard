@@ -194,6 +194,8 @@
     <string name="whats_new_topic_rearm_body">Shizuku 未就绪时的长空闲等待会在 READY 时立刻打断；绑定超时与更完整的日志便于排查特权读取失败。</string>
     <string name="whats_new_topic_scope_title">文本走 Shizuku；图片仍需无障碍</string>
     <string name="whats_new_topic_scope_body">Shizuku 就绪后，纯文本复制可不开启无障碍即可上传到服务器。图片与文件推送仍依赖无障碍捕获。</string>
+    <string name="whats_new_topic_illustrations_title">主题色空状态插画</string>
+    <string name="whats_new_topic_illustrations_body">空历史、首次配置服务器与推送引导现使用 undraw 风格插画，颜色跟随 Material 主题色方案。</string>
     <string name="oss_dep_compose">声明式 UI 工具包与 Material 3 组件，用于 Android 界面。</string>
     <string name="oss_dep_activity_compose">将 Jetpack Compose 与 Android Activity 集成。</string>
     <string name="oss_dep_core_ktx">Android 核心平台 API 的 Kotlin 扩展。</string>
@@ -209,6 +211,7 @@
     <string name="crash_report_message">SyncClipboard 发生了未预期错误。你可以复制或分享报告，也可选择上传粘贴链接，然后继续。</string>
     <string name="crash_report_share_subject">SyncClipboard 崩溃报告</string>
     <string name="oss_dep_lumen_crash">崩溃采集、面包屑轨迹，以及异常后的自适应崩溃报告界面。</string>
+    <string name="oss_dep_undraw">用于空状态装饰插画的开放图库（主题色矢量）。</string>
 
     <!-- 内容控制 -->
     <string name="section_content">内容控制</string>

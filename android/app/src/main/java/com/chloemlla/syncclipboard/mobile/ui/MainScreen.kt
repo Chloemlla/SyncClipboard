@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -85,6 +86,10 @@ import com.chloemlla.syncclipboard.mobile.R
 import com.chloemlla.syncclipboard.mobile.shizuku.ShizukuAvailability
 import com.chloemlla.syncclipboard.mobile.sync.PermissionHelper
 import com.chloemlla.syncclipboard.mobile.sync.SyncStatus
+import com.chloemlla.syncclipboard.mobile.ui.svg.DynamicColorImageVectors
+import com.chloemlla.syncclipboard.mobile.ui.svg.EmptyStateIllustration
+import com.chloemlla.syncclipboard.mobile.ui.svg.drawablevectors.download
+import com.chloemlla.syncclipboard.mobile.ui.svg.drawablevectors.videoSteaming
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -184,14 +189,34 @@ fun MainScreen(
                     icon = Icons.Outlined.Dns,
                 )
                 if (ui.baseUrl.isBlank()) {
-                    InfoCard(
-                        title = context.getString(R.string.firstrun_title),
-                        icon = Icons.Outlined.Info,
-                        lines = listOf(
-                            context.getString(R.string.firstrun_line1),
-                            context.getString(R.string.firstrun_line2),
-                        ),
-                    )
+                    SoftSurface {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            EmptyStateIllustration(
+                                imageVector = DynamicColorImageVectors.download(),
+                                caption = null,
+                                modifier = Modifier.heightIn(max = 160.dp),
+                            )
+                            Text(
+                                text = context.getString(R.string.firstrun_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                text = context.getString(R.string.firstrun_line1),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = context.getString(R.string.firstrun_line2),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
                 OutlinedTextField(
                     value = ui.baseUrl,
@@ -383,17 +408,44 @@ fun MainScreen(
                     },
                 )
                 if (ui.pushEnabled && !ui.accessibilityEnabled) {
-                    when (ui.shizuku) {
-                        ShizukuAvailability.READY -> InfoCard(
-                            title = context.getString(R.string.perm_shizuku),
-                            icon = Icons.Outlined.Info,
-                            lines = listOf(context.getString(R.string.hint_shizuku_active)),
-                        )
-                        else -> InfoCard(
-                            title = context.getString(R.string.perm_accessibility),
-                            icon = Icons.Outlined.Info,
-                            lines = listOf(context.getString(R.string.hint_push_requires_accessibility)),
-                        )
+                    SoftSurface {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            EmptyStateIllustration(
+                                imageVector = DynamicColorImageVectors.videoSteaming(),
+                                caption = null,
+                                modifier = Modifier.heightIn(max = 140.dp),
+                            )
+                            when (ui.shizuku) {
+                                ShizukuAvailability.READY -> {
+                                    Text(
+                                        text = context.getString(R.string.perm_shizuku),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text = context.getString(R.string.hint_shizuku_active),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                else -> {
+                                    Text(
+                                        text = context.getString(R.string.perm_accessibility),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        text = context.getString(R.string.hint_push_requires_accessibility),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 

@@ -28,6 +28,10 @@ object WhatsNewData {
      */
     val topics: List<Topic> = listOf(
         Topic(
+            titleRes = R.string.whats_new_topic_illustrations_title,
+            bodyRes = R.string.whats_new_topic_illustrations_body,
+        ),
+        Topic(
             titleRes = R.string.whats_new_topic_shizuku_title,
             bodyRes = R.string.whats_new_topic_shizuku_body,
         ),
