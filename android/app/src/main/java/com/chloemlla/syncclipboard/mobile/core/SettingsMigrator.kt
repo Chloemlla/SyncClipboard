@@ -218,7 +218,7 @@ object SettingsMigrator {
 
     fun cursorFor(snapshot: Snapshot): Cursor {
         val cursor = MatrixCursor(arrayOf(COL_JSON, COL_SERVICE_ENABLED), 1)
-        cursor.addRow(arrayOf(snapshot.toJson(), if (snapshot.serviceEnabled) 1 else 0))
+        cursor.addRow(arrayOf<Any>(snapshot.toJson(), if (snapshot.serviceEnabled) 1 else 0))
         return cursor
     }
 
