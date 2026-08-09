@@ -16,9 +16,10 @@ import com.chloemlla.syncclipboard.mobile.core.SettingsStore
 class ExportSettingsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        runCatching {
-            val store = SettingsStore(this)
-            SettingsMigrator.exportSnapshot(this, store)
+        try {
+            SettingsMigrator.exportSnapshot(applicationContext, SettingsStore(applicationContext))
+        } catch (_: Exception) {
+            // Best-effort migration; the one-shot activity must not crash.
         }
         finish()
     }
