@@ -167,6 +167,7 @@ public partial class StartUpHelper
         taskDefinition.Settings.StopIfGoingOnBatteries = false;
 
         using var identity = WindowsIdentity.GetCurrent();
+        taskDefinition.Principal.UserId = identity.Name;
         dynamic trigger = taskDefinition.Triggers.Create(9); // TASK_TRIGGER_LOGON
         trigger.UserId = identity.Name;
         dynamic action = taskDefinition.Actions.Create(0); // TASK_ACTION_EXEC
@@ -177,7 +178,7 @@ public partial class StartUpHelper
             StartupTaskName,
             taskDefinition,
             6, // TASK_CREATE_OR_UPDATE
-            null,
+            identity.Name,
             null,
             3, // TASK_LOGON_INTERACTIVE_TOKEN
             null);
@@ -186,12 +187,22 @@ public partial class StartUpHelper
     [SupportedOSPlatform("windows")]
     private static void DeleteScheduledTask()
     {
-        if (CheckScheduledTask())
+        dynamic taskService = CreateTaskService();
+        dynamic taskFolder = taskService.GetFolder("\\");
+        try
         {
-            dynamic taskService = CreateTaskService();
-            dynamic taskFolder = taskService.GetFolder("\\");
             taskFolder.DeleteTask(StartupTaskName, 0);
         }
+        catch (System.Runtime.InteropServices.COMException ex) when (IsScheduledTaskNotFound(ex.ErrorCode))
+        {
+            // The scheduled task is not registered; there is nothing to delete.
+        }
+    }
+
+    private static bool IsScheduledTaskNotFound(int errorCode)
+    {
+        return errorCode == unchecked((int)0x8004130F) || // SCHED_E_TASK_NOT_REGISTERED
+            errorCode == unchecked((int)0x80070002); // HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)
     }
 
     public static bool? GetWindowsTaskRunAsAdministrator()
