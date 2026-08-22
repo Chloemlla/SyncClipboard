@@ -298,7 +298,6 @@ namespace SyncClipboard.Core
                 new NativeNotificationOption
                 {
                     AppName = Env.SoftName,
-                    RemoveNotificationOnContentClick = false,
                     AppIcon = Path.Combine(Env.ProgramDirectory, "Assets", "icon.svg")
                 }
             ));
