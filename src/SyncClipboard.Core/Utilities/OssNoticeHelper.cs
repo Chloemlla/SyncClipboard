@@ -27,7 +27,7 @@ public static class OssNoticeHelper
     {
         ArgumentNullException.ThrowIfNull(configManager);
 
-        var node = configManager.GetNode(ConfigKey.Program);
+        var node = configManager.GetNode(ProgramConfig.ConfigKey);
         if (node is null)
         {
             // Brand-new config file / no Program section yet → require notice.
