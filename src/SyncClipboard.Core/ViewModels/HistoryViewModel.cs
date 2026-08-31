@@ -9,6 +9,7 @@ using SyncClipboard.Core.Models;
 using SyncClipboard.Core.Models.Keyboard;
 using SyncClipboard.Core.Models.UserConfigs;
 using SyncClipboard.Core.RemoteServer;
+using SyncClipboard.Core.UserServices;
 using SyncClipboard.Core.UserServices.ClipboardService;
 using SyncClipboard.Core.Utilities;
 using SyncClipboard.Core.Utilities.History;
@@ -26,6 +27,7 @@ public partial class HistoryViewModel : ObservableObject
     private static readonly TimeSpan OperationTimeout = TimeSpan.FromSeconds(30);
 
     private IWindow window = null!;
+    private bool _hasShownWindow;
 
     [ObservableProperty]
     private bool showInfoBar = false;
@@ -47,9 +49,10 @@ public partial class HistoryViewModel : ObservableObject
     private readonly IProfileEnv profileEnv;
     private readonly HistoryService _historyService;
     private readonly ICaretPositionProvider _caretPositionProvider;
-    private readonly IForegroundWindowInfoProvider _foregroundWindowInfoProvider;
+    private readonly INativeWindowController _foregroundWindowInfoProvider;
     private readonly IMousePositionProvider _mousePositionProvider;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ForegroundWindowTrackingService _foregroundWindowTrackingService;
     private IOfficialSyncServer? historySyncServer;
 
     [ObservableProperty]
@@ -128,8 +131,9 @@ public partial class HistoryViewModel : ObservableObject
         HistoryTransferQueue transferQueue,
         IThreadDispatcher threadDispatcher,
         ICaretPositionProvider caretPositionProvider,
-        IForegroundWindowInfoProvider foregroundWindowInfoProvider,
+        INativeWindowController foregroundWindowInfoProvider,
         IMousePositionProvider mousePositionProvider,
+        ForegroundWindowTrackingService foregroundWindowTrackingService,
         IServiceProvider serviceProvider)
     {
         this.historyManager = historyManager;
@@ -148,6 +152,7 @@ public partial class HistoryViewModel : ObservableObject
         this._caretPositionProvider = caretPositionProvider;
         this._foregroundWindowInfoProvider = foregroundWindowInfoProvider;
         this._mousePositionProvider = mousePositionProvider;
+        this._foregroundWindowTrackingService = foregroundWindowTrackingService;
         this._serviceProvider = serviceProvider;
 
         _transferQueue.TaskStatusChanged += OnTransferTaskStatusChanged;
@@ -293,8 +298,11 @@ public partial class HistoryViewModel : ObservableObject
         get => runtimeConfig.GetConfig<HistoryWindowConfig>().IsTopmost;
         set
         {
+            if (value == IsTopmost) return;
+
             window?.SetTopmost(value);
             runtimeConfig.SetConfig(runtimeConfig.GetConfig<HistoryWindowConfig>() with { IsTopmost = value });
+            OnPropertyChanged(nameof(IsTopmost));
         }
     }
 
@@ -449,7 +457,7 @@ public partial class HistoryViewModel : ObservableObject
         return _caretPositionProvider.GetCaretPosition();
     }
 
-    public ForegroundWindowDetail? GetForegroundWindowInfo()
+    public WindowDetail? GetForegroundWindowInfo()
     {
         return _foregroundWindowInfoProvider.GetForegroundWindowDetail();
     }
@@ -532,7 +540,7 @@ public partial class HistoryViewModel : ObservableObject
     [RelayCommand]
     public void Close()
     {
-        window?.Close();
+        window?.Hide();
     }
 
     private int _isLoadTaskRunning = 0;
@@ -758,10 +766,55 @@ public partial class HistoryViewModel : ObservableObject
 
     public void OnWindowShown()
     {
+        if (!OperatingSystem.IsLinux())
+        {
+            _foregroundWindowTrackingService.SetHistoryWindow(window.GetNativeWindowInfo());
+        }
         if (ScrollToTopOnReopen)
         {
             ScrollToTop();
         }
+    }
+
+    public void OnBeforeShownWindow()
+    {
+        CapturePasteTargetBeforeShowingHistory();
+    }
+
+    private void CapturePasteTargetBeforeShowingHistory()
+    {
+        _foregroundWindowTrackingService.CaptureCurrentForegroundWindow();
+    }
+
+    public void ShowWithAutoPosition()
+    {
+        OnBeforeShownWindow();
+
+        var wasVisible = window.IsVisible;
+        if (wasVisible)
+        {
+            RepositionWindow();
+        }
+        else if (!RepositionWindow() && !_hasShownWindow)
+        {
+            window.CenterOnScreen(Width, Height);
+        }
+
+        window.Show(activate: true);
+        window.FocusSearch();
+        OnWindowShown();
+        _hasShownWindow = true;
+    }
+
+    public void SwitchVisible()
+    {
+        if (window.IsVisible)
+        {
+            window.Hide();
+            return;
+        }
+
+        ShowWithAutoPosition();
     }
 
     public void NavigateToLast()
@@ -773,14 +826,28 @@ public partial class HistoryViewModel : ObservableObject
         window?.ScrollToSelectedItem();
     }
 
-    public bool HandleKeyPress(Key key, bool isShiftPressed = false, bool isAltPressed = false, bool isCtrlPressed = false)
+    public bool HandleKeyPress(
+        Key key,
+        bool isShiftPressed = false,
+        bool isAltPressed = false,
+        bool isCtrlPressed = false,
+        bool isMetaPressed = false)
     {
+        if (IsCloseShortcut(key, isShiftPressed, isAltPressed, isCtrlPressed, isMetaPressed))
+        {
+            Close();
+            return true;
+        }
+
         if (isCtrlPressed && isShiftPressed && !isAltPressed)
         {
             switch (key)
             {
                 case Key.S:
                     OnlyShowStarred = !OnlyShowStarred;
+                    return true;
+                case Key.T:
+                    IsTopmost = !IsTopmost;
                     return true;
             }
         }
@@ -829,12 +896,27 @@ public partial class HistoryViewModel : ObservableObject
                 return true;
 
             case Key.Esc:
-                window?.Close();
+                window?.Hide();
                 return true;
 
             default:
                 return false;
         }
+    }
+
+    private static bool IsCloseShortcut(
+        Key key,
+        bool isShiftPressed,
+        bool isAltPressed,
+        bool isCtrlPressed,
+        bool isMetaPressed)
+    {
+        if (key != Key.W || isShiftPressed || isAltPressed)
+            return false;
+
+        return OperatingSystem.IsMacOS()
+            ? isMetaPressed && !isCtrlPressed
+            : isCtrlPressed && !isMetaPressed;
     }
 
     private async void HandleToggleStarShortcut()
@@ -923,6 +1005,14 @@ public partial class HistoryViewModel : ObservableObject
     public async Task Init(IWindow window)
     {
         this.window = window;
+        // Both desktop views bind HistoryItems before calling Init. Subscribe here
+        // so the controls process collection changes before selection is adjusted.
+        HistoryItems.CollectionChanged -= OnHistoryItemsCollectionChanged;
+        HistoryItems.CollectionChanged += OnHistoryItemsCollectionChanged;
+        if (!OperatingSystem.IsLinux())
+        {
+            _foregroundWindowTrackingService.SetHistoryWindow(window.GetNativeWindowInfo());
+        }
         historyManager.HistoryAdded += RecordEntityUpdated;
         historyManager.HistoryUpdated += RecordEntityUpdated;
         historyManager.HistoryRemoved += OnHistoryRemoved;
@@ -1026,10 +1116,13 @@ public partial class HistoryViewModel : ObservableObject
     {
         try
         {
+            var selectionAfterReplacement = PrepareSelectionForRecordReplacement(oldR);
             ClearVisibleRecordSelection(oldR);
             allHistoryItems.Remove(oldR);
             if (newR != null)
                 InsertHistoryInOrder(newR);
+            if (selectionAfterReplacement is not null)
+                SelectSingleRecord(selectionAfterReplacement);
         }
         catch
         {
@@ -1320,34 +1413,6 @@ public partial class HistoryViewModel : ObservableObject
         _transferQueue.CancelUpload(profileId);
     }
 
-    public async Task CopyToClipboard(HistoryRecordVM record, bool paste, CancellationToken token)
-    {
-        var historyRecord = record.ToHistoryRecord();
-        var profile = historyRecord.ToProfile();
-        var valid = await profile.IsLocalDataValid(true, token);
-        if (!valid)
-        {
-            historyRecord.IsLocalFileReady = false;
-            await historyManager.UpdateHistoryLocalInfo(historyRecord, token);
-
-            ShowWindowToastInfo(I18n.Strings.UnableToCopyByMissingFile);
-            return;
-        }
-
-        if (paste || !IsTopmost)
-        {
-            ClearSelectedItem();
-            window.ScrollToTop();
-            window.Close();
-        }
-
-        await localClipboardSetter.Set(profile, token);
-        if (paste)
-        {
-            keyboard.Paste();
-        }
-    }
-
     public void OnGotFocus()
     {
         _remainWindowForViewDetail = false;
@@ -1359,7 +1424,7 @@ public partial class HistoryViewModel : ObservableObject
     {
         if (!_remainWindowForViewDetail && !IsTopmost && CloseWhenLostFocus)
         {
-            window.Close();
+            window.Hide();
         }
     }
 

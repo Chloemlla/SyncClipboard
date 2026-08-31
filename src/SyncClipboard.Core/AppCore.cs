@@ -165,17 +165,18 @@ namespace SyncClipboard.Core
 
             var contextMenu = Services.GetRequiredService<IContextMenu>();
             var mainWindow = Services.GetRequiredService<IMainWindow>();
-            var historyWindow = Services.GetRequiredKeyedService<IWindow>("HistoryWindow");
+            _ = Services.GetRequiredKeyedService<IWindow>("HistoryWindow");
+            var historyViewModel = Services.GetRequiredService<HistoryViewModel>();
 
-            AddSystemContextMenu(contextMenu, mainWindow, historyWindow);
-            RegisterForSystemHotkey(mainWindow);
+            AddSystemContextMenu(contextMenu, mainWindow, historyViewModel);
+            RegisterForSystemHotkey(mainWindow, historyViewModel);
 
             ProxyManager.Init(configManager);
 
             ServiceManager = Services.GetRequiredService<ServiceManager>();
             ServiceManager.StartUpAllService();
 
-            InitTrayIcon();
+            InitTrayIcon(historyViewModel);
             Services.GetRequiredService<AppInstance>().WaitForOtherInstanceToActiveAsync();
             contextMenu.AddMenuItemGroup([new(Strings.RestartApp, RestartApp), new(Strings.Exit, mainWindow.ExitApp)]);
             OssNoticeHelper.MigrateIfNeeded(configManager);
@@ -229,11 +230,14 @@ namespace SyncClipboard.Core
             }
         }
 
-        private void AddSystemContextMenu(IContextMenu contextMenu, IMainWindow mainWindow, IWindow historyWindow)
+        private void AddSystemContextMenu(
+            IContextMenu contextMenu,
+            IMainWindow mainWindow,
+            HistoryViewModel historyViewModel)
         {
             contextMenu.AddMenuItem(new MenuItem(Strings.Settings, mainWindow.Show), "Top Group");
             contextMenu.AddMenuItem(new MenuItem(Strings.About, () => mainWindow.OpenPage(PageDefinition.About)), "Top Group");
-            contextMenu.AddMenuItem(new MenuItem(Strings.HistoryPanel, historyWindow.Focus), "Top Group");
+            contextMenu.AddMenuItem(new MenuItem(Strings.HistoryPanel, historyViewModel.ShowWithAutoPosition), "Top Group");
 
             MenuItem[] menu =
             [
@@ -247,12 +251,10 @@ namespace SyncClipboard.Core
             contextMenu.AddMenuItemGroup(menu);
         }
 
-        private void RegisterForSystemHotkey(IMainWindow mainWindow)
+        private void RegisterForSystemHotkey(IMainWindow mainWindow, HistoryViewModel historyViewModel)
         {
             var hotkeyManager = Services.GetService<HotkeyManager>();
             if (hotkeyManager is null) return;
-
-            var HistoryWindow = Services.GetRequiredKeyedService<IWindow>("HistoryWindow");
 
             UniqueCommandCollection CommandCollection = new(Strings.System, PageDefinition.SystemSetting.FontIcon!)
             {
@@ -270,12 +272,12 @@ namespace SyncClipboard.Core
                     new UniqueCommand(
                         Strings.OpenHistoryPanel,
                         "OpenHistoryPanel",
-                        HistoryWindow.Focus
+                        historyViewModel.ShowWithAutoPosition
                     ),
                     new UniqueCommand(
                         Strings.ToggleHistoryPanel,
                         "ToggleHistoryPanel",
-                        HistoryWindow.SwitchVisible
+                        historyViewModel.SwitchVisible
                     )
                 }
             };
@@ -283,12 +285,11 @@ namespace SyncClipboard.Core
             hotkeyManager.RegisterCommands(CommandCollection);
         }
 
-        private void InitTrayIcon()
+        private void InitTrayIcon(HistoryViewModel historyViewModel)
         {
             var trayIcon = Services.GetRequiredService<ITrayIcon>();
-            var historyWindow = Services.GetRequiredKeyedService<IWindow>("HistoryWindow");
             var mainWindow = Services.GetRequiredService<IMainWindow>();
-            trayIcon.LeftClicked += historyWindow.Focus;
+            trayIcon.LeftClicked += historyViewModel.ShowWithAutoPosition;
             trayIcon.DoubleClicked += mainWindow.Show;
             trayIcon.Create();
         }
@@ -345,6 +346,8 @@ namespace SyncClipboard.Core
             services.AddSingleton<RemoteClipboardServerFactory>();
             services.AddSingleton<ServiceManager>();
             services.AddSingleton<HotkeyManager>();
+            services.AddSingleton<ForegroundWindowMonitor>();
+            services.AddSingleton<IForegroundWindowMonitor>(sp => sp.GetRequiredService<ForegroundWindowMonitor>());
             services.AddTransient<ForegroundWindowCapture>();
             services.AddTransient<GithubUpdater>();
             services.AddQuartz();
@@ -390,7 +393,7 @@ namespace SyncClipboard.Core
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<HotkeyViewModel>();
             services.AddSingleton<HotkeyBlacklistViewModel>();
-            services.AddTransient<HistoryViewModel>();
+            services.AddSingleton<HistoryViewModel>();
             services.AddTransient<HistorySettingViewModel>();
         }
 
@@ -409,6 +412,8 @@ namespace SyncClipboard.Core
             services.AddSingleton<IService>(sp => sp.GetRequiredService<NetworkAccountSwitchService>());
             services.AddSingleton<HotkeyBlacklistService>();
             services.AddSingleton<IService>(sp => sp.GetRequiredService<HotkeyBlacklistService>());
+            services.AddSingleton<ForegroundWindowTrackingService>();
+            services.AddSingleton<IService>(sp => sp.GetRequiredService<ForegroundWindowTrackingService>());
         }
     }
 }

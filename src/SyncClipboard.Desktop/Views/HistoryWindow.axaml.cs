@@ -19,6 +19,7 @@ using System;
 using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AvaloniaDragDropEffects = Avalonia.Input.DragDropEffects;
 
@@ -30,7 +31,6 @@ public partial class HistoryWindow : Window, IWindow
     private readonly ICaretPositionProvider _caretPositionProvider;
     private readonly ILogger _logger;
     public HistoryViewModel ViewModel => _viewModel;
-    private bool _firstShow = true;
     public HistoryWindow()
     {
         _viewModel = App.Current.Services.GetRequiredService<HistoryViewModel>();
@@ -134,6 +134,7 @@ public partial class HistoryWindow : Window, IWindow
         var isShiftPressed = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
         var isAltPressed = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
         var isCtrlPressed = e.KeyModifiers.HasFlag(KeyModifiers.Control);
+        var isMetaPressed = e.KeyModifiers.HasFlag(KeyModifiers.Meta);
 
         var key = Utilities.KeyboardMap.ConvertFromAvalonia(e.Key);
 
@@ -143,7 +144,7 @@ public partial class HistoryWindow : Window, IWindow
             return;
         }
 
-        var handled = _viewModel.HandleKeyPress(key.Value, isShiftPressed, isAltPressed, isCtrlPressed);
+        var handled = _viewModel.HandleKeyPress(key.Value, isShiftPressed, isAltPressed, isCtrlPressed, isMetaPressed);
 
         if (handled)
         {
@@ -166,47 +167,40 @@ public partial class HistoryWindow : Window, IWindow
         e.Cancel = true;
     }
 
-    public void SwitchVisible()
+    public virtual void Show(bool activate)
     {
-        if (!this.IsVisible)
+        var previousShowActivated = ShowActivated;
+        ShowActivated = activate;
+        if (!IsVisible)
         {
-            FocusOnScreen();
+            Show();
         }
-        else
+        if (WindowState == WindowState.Minimized)
         {
-            this.Close();
+            WindowState = WindowState.Normal;
         }
+        if (activate)
+        {
+            Activate();
+        }
+        ShowActivated = previousShowActivated;
     }
 
-    protected virtual void FocusOnScreen()
+    public new virtual void Hide()
     {
-        if (!this.IsVisible)
-        {
-            if (!_viewModel.RepositionWindow() && _firstShow)
-            {
-                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            }
-            _firstShow = false;
-        }
-        else
-        {
-            _viewModel.RepositionWindow();
-        }
-        this.Show();
-        if (this.WindowState == WindowState.Minimized)
-        {
-            this.WindowState = WindowState.Normal;
-        }
-        this.Activate();
+        ResetPointerInteractionState();
+        base.Hide();
+    }
 
+    public void CenterOnScreen(int width, int height)
+    {
+        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+    }
+
+    public void FocusSearch()
+    {
         _SearchTextBox.Focus();
         _SearchTextBox.SelectAll();
-        _viewModel.OnWindowShown();
-    }
-
-    void IWindow.Focus()
-    {
-        FocusOnScreen();
     }
 
     public void ScrollToSelectedItem()
@@ -674,6 +668,38 @@ public partial class HistoryWindow : Window, IWindow
         this.Topmost = topmost;
     }
 
+    public virtual NativeWindowInfo? GetNativeWindowInfo()
+    {
+        var handle = this.TryGetPlatformHandle();
+        if (handle is null || handle.Handle == nint.Zero)
+        {
+            return null;
+        }
+
+        return handle.HandleDescriptor switch
+        {
+            "HWND" => new WindowsNativeWindowInfo
+            {
+                ProcessId = Environment.ProcessId,
+                WindowHandle = handle.Handle
+            },
+            "NSWindow" => new MacNativeWindowInfo
+            {
+                ProcessId = Environment.ProcessId,
+                BundleIdentifier = Environment.ProcessPath ?? string.Empty,
+                WindowTitle = Title ?? string.Empty,
+                Bounds = new ScreenPosition
+                {
+                    X = Position.X,
+                    Y = Position.Y,
+                    Width = (int)Width,
+                    Height = (int)Height
+                }
+            },
+            _ => null
+        };
+    }
+
     // 在 macOS 上，ViewModel 的 Width 和 Height 已经是物理像素值，不需要再乘以 RenderScaling
     private (int Width, int Height) GetPhysicalPixelSize()
     {
@@ -740,16 +766,6 @@ public partial class HistoryWindow : Window, IWindow
         if (targetScreen == null)
         {
             return false;
-        }
-
-        if (!_firstShow)
-        {
-            var currentScreen = screens.FirstOrDefault(s => s.Bounds.Contains(this.Position))
-                                ?? Screens.Primary;
-            if (currentScreen != null && currentScreen == targetScreen)
-            {
-                return true;
-            }
         }
 
         var workArea = targetScreen.WorkingArea;
