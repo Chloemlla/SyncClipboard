@@ -23,7 +23,7 @@ public partial class OpenSourceNoticePage : UserControl
         UpdateActionUi();
     }
 
-    private void OnNavigatedTo(object? sender, NavigationEventArgs e)
+    private void OnNavigatedTo(object? sender, FANavigationEventArgs e)
     {
         _viewModel.IsFirstRun = e.Parameter is not false;
         UpdateActionUi();
