@@ -16,7 +16,7 @@ public partial class OpenSourceNoticePage : UserControl
 
     public OpenSourceNoticePage()
     {
-        AddHandler(Frame.NavigatedToEvent, OnNavigatedTo, RoutingStrategies.Direct);
+        AddHandler(FAFrame.NavigatedToEvent, OnNavigatedTo, RoutingStrategies.Direct);
         _viewModel = App.Current.Services.GetRequiredService<OpenSourceNoticeViewModel>();
         DataContext = _viewModel;
         InitializeComponent();
@@ -65,7 +65,7 @@ public partial class OpenSourceNoticePage : UserControl
 
     private async void ViewLicense_Click(object? sender, RoutedEventArgs e)
     {
-        var dialog = new ContentDialog
+        var dialog = new FAContentDialog
         {
             Title = Strings.License,
             CloseButtonText = Strings.OssClose,
@@ -90,7 +90,7 @@ public partial class OpenSourceNoticePage : UserControl
 
     private void DependencyLicense_Click(object? sender, RoutedEventArgs e)
     {
-        if ((sender as SettingsExpanderItem)?.Content is not OpenSourceSoftware software)
+        if ((sender as FASettingsExpanderItem)?.Content is not OpenSourceSoftware software)
         {
             return;
         }

@@ -25,18 +25,16 @@ class Program
 
         try
         {
-            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+            return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
         catch (Exception e)
         {
             var path = Path.Combine(Env.LogFolder, $"{DateTime.Now:yyyy-MM-dd HH-mm-ss}.dmp");
             File.WriteAllText(path + ".txt", $"UnhandledException {e.GetType()} {e.Message} \n{e.StackTrace}");
             App.Current?.Logger?.Write($"UnhandledException {e.GetType()} {e.Message} \n {e.StackTrace}");
-            App.Current?.AppCore?.Stop();
+            App.Current?.AppCore?.ExitAsync().GetAwaiter().GetResult();
             return (int)ReturnCode.UnhandledException;
         }
-
-        return (int)ReturnCode.Success;
     }
 
     private static string Font(string name)

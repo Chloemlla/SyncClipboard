@@ -91,7 +91,7 @@ v3.1.1及以上的客户端、服务器与之前的版本不兼容，同步网�
 
 ## 服务器
 ### 独立服务器
-[SyncClipboard.Server](https://github.com/Jeric-X/SyncClipboard/releases/)支持跨平台运行，依赖[ASP.NET Core 10.0](https://dotnet.microsoft.com/zh-cn/download/dotnet/10.0)，安装`ASP.NET Core 运行时`后，通过以下命令运行
+[SyncClipboard.Server](https://github.com/Jeric-X/SyncClipboard/releases/)支持跨平台运行，依赖[ASP.NET Core 8.0](https://dotnet.microsoft.com/zh-cn/download/dotnet/8.0)，安装`ASP.NET Core 运行时`后，通过以下命令运行
 ```
 dotnet /path/to/SyncClipboard.Server.dll --contentRoot ./
 ```
@@ -127,8 +127,8 @@ dotnet /path/to/SyncClipboard.Server.dll --contentRoot ./
   "AppSettings": {
     "UserName": "your_username",
     "Password": "your_password",
-    "MaxSavedHistoryCount": 1000,
-    "HistoryRetentionMinutes": 10080
+    "MaxSavedHistoryCount": 1000, // 历史记录数量上限，0 表示不限数量；保留时长限制仍生效
+    "HistoryRetentionMinutes": 0 // 历史记录保留时长（分钟），0 表示不限时长；数量限制仍生效
   }
 }
 ```
@@ -393,7 +393,6 @@ PUT /SyncClipboard.json
 [WinUIEx](https://github.com/dotMorten/WinUIEx)  
 [moq](https://github.com/moq/moq)  
 [Avalonia](https://avaloniaui.net/)  
-[FluentAvalonia.BreadcrumbBar](https://github.com/indigo-san/FluentAvalonia.BreadcrumbBar)  
 [FluentAvalonia](https://github.com/amwx/FluentAvalonia)  
 [AsyncImageLoader.Avalonia](https://github.com/AvaloniaUtils/AsyncImageLoader.Avalonia)  
 [Vanara](https://github.com/dahall/Vanara)  

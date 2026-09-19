@@ -1,6 +1,5 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Media.Animation;
@@ -41,7 +40,7 @@ public partial class MainWindow : Window, IMainWindow
 
     internal void NavigateTo(
         PageDefinition page,
-        SlideNavigationTransitionEffect effect = SlideNavigationTransitionEffect.FromBottom,
+        FASlideNavigationTransitionEffect effect = FASlideNavigationTransitionEffect.FromBottom,
         object? parameter = null)
     {
         _MainView.NavigateTo(page, effect, parameter);
@@ -49,12 +48,12 @@ public partial class MainWindow : Window, IMainWindow
 
     public void NavigateTo(PageDefinition page, NavigationTransitionEffect effect, object? para = null)
     {
-        SlideNavigationTransitionEffect platformEffect = effect switch
+        FASlideNavigationTransitionEffect platformEffect = effect switch
         {
-            NavigationTransitionEffect.FromBottom => SlideNavigationTransitionEffect.FromBottom,
-            NavigationTransitionEffect.FromLeft => SlideNavigationTransitionEffect.FromLeft,
-            NavigationTransitionEffect.FromRight => SlideNavigationTransitionEffect.FromRight,
-            NavigationTransitionEffect.FromTop => SlideNavigationTransitionEffect.FromTop,
+            NavigationTransitionEffect.FromBottom => FASlideNavigationTransitionEffect.FromBottom,
+            NavigationTransitionEffect.FromLeft => FASlideNavigationTransitionEffect.FromLeft,
+            NavigationTransitionEffect.FromRight => FASlideNavigationTransitionEffect.FromRight,
+            NavigationTransitionEffect.FromTop => FASlideNavigationTransitionEffect.FromTop,
             _ => throw new NotImplementedException()
         };
         _MainView.NavigateTo(page, platformEffect, para);
@@ -72,7 +71,7 @@ public partial class MainWindow : Window, IMainWindow
                 return;
             }
 
-            NavigateTo(page, SlideNavigationTransitionEffect.FromBottom, para);
+            NavigateTo(page, FASlideNavigationTransitionEffect.FromBottom, para);
             _viewModel.BreadcrumbList.Clear();
             _viewModel.BreadcrumbList.Add(page);
         }
@@ -97,23 +96,6 @@ public partial class MainWindow : Window, IMainWindow
     internal void EnableScrollViewer()
     {
         _MainView.EnableScrollViewer();
-    }
-
-    public void SetFont(string font)
-    {
-        if (string.IsNullOrEmpty(font))
-        {
-            App.Current.Resources["ProgramFont"] = App.Current.Resources["DefaultFont"];
-        }
-        else
-        {
-            App.Current.Resources["ProgramFont"] = new FontFamily(font);
-        }
-    }
-
-    public void ExitApp()
-    {
-        App.Current.ExitApp();
     }
 
     protected virtual void ShowMainWindow()

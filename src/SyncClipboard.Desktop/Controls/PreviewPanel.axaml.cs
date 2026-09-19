@@ -28,6 +28,7 @@ public sealed partial class PreviewPanel : UserControl
     private HistoryRecordVM? _pendingDragItem;
     private Control? _dragSource;
     private IPointer? _dragPointer;
+    private PointerPressedEventArgs? _dragStartEventArgs;
 
     /// <summary>
     /// ViewModel依赖属性
@@ -148,14 +149,19 @@ public sealed partial class PreviewPanel : UserControl
 
         try
         {
-            var (width, height) = await GetImageDimensions(record.PreviewImage);
+            var dimensions = await GetImageDimensions(record.PreviewImage);
+            if (dimensions is null)
+            {
+                await ViewModel.MarkLocalFileMissingAsync(record);
+                return;
+            }
 
             // 检查当前选中项是否还是同一个记录
             if (SelectedItem != record)
                 return;
 
             // 保存图片尺寸，用于面板大小变化时重新计算
-            _currentPreviewImageSize = (width, height);
+            _currentPreviewImageSize = dimensions.Value;
 
             // 计算并设置 Stretch
             UpdatePreviewImageStretch();
@@ -214,13 +220,20 @@ public sealed partial class PreviewPanel : UserControl
         _StatusText.IsVisible = isLocalFileMissing || isSynced;
     }
 
-    private static Task<(uint width, uint height)> GetImageDimensions(string imagePath)
+    private static Task<(uint width, uint height)?> GetImageDimensions(string imagePath)
     {
-        return Task.Run(() =>
+        return Task.Run<(uint width, uint height)?>(() =>
         {
-            using var stream = File.OpenRead(imagePath);
-            using var bitmap = new Bitmap(stream);
-            return ((uint)bitmap.PixelSize.Width, (uint)bitmap.PixelSize.Height);
+            try
+            {
+                using var stream = File.OpenRead(imagePath);
+                using var bitmap = new Bitmap(stream);
+                return ((uint)bitmap.PixelSize.Width, (uint)bitmap.PixelSize.Height);
+            }
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+            {
+                return null;
+            }
         });
     }
 
@@ -257,6 +270,7 @@ public sealed partial class PreviewPanel : UserControl
                 _pendingDragItem = clickedItem;
                 _dragSource = sender as Control;
                 _dragPointer = e.Pointer;
+                _dragStartEventArgs = e;
                 e.Pointer.Capture((IInputElement)sender!);
             }
         }
@@ -269,7 +283,7 @@ public sealed partial class PreviewPanel : UserControl
             return;
         }
 
-        if (!_isPendingDrag || _pendingDragItem == null || _dragSource == null || ViewModel == null)
+        if (!_isPendingDrag || _pendingDragItem == null || _dragSource == null || _dragStartEventArgs == null || ViewModel == null)
             return;
 
         var currentPoint = e.GetPosition(null);
@@ -282,6 +296,7 @@ public sealed partial class PreviewPanel : UserControl
         // 开始拖拽，此时阻止默认行为
         e.Handled = true;
         var item = _pendingDragItem;
+        var dragStartEventArgs = _dragStartEventArgs;
         ResetPendingDrag();
 
         try
@@ -292,7 +307,7 @@ public sealed partial class PreviewPanel : UserControl
             if (success)
             {
                 var result = await DragDrop.DoDragDropAsync(
-                    e,
+                    dragStartEventArgs,
                     dataTransfer,
                     AvaloniaDragDropEffects.Copy);
             }
@@ -317,6 +332,7 @@ public sealed partial class PreviewPanel : UserControl
     {
         _dragPointer?.Capture(null);
         _dragPointer = null;
+        _dragStartEventArgs = null;
         _isPendingDrag = false;
         _pendingDragItem = null;
         _dragSource = null;

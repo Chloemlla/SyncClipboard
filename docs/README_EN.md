@@ -86,7 +86,7 @@ Clients and servers v3.1.1 and above are incompatible with previous versions. Al
 
 ## Server
 ### Standalone Server
-[SyncClipboard.Server](https://github.com/Jeric-X/SyncClipboard/releases/) is cross-platform, depends on [ASP.NET Core 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0). Run with:
+[SyncClipboard.Server](https://github.com/Jeric-X/SyncClipboard/releases/) is cross-platform, depends on [ASP.NET Core 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0). Run with:
 ```
 dotnet /path/to/SyncClipboard.Server.dll --contentRoot ./
 ```
@@ -125,8 +125,8 @@ dotnet /path/to/SyncClipboard.Server.dll --contentRoot /path/to/contentRoot
   "AppSettings": {
     "UserName": "your_username",
     "Password": "your_password",
-    "MaxSavedHistoryCount": 1000,
-    "HistoryRetentionMinutes": 10080
+    "MaxSavedHistoryCount": 1000, // Maximum history count; 0 means no count limit. The retention time limit still applies.
+    "HistoryRetentionMinutes": 0 // Retention in minutes; 0 means no time limit. The history count limit still applies.
   }
 }
 ```
@@ -367,7 +367,6 @@ For protocol and data format specifications when using S3-compatible object stor
 [WinUIEx](https://github.com/dotMorten/WinUIEx)  
 [moq](https://github.com/moq/moq)  
 [Avalonia](https://avaloniaui.net/)  
-[FluentAvalonia.BreadcrumbBar](https://github.com/indigo-san/FluentAvalonia.BreadcrumbBar)  
 [FluentAvalonia](https://github.com/amwx/FluentAvalonia)  
 [AsyncImageLoader.Avalonia](https://github.com/AvaloniaUtils/AsyncImageLoader.Avalonia)  
 [Vanara](https://github.com/dahall/Vanara)  

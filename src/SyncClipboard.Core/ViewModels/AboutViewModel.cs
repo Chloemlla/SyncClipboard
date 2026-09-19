@@ -128,13 +128,6 @@ public partial class AboutViewModel : ObservableObject
             "Fluent Design controls for Avalonia.",
             "MIT"),
         new OpenSourceSoftware(
-            "FluentAvalonia.BreadcrumbBar",
-            "https://github.com/indigo-san/FluentAvalonia.BreadcrumbBar",
-            "FluentAvalonia.BreadcrumbBar/LICENSE.txt",
-            "indigo-san",
-            "Breadcrumb navigation control for Avalonia settings pages.",
-            "MIT"),
-        new OpenSourceSoftware(
             "AsyncImageLoader.Avalonia",
             "https://github.com/AvaloniaUtils/AsyncImageLoader.Avalonia",
             "AsyncImageLoader.Avalonia/LICENSE.txt",
