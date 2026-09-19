@@ -2,26 +2,41 @@
 
 [中文](../README.md) | English
 
-> [!IMPORTANT]
-> **This repository is the [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) fork.** On top of upstream [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard), it adds and actively maintains a **brand-new native Android client** (`android/`, package `com.chloemlla.syncclipboard.mobile`). Upstream ships no official native Android client — only third-party-tool-based approaches.
->
-> Key improvements in this fork:
->
-> - **Native Kotlin + Jetpack Compose client**: Material 3 design language, syncs out of the box with no third-party automation tools required.
-> - **Real-time sync**: connects to the same SignalR hub (`/SyncClipboardHub`) the desktop client uses, waking on server changes with near-zero latency; adaptive polling backs it up — a slow heartbeat (battery/data friendly) while realtime is healthy, falling back to fast polling with exponential backoff when the hub is unavailable.
-> - **Two-way sync**: pull (server → phone, applied to the clipboard in the background) + push (phone → server, capturing copies via an accessibility service).
-> - **Full profile parity with desktop**: bidirectional Text / Image / File / Group; hashes match desktop `FileProfile` / `GroupProfile`.
-> - **Clipboard assist (EasyCopyImage)**: download web images and optionally rewrite the local clipboard for better Windows image interop.
-> - **Shizuku support**: advanced keep-alive and **accessibility-free** background **text** clipboard reads (Accessibility still recommended for image/file push).
-> - **Reliable background keep-alive**: foreground `dataSync` service + battery-optimization exemption + start-on-boot, fixing sync stalls after backgrounding / screen-off.
-> - **Complete CI**: a Java 21 + pinned-Gradle verification pipeline, plus **automatic signed-release publishing** of the Android APK to GitHub Releases.
->
-> See [android/README.md](../android/README.md) for full Android client details. The content below is the original upstream documentation.
+## ⚡ Fork Enhancements
+
+This repository is the [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) fork of upstream [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard). It adds and maintains a **native Android client** (`android/`, package `com.chloemlla.syncclipboard.mobile`) and carries a number of desktop Core fixes. Upstream ships no official native Android client — only third-party-tool approaches such as AutoJs6 and Xposed.
+
+| Feature | Description |
+| --- | --- |
+| **Native Android client (new)** | `android/` is built with Kotlin + Jetpack Compose in Material 3; it syncs without any third-party automation tool. |
+| **SignalR real-time sync** | Connects to the same `/SyncClipboardHub` the desktop client uses, so server changes trigger an immediate pull instead of waiting for the next poll. |
+| **Adaptive polling fallback** | Drops to a ~30s heartbeat (battery/data friendly) while the realtime channel is healthy; falls back to the configured interval with exponential backoff when it is not. |
+| **Two-way sync for all four profile types** | Text / Image / File / Group support both pull and push; protocol hashes match desktop `SyncClipboard.Shared`, so they interoperate with Windows / Linux / macOS. |
+| **Accessibility-service push** | An `AccessibilityService` captures background copies and uploads them. Required for image/file push, because Android 10+ restricts background clipboard reads. |
+| **Shizuku support** | Optional; provides stronger keep-alive and pushes **text** without accessibility (binary types still need it). |
+| **Background keep-alive** | Foreground `dataSync` service + battery-optimization exemption + start-on-boot (`BootReceiver`), fixing sync stalls after backgrounding or screen-off. |
+| **Clipboard assist (EasyCopyImage)** | Downloads the original image when a web image is copied and pushes it as `type=Image`; can optionally rewrite the local clipboard to an image URI for better Windows interop. WebP/HEIC/AVIF are re-encoded to PNG/JPEG. |
+| **Image download confirmation and save (Android)** | Incoming images prompt for confirmation before download, then are saved to the system gallery. |
+| **Image download confirmation and archiving (Windows)** | The desktop client confirms before downloading too, then saves into the `Pictures\SyncClipboard` album; a declined profile is cached so the same image is not re-prompted. |
+| **Local clipboard history** | Keeps recent text with re-copy, delete, and favorite actions. |
+| **Ignore foreground apps** | A configurable package ignore list skips pushing while a listed app is in the foreground. |
+| **Built-in tools page** | Short URL (mmp.cc), Artifact (Bearer API), and OpenAI-compatible image generation; media handling needs a user-supplied ffmpeg — no bundled binary. |
+| **First-run open-source notice and About parity** | A first-run page shows the open-source / free / anti-scam statements and dependency credits; the same page was added to both WinUI3 and Avalonia desktops, About links to this fork and to upstream, and dependency entries gained author, description, and license fields. |
+| **Project license shipped with packages** | All three desktop outputs copy the repository `LICENSE` to `LICENSES/PROJECT_LICENSE.txt`. |
+| **Crash reporting (lumen-crash)** | Integrates the lumen-crash SDK; the crash report page can surface before the normal UI and supports user-initiated paste upload. |
+| **Legacy package settings migration** | The package moved from `com.syncclipboard.mobile` to `com.chloemlla.syncclipboard.mobile`; a `legacyMigrate` flavor plus a same-signature ContentProvider imports the old server URL, credentials, and toggles. |
+| **Android 11–17 adaptation** | `compileSdk`/`targetSdk` 37, `minSdk` 26; the Android 17→11 checklist is applied, covering resizable large screens, predictive back, `ACCESS_LOCAL_NETWORK`, and network security config. |
+| **Desktop SignalR automatic reconnect** | The official-server adapter enables `WithAutomaticReconnect` (0/2/5/10/30s) and maps reconnecting/reconnected to disconnected/connected events, so network blips or server restarts recover without waiting for the slower liveness check. |
+| **Windows scheduled-task autostart fix** | Sets the task principal `UserId` on registration and tolerates "task not registered" when deleting, so the autostart toggle no longer errors. |
+| **Android CI and signed releases** | New Android pipelines: push/PR runs unit tests, lint, and a debug build; the release job signs and packages both the `production` and `legacyMigrate` flavors on Java 21 with a pinned Gradle version and publishes to GitHub Releases. |
+
+See [android/README.md](../android/README.md) for full Android client details, permissions, and the protocol summary. The content below is the original upstream documentation.
 
 <details>
 <summary>Contents</summary>
 
 - [SyncClipboard](#syncclipboard)
+  - [Fork Enhancements](#-fork-enhancements)
   - [Features](#features)
   - [Breaking Changes](#breaking-changes)
     - [v3.1.1](#v311)

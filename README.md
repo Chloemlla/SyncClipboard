@@ -3,26 +3,41 @@
 
 中文 | [English](docs/README_EN.md)  
 
-> [!IMPORTANT]
-> **本仓库为 [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) 分支**，在上游 [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard) 基础上，重点新增并持续维护一个**全新的原生 Android 客户端**（`android/`，包名 `com.chloemlla.syncclipboard.mobile`）。上游本身不含官方原生安卓客户端，仅提供基于第三方工具的方案。
->
-> 本分支的主要改进：
->
-> - **原生 Kotlin + Jetpack Compose 客户端**：Material 3 设计语言，无需依赖任何第三方自动化工具即可开箱同步。
-> - **实时同步**：接入桌面端同款 SignalR Hub（`/SyncClipboardHub`），服务器变更近乎零延迟唤醒；配合自适应轮询作为兜底，实时通道正常时降频为慢心跳（省电省流量），不可用时回退到快轮询并指数退避。
-> - **双向同步**：拉取（服务器 → 手机，后台自动写入剪贴板）+ 推送（手机 → 服务器，通过无障碍服务捕获复制内容）。
-> - **完整 profile 对齐桌面**：Text / Image / File / Group 双向同步；协议 hash 与桌面 `FileProfile` / `GroupProfile` 一致。
-> - **剪贴板辅助（EasyCopyImage）**：下载网页图片并可选改写本机剪贴板，提升与 Windows 图片互通。
-> - **Shizuku 支持**：借助 Shizuku 实现高级保活与**免无障碍**的后台文本剪贴板读取（图片/文件推送仍建议开无障碍）。
-> - **稳定的后台保活**：前台 `dataSync` 服务 + 电池优化豁免 + 开机自启，修复了退到后台 / 熄屏后同步失效的问题。
-> - **完善的 CI**：Java 21 + 固定 Gradle 版本的验证流水线，并支持**自动签发发布**签名安卓安装包到 GitHub Release。
->
-> 安卓客户端的详细说明见 [android/README.md](android/README.md)。以下内容为上游原始文档。
+## ⚡ 本分支改进特性
+
+本仓库是 [Chloemlla/SyncClipboard](https://github.com/Chloemlla/SyncClipboard) 分支，上游为 [Jeric-X/SyncClipboard](https://github.com/Jeric-X/SyncClipboard)。本分支在上游基础上新增并维护一个**原生 Android 客户端**（`android/`，包名 `com.chloemlla.syncclipboard.mobile`），并对桌面端 Core 做了若干修复。上游不含官方原生安卓客户端，仅提供基于 AutoJs6、Xposed 等第三方工具的方案。
+
+| 特性 | 说明 |
+| --- | --- |
+| **原生 Android 客户端（新增）** | `android/` 为 Kotlin + Jetpack Compose 实现，Material 3 设计；不依赖任何第三方自动化工具即可同步。 |
+| **SignalR 实时同步** | 接入桌面端同款 `/SyncClipboardHub`，服务器内容变更时立即唤醒拉取，不必等轮询周期。 |
+| **自适应轮询兜底** | 实时通道健康时降为约 30 秒心跳（省电省流量）；不可用时回退到配置的轮询间隔并指数退避。 |
+| **四类 profile 双向同步** | Text / Image / File / Group 均支持拉取与推送，协议 hash 与桌面 `SyncClipboard.Shared` 一致，可与 Windows / Linux / macOS 互通。 |
+| **无障碍服务推送** | `AccessibilityService` 捕获后台复制内容并上传。因 Android 10+ 限制后台读取剪贴板，图片/文件推送必需。 |
+| **Shizuku 支持** | 可选，用于增强保活，并可在**免无障碍**的情况下推送文本（二进制类型仍需无障碍）。 |
+| **后台保活** | 前台 `dataSync` 服务 + 电池优化豁免 + 开机自启（`BootReceiver`），修复退到后台或熄屏后同步失效的问题。 |
+| **剪贴板辅助（EasyCopyImage）** | 复制网页图片时下载原图并按 `type=Image` 推送，可选改写本机剪贴板为图片 URI，改善与 Windows 图片互通；WebP/HEIC/AVIF 等会转码为 PNG/JPEG。 |
+| **图片下载确认与落盘（Android）** | 收到图片先弹窗确认再下载，确认后保存到系统相册。 |
+| **图片下载确认与归档（Windows）** | 桌面端同样先确认再下载，确认后另存到 `图片\SyncClipboard` 相册目录；拒绝后缓存该 profile，避免同一张图反复弹窗。 |
+| **本地剪贴板历史** | 记录近期文本，支持再次复制、删除、收藏。 |
+| **忽略前台应用** | 可配置包名忽略列表，前台为该应用时跳过推送。 |
+| **内置工具页** | 短链（mmp.cc）、Artifact（Bearer API）、OpenAI 兼容图像生成；媒体处理需自行提供 ffmpeg，未捆绑二进制。 |
+| **首启开源声明与 About 对齐** | 首次启动展示开源/免费/反诈声明与依赖鸣谢；桌面端 WinUI3 与 Avalonia 双端同步补齐该页面，About 页可直接打开本分支与上游仓库，依赖清单补充了作者、描述与许可证字段。 |
+| **项目许可证随包分发** | 三个桌面产物均将仓库 `LICENSE` 复制为 `LICENSES/PROJECT_LICENSE.txt` 一并分发。 |
+| **崩溃采集（lumen-crash）** | 接入 lumen-crash SDK，崩溃报告页可在正常界面之前展示，并支持用户主动粘贴上传。 |
+| **旧包名配置迁移** | 包名由 `com.syncclipboard.mobile` 迁至 `com.chloemlla.syncclipboard.mobile`；提供 `legacyMigrate` flavor 与同签名 ContentProvider，自动导入旧的服务器地址、凭据与开关。 |
+| **Android 11–17 适配** | `compileSdk`/`targetSdk` 37、`minSdk` 26；按 Android 17→11 适配清单落实大屏可调整、预测式返回、`ACCESS_LOCAL_NETWORK`、网络安全配置等项。 |
+| **桌面端 SignalR 自动重连** | 官方服务器适配器启用 `WithAutomaticReconnect`（0/2/5/10/30 秒递增），并将重连开始/成功映射为断开/恢复事件，网络抖动或服务器重启后可自行恢复，无需等待较慢的存活检测。 |
+| **Windows 计划任务自启修复** | 注册计划任务时显式设置运行账户 `UserId`；删除任务时容忍“任务未注册”错误，避免自启开关报错。 |
+| **Android CI 与签名发布** | 新增 Android 流水线：push/PR 触发单测、lint 与 debug 构建校验；release 作业在 Java 21 + 固定 Gradle 版本下签名打包 `production` 与 `legacyMigrate` 两个 flavor，并发布到 GitHub Release。 |
+
+安卓客户端的详细说明、权限清单与协议摘要见 [android/README.md](android/README.md)。以下内容为上游原始文档。
 
 <details>
 <summary>目录</summary>
 
 - [SyncClipboard](#syncclipboard)
+  - [本分支改进特性](#-本分支改进特性)
   - [功能](#功能)
   - [不兼容变更记录](#不兼容变更记录)
     - [v3.1.1](#v311)
