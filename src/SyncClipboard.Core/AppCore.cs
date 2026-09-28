@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using NativeNotification;
 using NativeNotification.Interface;
 using Quartz;
-using SharpHook;
+using SharpHook.Providers;
 using SyncClipboard.Core.Clipboard;
 using SyncClipboard.Core.Commons;
 using SyncClipboard.Core.Commons.ConfigMigration;
@@ -160,12 +160,31 @@ namespace SyncClipboard.Core
             }
         }
 
+        private void InitLinuxInputMode(ConfigManager configManager)
+        {
+            if (OperatingSystem.IsLinux())
+            {
+                // Select before any permission query, global hook or input simulator loads the backend.
+                try
+                {
+                    var mode = configManager.GetConfig<ProgramConfig>().LinuxInputMode;
+                    var result = UioHookProvider.Instance.SetLinuxMode(mode);
+                    Logger.Write(LOG_TAG, $"Linux input mode: {mode}, initialization result: {result}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Write(LOG_TAG, $"Failed to select Linux input backend: {ex}");
+                }
+            }
+        }
+
         public void Run()
         {
             LogEnvInfo();
             InitAppImageEntry();
             var configManager = Services.GetRequiredService<ConfigManager>();
             InitLanguage(configManager);
+            InitLinuxInputMode(configManager);
 
             var contextMenu = Services.GetRequiredService<IContextMenu>();
             var mainWindow = Services.GetRequiredService<IMainWindow>();
@@ -366,6 +385,7 @@ namespace SyncClipboard.Core
             services.AddSingleton((serviceProvider) => serviceProvider);
             services.AddSingleton<ConfigManager>();
             services.AddSingleton<ISyncClipboardConfigMigration, SyncClipboardConfigMigrationV0ToV1>();
+            services.AddSingleton<ISyncClipboardConfigMigration, SyncClipboardConfigMigrationV1ToV2>();
             services.AddSingleton<SyncClipboardConfigUpgrader>();
             services.AddSingleton<ConfigRecoveryService>();
             services.AddSingleton<AccountManager>();
@@ -376,8 +396,8 @@ namespace SyncClipboard.Core
             services.AddSingleton<LoggerOption>();
             services.AddSingleton<Interfaces.ILogger, Logger>();
             services.AddSingleton<IMessenger, WeakReferenceMessenger>();
-            services.AddSingleton<IEventSimulator, EventSimulator>();
-            services.AddTransient<VirtualKeyboard>();
+            services.AddSingleton<IInputPermissionProvider, InputPermissionProvider>();
+            services.AddSingleton<VirtualKeyboard>();
             services.AddSingleton<UpdateChecker>();
             services.AddSingleton<HistorySyncer>();
             services.AddSingleton<HistoryManager>();
@@ -396,13 +416,13 @@ namespace SyncClipboard.Core
             services.AddQuartz(options => options.InterruptJobsOnShutdownWithWait = true);
             services.AddSingleton<IScheduler>(sp => sp.GetRequiredService<ISchedulerFactory>().GetScheduler().GetAwaiter().GetResult());
             services.AddTransient<AppInstance>();
-            services.AddSingleton(sp => ManagerFactory.GetNotificationManager(
-                new NativeNotificationOption
+            services.AddSingleton(sp => NotificationManagerFactory.Create(
+                () => ManagerFactory.GetNotificationManager(new NativeNotificationOption
                 {
                     AppName = Env.SoftName,
                     AppIcon = Path.Combine(Env.ProgramDirectory, "Assets", "icon.svg")
-                }
-            ));
+                }),
+                sp.GetRequiredService<Interfaces.ILogger>()));
             services.AddKeyedSingleton<INotification>("ProfileNotification", (sp, key) => sp.GetRequiredService<INotificationManager>().Create());
             services.AddSingleton<ProfileNotificationHelper>();
 
@@ -411,33 +431,34 @@ namespace SyncClipboard.Core
             services.AddServerAdapter<S3Config, S3Adapter>();
             services.AddLogInHelper<WebDavConfig, NextCloudLoginHelper>();
             services.AddSingleton<LocalClipboardSetter>();
+            services.AddSingleton<IClipboardWriteCapabilities, DefaultClipboardWriteCapabilities>();
             services.AddSingleton<ProfileActionBuilder>();
             services.AddSingleton<IProfileEnv, ClientProfileEnvProvider>();
         }
 
         public static void ConfigurateViewModels(IServiceCollection services)
         {
-            services.AddTransient<SyncSettingViewModel>();
-            services.AddTransient<ServerConfigViewModel>();
-            services.AddTransient<SystemSettingViewModel>();
-            services.AddTransient<AboutViewModel>();
+            services.AddSingleton<SyncSettingViewModel>();
+            services.AddSingleton<ServerConfigViewModel>();
+            services.AddSingleton<SystemSettingViewModel>();
+            services.AddSingleton<AboutViewModel>();
             services.AddTransient<OpenSourceNoticeViewModel>();
-            services.AddTransient<CliboardAssistantViewModel>();
+            services.AddSingleton<CliboardAssistantViewModel>();
             services.AddTransient<NextCloudLogInViewModel>();
             services.AddTransient<AddAccountViewModel>();
             services.AddTransient<AccountConfigEditViewModel>();
             services.AddTransient<NetworkAccountSwitchViewModel>();
             services.AddTransient<CurrentNetworkStatusViewModel>();
-            services.AddTransient<FileSyncFilterSettingViewModel>();
+            services.AddSingleton<FileSyncFilterSettingViewModel>();
             services.AddSingleton<ClipboardOwnerFilterSettingViewModel>();
-            services.AddTransient<ClipboardAcquisitionRulesViewModel>();
+            services.AddSingleton<ClipboardAcquisitionRulesViewModel>();
             services.AddTransient<ProxySettingViewModel>();
             services.AddSingleton<ServiceStatusViewModel>();
             services.AddSingleton<MainViewModel>();
             services.AddSingleton<HotkeyViewModel>();
             services.AddSingleton<HotkeyBlacklistViewModel>();
             services.AddSingleton<HistoryViewModel>();
-            services.AddTransient<HistorySettingViewModel>();
+            services.AddSingleton<HistorySettingViewModel>();
         }
 
         public static void ConfigurateUserService(IServiceCollection services)

@@ -16,13 +16,13 @@ using SyncClipboard.Core.Models;
 using SyncClipboard.Core.Utilities;
 using SyncClipboard.Core.ViewModels;
 using SyncClipboard.Core.ViewModels.Sub;
+using SyncClipboard.Desktop.Utilities;
 using System;
 using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AvaloniaDragDropEffects = Avalonia.Input.DragDropEffects;
 
 namespace SyncClipboard.Desktop.Views;
 
@@ -45,6 +45,8 @@ public partial class HistoryWindow : Window, IWindow
             this.WindowDecorations = WindowDecorations.BorderOnly;
 
         InitializeComponent();
+        // Handle configured keys before the search box, without intercepting modal dialog input.
+        _HistoryContent.AddHandler(KeyDownEvent, HistoryWindow_KeyDown, RoutingStrategies.Tunnel);
         if (OperatingSystem.IsLinux())
             WindowDecorationsTheme = (ControlTheme)this.FindResource("LinuxHistoryWindowDecorationsTheme")!;
 
@@ -118,23 +120,8 @@ public partial class HistoryWindow : Window, IWindow
         MinHeight = _FilterSelectorBar.DesiredSize.Height + _SearchTextBox.DesiredSize.Height;
     }
 
-    protected override void OnKeyDown(KeyEventArgs e)
+    private void HistoryWindow_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && _viewModel.IsMultiSelecting)
-        {
-            _viewModel.ExitMultiSelect();
-            e.Handled = true;
-            return;
-        }
-
-        if (e.Key == Key.F && e.KeyModifiers.HasFlag(KeyModifiers.Control))
-        {
-            _SearchTextBox.Focus();
-            _SearchTextBox.SelectAll();
-            e.Handled = true;
-            return;
-        }
-
         var isShiftPressed = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
         var isAltPressed = e.KeyModifiers.HasFlag(KeyModifiers.Alt);
         var isCtrlPressed = e.KeyModifiers.HasFlag(KeyModifiers.Control);
@@ -148,15 +135,7 @@ public partial class HistoryWindow : Window, IWindow
             return;
         }
 
-        var handled = _viewModel.HandleKeyPress(key.Value, isShiftPressed, isAltPressed, isCtrlPressed, isMetaPressed);
-
-        if (handled)
-        {
-            e.Handled = true;
-            return;
-        }
-
-        base.OnKeyDown(e);
+        e.Handled = _viewModel.HandleKeyPress(key.Value, isShiftPressed, isAltPressed, isCtrlPressed, isMetaPressed);
     }
 
     protected override void OnClosing(WindowClosingEventArgs e)
@@ -563,23 +542,7 @@ public partial class HistoryWindow : Window, IWindow
         var dragStartEventArgs = _dragStartEventArgs;
         ResetPendingDrag();
 
-        try
-        {
-            // Avalonia 11.3+: 使用 DataTransfer API
-            var dataTransfer = new DataTransfer();
-            var success = await _viewModel.FillDragPackage(dataTransfer, item);
-            if (success)
-            {
-                var result = await DragDrop.DoDragDropAsync(
-                    dragStartEventArgs,
-                    dataTransfer,
-                    AvaloniaDragDropEffects.Copy);
-            }
-        }
-        catch
-        {
-            // 拖拽失败，忽略
-        }
+        await AvaloniaDragDropHelper.DoDragDropAsync(dragStartEventArgs, data => _viewModel.FillDragPackage(data, item));
     }
 
     private void ListBoxItem_PointerReleased(object? sender, PointerReleasedEventArgs e)

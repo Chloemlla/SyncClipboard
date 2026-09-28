@@ -540,26 +540,14 @@
   <data name="HistoryWindowMouseOperations" xml:space="preserve">
     <value>Mouse Operations</value>
   </data>
-  <data name="HistoryWindowKeyboardList" xml:space="preserve">
-    <value>Ctrl+F: Focus search box
-Ctrl+Home: Scroll to top
-Ctrl+End: Scroll to bottom
-Ctrl+S: Toggle star
-Ctrl+Shift+S: Toggle starred only
-Ctrl+Shift+T: Toggle always on top
-Ctrl+D: Delete item
-Ctrl+P: Toggle preview panel
-↑/↓: Navigate items
-Tab/Shift+Tab: Switch filters
-Enter: Copy and paste
-Alt+Enter: Copy only
-Esc: Close panel</value>
+  <data name="HistoryWindowCloseShortcutDescription" xml:space="preserve">
+    <value>Close panel</value>
   </data>
   <data name="HistoryWindowMouseList" xml:space="preserve">
     <value>Single click: Select item
-Double click item: Copy to clipboard
+Double click item: {0}
 Double click image: View full image
-Middle click: Copy and paste
+Middle click: {1}
 Long press: Enter multi-select
 Ctrl + left click: Multi-select
 Shift + left click: Select a continuous range</value>
@@ -1388,4 +1376,120 @@ Choose whether to use the default location or select another folder.</value>
   <data name="WifiDenied" xml:space="preserve"><value>Wi-Fi access was denied</value></data>
   <data name="WifiUnsupported" xml:space="preserve"><value>Wi-Fi name detection is unavailable; IP rules still work</value></data>
   <data name="RuleAccountMissing" xml:space="preserve"><value>Rule “{0}” matched but its target account no longer exists; sync account removed</value></data>
+  <data name="PermissionManagement" xml:space="preserve"><value>Permission management</value></data>
+  <data name="AccessibilityPermission" xml:space="preserve"><value>Accessibility</value></data>
+  <data name="AccessibilityPermissionRequestMessage" xml:space="preserve"><value>Accessibility access is required for this feature. Click “Request access” to open System Settings and request permission, then enable SyncClipboard in the Accessibility list.</value></data>
+  <data name="AccessibilityPermissionDescription" xml:space="preserve"><value>Allows simulated copy/paste and access to information about other windows.</value></data>
+  <data name="KeyboardMonitoringPermissionDescription" xml:space="preserve"><value>Requires read/write access to monitor global hotkeys.</value></data>
+  <data name="InputSimulationPermissionDescription" xml:space="preserve"><value>Requires write access to simulate key presses for copying, pasting, and other operations.</value></data>
+  <data name="InputPermissionAvailable" xml:space="preserve"><value>Access allowed</value></data>
+  <data name="InputPermissionDenied" xml:space="preserve"><value>Access denied</value></data>
+  <data name="InputPermissionUnavailable" xml:space="preserve"><value>Device unavailable</value></data>
+  <data name="InputPermissionPartial" xml:space="preserve"><value>Some devices accessible</value></data>
+  <data name="InputPermissionNotRequired" xml:space="preserve"><value>No extra permission needed</value></data>
+  <data name="InputPermissionUnknown" xml:space="preserve"><value>Unable to determine</value></data>
+  <data name="InputSimulationPermissionRequired" xml:space="preserve"><value>Keyboard input cannot be simulated. Check input permissions in System settings.</value></data>
+  <data name="GlobalHotkeyEngine" xml:space="preserve"><value>Global hotkey backend (restart required after changes)</value></data>
+  <data name="GlobalHotkeyEngineAutomaticDescription" xml:space="preserve"><value>Uses XRecord on X11 and libinput/uinput on Wayland.</value></data>
+  <data name="GlobalHotkeyEngineX11Description" xml:space="preserve"><value>Requires XWayland on Wayland and may not work even when XWayland is supported.</value></data>
+  <data name="GlobalHotkeyEngineLibinputDescription" xml:space="preserve"><value>Uses libinput to monitor input and uinput to simulate it. Requires input device permissions.</value></data>
+  <data name="LinuxInputSimulationPermissionRequired" xml:space="preserve"><value>Simulating key presses requires write access to /dev/uinput. Make sure the device exists and grant the current user write access. You can check access in the app's System settings.</value></data>
+  <data name="ClipboardWriteMethod" xml:space="preserve"><value>Clipboard writing method</value></data>
+  <data name="ClipboardWriteMethodDescription" xml:space="preserve"><value>When selecting a non-built-in method, make sure the command is available on the system.</value></data>
+  <data name="ClipboardAccess" xml:space="preserve"><value>Clipboard access</value></data>
+  <data name="ClipboardReadMethod" xml:space="preserve"><value>Clipboard reading method</value></data>
+  <data name="ClipboardReadMethodDescription" xml:space="preserve"><value>When selecting a non-built-in method, make sure the command is available on the system.</value></data>
+  <data name="EasyCopyImageUnsupportedWriter" xml:space="preserve"><value>The current clipboard writing method ({0}) does not support this feature.</value></data>
+  <data name="BuiltIn" xml:space="preserve"><value>Built-in</value></data>
+  <data name="HistoryShortcutSettings" xml:space="preserve">
+    <value>History panel shortcuts</value>
+  </data>
+  <data name="HistoryShortcutReserved" xml:space="preserve">
+    <value>{0} is already used to close the window.</value>
+  </data>
+  <data name="HistoryShortcutModifierOnly" xml:space="preserve">
+    <value>Press a key in addition to the modifier keys.</value>
+  </data>
+  <data name="HistoryShortcutMultipleMainKeys" xml:space="preserve">
+    <value>Use only one non-modifier key.</value>
+  </data>
+  <data name="HistoryShortcutInputCharacter" xml:space="preserve">
+    <value>{0} is a character input key and cannot be used alone.</value>
+  </data>
+  <data name="HistoryShortcutConflict" xml:space="preserve">
+    <value>{0} is already assigned to “{1}”.</value>
+  </data>
+  <data name="HistoryDoubleClick" xml:space="preserve">
+    <value>Double-click a record</value>
+  </data>
+  <data name="HistoryMiddleClick" xml:space="preserve">
+    <value>Middle-click a record</value>
+  </data>
+  <data name="HistoryShortcutSearch" xml:space="preserve">
+    <value>Focus search</value>
+  </data>
+  <data name="HistoryShortcutPreviousItem" xml:space="preserve">
+    <value>Previous item</value>
+  </data>
+  <data name="HistoryShortcutNextItem" xml:space="preserve">
+    <value>Next item</value>
+  </data>
+  <data name="HistoryShortcutFirstItem" xml:space="preserve">
+    <value>Scroll to top</value>
+  </data>
+  <data name="HistoryShortcutLastItem" xml:space="preserve">
+    <value>Scroll to bottom</value>
+  </data>
+  <data name="HistoryShortcutToggleStar" xml:space="preserve">
+    <value>Toggle favorite</value>
+  </data>
+  <data name="HistoryShortcutToggleStarredFilter" xml:space="preserve">
+    <value>Toggle favorites filter</value>
+  </data>
+  <data name="HistoryShortcutToggleTopmost" xml:space="preserve">
+    <value>Toggle always on top</value>
+  </data>
+  <data name="HistoryShortcutDelete" xml:space="preserve">
+    <value>Delete record</value>
+  </data>
+  <data name="HistoryShortcutTogglePreview" xml:space="preserve">
+    <value>Toggle preview panel</value>
+  </data>
+  <data name="HistoryShortcutNextFilter" xml:space="preserve">
+    <value>Next filter</value>
+  </data>
+  <data name="HistoryShortcutPreviousFilter" xml:space="preserve">
+    <value>Previous filter</value>
+  </data>
+  <data name="HistoryShortcutCopyAndPaste" xml:space="preserve">
+    <value>Copy and paste</value>
+  </data>
+  <data name="HistoryShortcutCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="ExecuteRecommendedAction" xml:space="preserve">
+    <value>Run recommended action</value>
+  </data>
+  <data name="NoRecommendedAction" xml:space="preserve">
+    <value>No recommended action is available for this record.</value>
+  </data>
+  <data name="RecommendedActionFileUnavailable" xml:space="preserve">
+    <value>Cannot run the recommended action because the local file is unavailable.</value>
+  </data>
+  <data name="HistoryWindowOperationFormat" xml:space="preserve"><value>{0}: {1}</value></data>
+  <data name="ResetAllHistoryKeyboardShortcuts" xml:space="preserve">
+    <value>Reset All Keyboard Shortcuts</value>
+  </data>
+  <data name="ResetAllHistoryKeyboardShortcutsConfirmMessage" xml:space="preserve">
+    <value>Reset all history panel keyboard shortcuts to their defaults?</value>
+  </data>
+  <data name="HistoryShortcutResetConflict" xml:space="preserve">
+    <value>Cannot reset: {0} is already assigned to “{1}”. Change that action’s shortcut first.</value>
+  </data>
+  <data name="RootDirectoryNotSupported" xml:space="preserve">
+    <value>Synchronizing filesystem root directories is not supported. Select files or folders inside instead.</value>
+  </data>
+  <data name="ManualUploadFailed" xml:space="preserve">
+    <value>Failed to upload manually</value>
+  </data>
 </root>

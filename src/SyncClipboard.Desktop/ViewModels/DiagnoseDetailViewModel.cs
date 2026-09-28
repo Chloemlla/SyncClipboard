@@ -14,7 +14,7 @@ namespace SyncClipboard.Desktop.ViewModels;
 
 internal partial class DiagnoseDetailViewModel : ObservableObject
 {
-    private readonly MultiSourceClipboardReader Clipboard = App.Current.Services.GetRequiredService<MultiSourceClipboardReader>();
+    private readonly ClipboardReaderSelector Clipboard = App.Current.Services.GetRequiredService<ClipboardReaderSelector>();
 
     [ObservableProperty]
     private bool isImage;
@@ -99,6 +99,12 @@ internal partial class DiagnoseDetailViewModel : ObservableObject
 
     private async Task ProcessImageBytes(object? clipboard)
     {
+        if (clipboard is Bitmap bitmap)
+        {
+            IsImage = true;
+            Bitmap = bitmap;
+        }
+
         if (clipboard is byte[] bytes)
         {
             try

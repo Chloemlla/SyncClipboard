@@ -35,11 +35,9 @@ internal sealed class MacForegroundWindowWatcher(
             });
         }).GetAwaiter().GetResult();
 
-        if (MacInterop.AXIsProcessTrusted())
-        {
-            _lastPolledWindow = ReadCurrentWindow();
-            _pollingTimer = new Timer(PollForegroundWindow, null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));
-        }
+        // The provider checks current access on each read, so polling also handles permissions granted after Start.
+        _lastPolledWindow = ReadCurrentWindow();
+        _pollingTimer = new Timer(PollForegroundWindow, null, TimeSpan.FromMilliseconds(500), TimeSpan.FromMilliseconds(500));
     }
 
     public void Stop()

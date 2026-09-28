@@ -24,7 +24,7 @@ SyncClipboard is a cross-platform clipboard synchronization tool (Windows/macOS/
 
 This is a multi-platform .NET solution. The sln cannot be built as a whole (it contains platform-specific projects that fail on incompatible OS/arch). All projects use [central package management](https://learn.microsoft.com/en-us/nuget/consume-packages/Central-Package-Management) via `src/Directory.Packages.props`. Commands below are run from the repo root unless noted.
 
-The repository selects .NET SDK 10.0.302 with `latestPatch` roll-forward in `global.json`. Linux packaging still uses PupNet 1.8.0 and requires the .NET 8 runtime in addition to the .NET 10 SDK.
+The repository selects .NET SDK 10.0.302 with `latestPatch` roll-forward in `global.json`.
 
 ### Windows (WinUI3)
 
@@ -114,6 +114,19 @@ dotnet format --verify-no-changes --severity info --no-restore
 ```
 
 Rules are defined in `src/.editorconfig`.
+
+#### XAML / AXAML
+
+Format changed `.xaml` and `.axaml` files with **XamlStyler.Console**, using `src/Settings.XamlStyler`. Restrict formatting to files changed by the current task or PR; do not reformat unrelated files. `dotnet format` does not replace this check.
+
+Use the globally installed `xstyler`. If it is not available, install it with the command below; no specific version is required. Run the formatting command from the repository root, replacing the example file list with the actual changed files:
+
+```bash
+dotnet tool install --global XamlStyler.Console
+xstyler -f "path/to/ChangedView.xaml,path/to/ChangedView.axaml" -c src/Settings.XamlStyler -i
+```
+
+`-f` accepts a comma-separated file list; `-i` allows `.axaml` files. Repeat the formatting command with `-p` to verify without writing files. Review the diff to ensure only formatting changed.
 
 ## Architecture
 

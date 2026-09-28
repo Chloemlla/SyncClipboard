@@ -1,4 +1,6 @@
 using System;
+using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Microsoft.Extensions.DependencyInjection;
 using SharpHook;
 using SyncClipboard.Core;
@@ -6,12 +8,14 @@ using SyncClipboard.Core.Clipboard;
 using SyncClipboard.Core.Interfaces;
 using SyncClipboard.Desktop.ClipboardAva;
 using SyncClipboard.Desktop.ClipboardAva.ClipboardReader;
+using SyncClipboard.Desktop.ClipboardAva.ClipboardWriter;
 using SyncClipboard.Desktop.ClipboardAva.Fingerprint;
 using SyncClipboard.Desktop.Utilities;
 using SyncClipboard.Desktop.Utilities.CaretPositionProvider;
 using SyncClipboard.Desktop.Utilities.NativeWindowController;
 using SyncClipboard.Desktop.Utilities.MousePositionProvider;
 using SyncClipboard.Desktop.Views;
+using SyncClipboard.Desktop.ViewModels;
 using SyncClipboard.Core.Utilities.Network;
 
 namespace SyncClipboard.Desktop;
@@ -22,6 +26,7 @@ public class AppServices
     {
         AppCore.ConfigCommonService(services);
         AppCore.ConfigurateViewModels(services);
+        services.AddSingleton<DiagnoseViewModel>();
         AppCore.ConfigurateUserService(services);
 
         services.AddTransient<IAppConfig, AppConfig>();
@@ -35,7 +40,13 @@ public class AppServices
             return new Services.AvaloniaDialog(historyWindow!);
         });
         services.AddSingleton<IContextMenu, TrayIconContextMenu>();
-        services.AddSingleton<MultiSourceClipboardReader>();
+        services.AddSingleton<IClipboard>(sp =>
+            ((Window)sp.GetRequiredService<IMainWindow>()).Clipboard
+            ?? throw new InvalidOperationException("Main window clipboard is unavailable."));
+        services.AddSingleton<ClipboardReaderSelector>();
+        services.AddSingleton<ClipboardWriterSelector>();
+        services.AddSingleton<IClipboardWriteCapabilities>(sp => sp.GetRequiredService<ClipboardWriterSelector>());
+        services.AddSingleton<IClipboardWriter, AvaloniaClipboardWriter>();
         services.AddSingleton<IClipboardReader, AvaloniaClipboardReader>();
 
         // 注册剪贴板指纹提供者
@@ -62,7 +73,7 @@ public class AppServices
         services.AddTransient<IClipboardSetter<ImageProfile>, ImageClipboardSetter>();
         services.AddTransient<IClipboardSetter<GroupProfile>, FileClipboardSetter>();
 
-        services.AddSingleton<IGlobalHook>((sp) => new SimpleGlobalHook(true));
+        services.AddSingleton<IGlobalHook>(_ => new SimpleGlobalHook());
 
         services.AddTransient<IFontManager, FontManager>();
         services.AddTransient<IThreadDispatcher, ThreadDispatcher>();
@@ -71,6 +82,7 @@ public class AppServices
         {
             services.AddSingleton<IClipboardReader, XClipReader>();
             services.AddSingleton<IClipboardReader, WlClipboardReader>();
+            services.AddSingleton<IClipboardWriter, WlClipboardWriter>();
             services.AddSingleton<ICaretPositionProvider, CaretPositionProvider>();
             services.AddSingleton<INativeWindowController, LinuxNativeWindowController>();
             services.AddSingleton<INativeForegroundWindowWatcher, PollingForegroundWindowWatcher>();
