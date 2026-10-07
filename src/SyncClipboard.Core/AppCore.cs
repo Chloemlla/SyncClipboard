@@ -213,6 +213,17 @@ namespace SyncClipboard.Core
             }
             RunStartUpCommands();
             Job.SetUpSchedulerJobs(Services);
+            if (Environment.GetCommandLineArgs().Contains(StartArguments.UpdateCompleted))
+            {
+                try
+                {
+                    NotificationManager.ShowText(Env.SoftName, string.Format(Strings.UpdatedToVersion, Env.AppVersion));
+                }
+                catch (Exception error)
+                {
+                    Logger.Write(LOG_TAG, $"Failed to show update completion notification: {error}");
+                }
+            }
         }
 
         private void RunStartUpCommands()
@@ -278,7 +289,8 @@ namespace SyncClipboard.Core
         private void RegisterForSystemHotkey(IMainWindow mainWindow, HistoryViewModel historyViewModel)
         {
             var hotkeyManager = Services.GetService<HotkeyManager>();
-            if (hotkeyManager is null) return;
+            if (hotkeyManager is null)
+                return;
 
             UniqueCommandCollection CommandCollection = new(Strings.System, PageDefinition.SystemSetting.FontIcon!)
             {
@@ -399,6 +411,7 @@ namespace SyncClipboard.Core
             services.AddSingleton<IInputPermissionProvider, InputPermissionProvider>();
             services.AddSingleton<VirtualKeyboard>();
             services.AddSingleton<UpdateChecker>();
+            services.AddSingleton<IUpdateInstallerFactory, UpdateInstallerFactory>();
             services.AddSingleton<HistorySyncer>();
             services.AddSingleton<HistoryManager>();
             services.AddSingleton<HistorySyncer>();

@@ -234,7 +234,8 @@ public class KeyboardSimulationTests
         var created = 0;
         using var keyboard = new VirtualKeyboard(permissions.Object, () =>
         {
-            if (++created == 1) throw new HookException(UioHookResult.ErrorLinuxOpenUinput);
+            if (++created == 1)
+                throw new HookException(UioHookResult.ErrorLinuxOpenUinput);
             return simulator.Object;
         });
 
@@ -244,6 +245,9 @@ public class KeyboardSimulationTests
     }
 
     [TestMethod]
+    [TestCategory("PlatformWindows")]
+    [TestCategory("PlatformMacOS")]
+    [TestCategory("PlatformLinux")]
     public void CopyAndPaste_ReuseSimulator_AndServiceProviderDisposesIt()
     {
         var services = new ServiceCollection();
@@ -342,6 +346,9 @@ public class KeyboardSimulationTests
     }
 
     [TestMethod]
+    [TestCategory("PlatformWindows")]
+    [TestCategory("PlatformMacOS")]
+    [TestCategory("PlatformLinux")]
     public void SimulationError_ReleasesKeys_DisposesSimulator_AndAllowsRetry()
     {
         var simulator = new Mock<IEventSimulator>();

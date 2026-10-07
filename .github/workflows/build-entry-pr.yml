@@ -33,3 +33,11 @@ jobs:
   build-android:
     uses: ./.github/workflows/android-package.yml
     secrets: inherit
+
+  windows-test:
+    needs: build-win
+    uses: ./.github/workflows/windows-test.yml
+
+  macos-test:
+    needs: build-mac
+    uses: ./.github/workflows/macos-test.yml
