@@ -4,6 +4,7 @@ using SyncClipboard.Core.Commons;
 using SyncClipboard.Core.Interfaces;
 using SyncClipboard.Core.Models;
 using SyncClipboard.Core.Models.UserConfigs;
+using SyncClipboard.Core.Utilities.History.HistoryExport;
 using SyncClipboard.Server.Core.Models;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
@@ -190,6 +191,20 @@ public class HistoryManager : IHistoryEntityRepository<HistoryRecord, DateTime>
         await _dbContext.HistoryRecords.AddAsync(record, token);
         await _dbContext.SaveChangesAsync(token);
         HistoryAdded?.Invoke(record);
+    }
+
+    public async Task<IReadOnlyList<HistoryExportRecord>> GetExportSnapshotAsync(
+        IReadOnlyList<HistoryRecordKey>? selected, CancellationToken token)
+    {
+        await _dbSemaphore.WaitAsync(token).ConfigureAwait(false);
+        using var guard = new ScopeGuard(() => _dbSemaphore.Release());
+        if (selected is { Count: 0 })
+            return [];
+        var records = await _dbContext.HistoryRecords.AsNoTracking().Where(record => !record.IsDeleted)
+            .ToListAsync(token).ConfigureAwait(false);
+        var keys = selected?.Select(key => new HistoryRecordKey(key.Type, key.Hash.ToUpperInvariant())).ToHashSet();
+        return records.Where(record => keys is null || keys.Contains(new(record.Type, record.Hash.ToUpperInvariant())))
+            .Select(HistoryExportRecord.FromRecord).ToArray();
     }
 
     public async Task<List<HistoryRecord>> GetHistory(CancellationToken? token = null)
@@ -496,7 +511,8 @@ public class HistoryManager : IHistoryEntityRepository<HistoryRecord, DateTime>
             using var guard = new ScopeGuard(() => _dbSemaphore.Release());
 
             var deleted = await _historyManagerHelper.RemoveExpiredInBatchesAsync(
-                r => r.Timestamp < cutoffTime && !r.Stared && !r.Pinned && r.SyncStatus == HistorySyncStatus.LocalOnly, token);
+                r => r.LastModified < cutoffTime && r.LastAccessed < cutoffTime &&
+                    !r.Stared && !r.Pinned && r.SyncStatus == HistorySyncStatus.LocalOnly, token);
 
             if (deleted > 0)
             {
@@ -861,7 +877,8 @@ public class HistoryManager : IHistoryEntityRepository<HistoryRecord, DateTime>
     public Expression<Func<HistoryRecord, bool>> QueryToDeleteByOverCount => entity => !entity.Stared &&
         !entity.Pinned && entity.SyncStatus == HistorySyncStatus.LocalOnly;
 
-    public Expression<Func<HistoryRecord, DateTime>> QueryDeleteOrderBy => entity => entity.Timestamp;
+    public Expression<Func<HistoryRecord, DateTime>> QueryDeleteOrderBy => entity =>
+        entity.LastModified > entity.LastAccessed ? entity.LastModified : entity.LastAccessed;
 
     public Expression<Func<HistoryRecord, bool>> QueryCount => entity => entity.SyncStatus == HistorySyncStatus.LocalOnly;
 }
